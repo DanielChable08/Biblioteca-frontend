@@ -1,0 +1,328 @@
+
+:host {
+  --beige-suave: #EDE6D7;
+  --vino-profundo: #5C2B2E;
+  --oro-suave: #D4AF37;
+  --gris-claro: #C4C4C4;
+  --cafe-moka: #7d3400ff;
+  --vino-degradado: #631604ff;
+  --blanco-puro: #FFFFFF;
+  --error-color: #e74c3c;
+}
+
+
+.login-container {
+  display: flex;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--beige-suave);
+}
+
+.left-column {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--vino-profundo) 0%, #4a1f21 50%, var(--vino-degradado) 100%);
+  padding: 2rem;
+}
+
+.welcome-content {
+  text-align: center;
+  color: var(--blanco-puro);
+  max-width: 500px;
+}
+
+.stained-glass-window {
+  width: 350px;
+  height: 400px;
+  margin: 0 auto 2rem;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(255,255,255,0.1);
+  border: 6px solid var(--cafe-moka);
+  border-radius: 12px;
+}
+
+.welcome-text h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0.3rem 0;
+  color: var(--blanco-puro);
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  line-height: 1.2;
+}
+
+.welcome-text p {
+  font-size: 1rem;
+  max-width: 350px;
+  margin: 1.5rem auto 0;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.right-column {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--beige-suave);
+  padding: 2rem;
+}
+
+
+:host ::ng-deep .biblioteca-card {
+  width: 100%;
+  max-width: 450px;
+  border-radius: 24px !important;
+  box-shadow: 0 8px 32px rgba(92, 43, 46, 0.15) !important;
+  border: none !important;
+  background: var(--blanco-puro) !important;
+  overflow: hidden;
+}
+
+:host ::ng-deep .biblioteca-card .p-card-header {
+  padding: 0 !important;
+  border: none !important;
+  background: var(--blanco-puro) !important;
+}
+
+:host ::ng-deep .biblioteca-card .p-card-content {
+  padding: 0 2.5rem 1rem 2.5rem !important;
+  background: var(--blanco-puro) !important;
+}
+
+:host ::ng-deep .biblioteca-card .p-card-footer {
+  padding: 0 2.5rem 2.5rem 2.5rem !important;
+  border: none !important;
+  background: var(--blanco-puro) !important;
+}
+
+
+.card-header {
+  text-align: center;
+  padding: 2.5rem 2.5rem 1.5rem 2.5rem;
+  background: var(--blanco-puro);
+}
+
+.library-icon i {
+  font-size: 2.5rem;
+  color: var(--oro-suave) !important;
+}
+
+.card-header h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--vino-profundo);
+  margin: 1rem 0 0.5rem;
+}
+
+.card-header p {
+  color: var(--gris-claro);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.field-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--vino-profundo);
+  margin: 0;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--oro-suave);
+  font-size: 1rem;
+  z-index: 2;
+}
+
+.input-with-icon {
+  width: 100% !important;
+  padding: 0.875rem 1rem 0.875rem 2.5rem !important;
+  border: 1.5px solid var(--gris-claro) !important;
+  border-radius: 8px !important;
+  font-size: 0.95rem !important;
+  color: var(--vino-profundo) !important;
+  background: var(--blanco-puro) !important;
+  height: 48px !important; 
+  transition: all 0.2s ease !important;
+}
+
+.input-with-icon:focus {
+  outline: none !important;
+  border-color: var(--oro-suave) !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2) !important;
+}
+
+.input-with-icon.ng-invalid.ng-dirty {
+  border-color: var(--error-color) !important;
+}
+
+.input-with-icon::placeholder {
+  color: var(--gris-claro) !important;
+}
+
+
+:host ::ng-deep .password-with-icon {
+  width: 100% !important;
+  display: block !important;
+}
+
+:host ::ng-deep .password-with-icon .p-password-input {
+  width: 100% !important;
+  padding: 0.875rem 2.5rem 0.875rem 2.5rem !important;
+  border: 1.5px solid var(--gris-claro) !important;
+  border-radius: 8px !important;
+  font-size: 0.95rem !important;
+  color: var(--vino-profundo) !important;
+  background: var(--blanco-puro) !important;
+  height: 48px !important; 
+  transition: all 0.2s ease !important;
+}
+
+:host ::ng-deep .password-with-icon .p-password-input:focus {
+  outline: none !important;
+  border-color: var(--oro-suave) !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2) !important;
+}
+
+:host ::ng-deep .password-with-icon.ng-invalid.ng-dirty .p-password-input {
+  border-color: var(--error-color) !important;
+}
+
+:host ::ng-deep .password-with-icon .p-password-toggle {
+  color: var(--gris-claro) !important;
+  right: 12px !important;
+}
+
+:host ::ng-deep .password-with-icon .p-password-toggle:hover {
+  color: var(--oro-suave) !important;
+}
+
+
+.logo-dorado {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 2px;
+}
+
+:host ::ng-deep .biblioteca-button {
+  width: 100%;
+  background: var(--vino-profundo) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.875rem 1rem !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  margin-top: 0.5rem;
+  transition: all 0.2s ease !important;
+  color: var(--blanco-puro) !important;
+}
+
+:host ::ng-deep .biblioteca-button:hover:not(:disabled) {
+  background: var(--vino-degradado) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(92, 43, 46, 0.3) !important;
+}
+
+:host ::ng-deep .biblioteca-button:disabled {
+  background: var(--gris-claro) !important;
+  color: var(--blanco-puro) !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+
+.p-error {
+  color: var(--error-color);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+
+.terms-text {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--gris-claro);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.demo-info {
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid var(--oro-suave);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: var(--cafe-moka);
+  text-align: center;
+}
+
+.demo-info strong {
+  color: var(--vino-profundo);
+}
+
+
+:host ::ng-deep .p-toast {
+  z-index: 9999;
+}
+
+:host ::ng-deep .p-toast .p-toast-message {
+  border-radius: 8px;
+}
+
+
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+  
+  .left-column {
+    min-height: 50vh;
+  }
+  
+  .stained-glass-window {
+    width: 250px;
+    height: 300px;
+  }
+  
+  .welcome-text h1 {
+    font-size: 1.8rem;
+  }
+  
+  .right-column {
+    padding: 1rem;
+  }
+  
+  :host ::ng-deep .biblioteca-card {
+    max-width: 100%;
+  }
+
+  .card-header,
+  :host ::ng-deep .biblioteca-card .p-card-content,
+  :host ::ng-deep .biblioteca-card .p-card-footer {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+}
