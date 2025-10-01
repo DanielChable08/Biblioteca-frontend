@@ -1,0 +1,18 @@
+<p-dialog header="Detalles del Libro" [(visible)]="display" [modal]="true" [style]="{width: '50vw'}" [draggable]="false" [resizable]="false" (onHide)="closeModal()">
+  <div *ngIf="libro">
+    <h2>{{ libro.titulo }}</h2>
+    <p><strong>Autor:</strong> {{ libro.autores && libro.autores.length > 0 ? (libro.autores[0].nombre + ' ' + libro.autores[0].apPaterno) : 'N/A' }}</p>
+    <p><strong>Categoría:</strong> {{ libro.categoria?.nombre }}</p>
+    <p><strong>Editorial:</strong> {{ libro.editorial?.nombre }}</p>
+    <p><strong>Idioma:</strong> {{ libro.idioma?.nombre }}</p>
+    <p><strong>Año de Publicación:</strong> {{ libro.anho }}</p>
+    <p><strong>Páginas:</strong> {{ libro.paginas }}</p>
+    <p><strong>ISBN:</strong> {{ libro.isbn }}</p>
+    <p><strong>Resumen:</strong> {{ libro.resumen }}</p>
+    <p><strong>Ubicación:</strong> {{ libro.ubicacion }}</p>
+    <p><strong>Estado:</strong> {{ libro.estado }}</p>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cerrar" icon="pi pi-times" (click)="closeModal()" styleClass="p-button-text"></p-button>
+  </ng-template>
+</p-dialog>

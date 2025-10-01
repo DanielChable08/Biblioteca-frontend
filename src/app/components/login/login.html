@@ -1,102 +1,17 @@
 <div class="login-container">
-  <div class="left-column">
-    <div class="welcome-content">
-      <div class="stained-glass-window">
-        <p-image 
-          src="assets/biblioteca.jpg" 
-          [preview]="true" 
-          alt="Biblioteca" 
-          width="350">
-          <ng-template #indicator>
-            <i class="pi pi-search"></i>
-          </ng-template>
-          <ng-template #image>
-            <img src="assets/biblioteca.jpg" alt="biblioteca" width="350" />
-          </ng-template>
-          <ng-template #preview let-style="style" let-previewCallback="previewCallback">
-            <img src="assets/biblioteca.jpg" alt="biblioteca" [style]="style" (click)="previewCallback()" />
-          </ng-template>
-        </p-image>
+  <p-card header="Login de Bibliotecario" subheader="Acceso al panel de administración">
+    <div class="p-fluid">
+      <div class="p-field">
+        <label for="email">Email</label>
+        <input id="email" type="email" pInputText [(ngModel)]="email">
       </div>
-      <div class="welcome-text">
-        <h1>Bienvenido a nuestra</h1>
-        <h1>Biblioteca Física</h1>
-        <p>Accede a una vasta colección de recursos espirituales para fortalecer tu fe y conocimiento.</p>
+      <div class="p-field">
+        <label for="password">Contraseña</label>
+        <input id="password" type="password" pInputText [(ngModel)]="password">
       </div>
     </div>
-  </div>
-
-  <div class="right-column">
-    
-    <p-card styleClass="biblioteca-card">
-      <ng-template pTemplate="header">
-        <div class="card-header">
-          <div class="library-icon">
-            <img src="assets/img/Logo-Dorado.png" class="logo-dorado" alt="logo">
-          </div>
-          <h2>Biblioteca Física</h2>
-          <p>Ingresa a tu cuenta para acceder al catálogo</p>
-        </div>
-      </ng-template>
-      
-      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
-        <div class="form-field">
-          <label for="email" class="field-label">Correo electrónico</label>
-          <div class="input-wrapper">
-            <i class="pi pi-envelope input-icon"></i>
-            <input 
-              pInputText 
-              id="email" formControlName="email" placeholder="tu&#64;iglesia.com"
-              type="email" class="input-with-icon" [class.ng-invalid]="isFieldInvalid('email')"
-              [class.ng-dirty]="isFieldInvalid('email')">
-          </div>
-          <small 
-            class="p-error" 
-            *ngIf="isFieldInvalid('email')">
-            Por favor ingresa un email válido
-          </small>
-        </div>
-
-        <div class="form-field">
-          <label for="password" class="field-label">Contraseña</label>
-          <div class="input-wrapper">
-            <i class="pi pi-lock input-icon"></i>
-            <p-password 
-              inputId="password"
-              formControlName="password"
-              placeholder="........"
-              [feedback]="false"
-              [toggleMask]="true"
-              styleClass="password-with-icon"
-              [class.ng-invalid]="isFieldInvalid('password')"
-              [class.ng-dirty]="isFieldInvalid('password')">
-            </p-password>
-          </div>
-          <small 
-            class="p-error" 
-            *ngIf="isFieldInvalid('password')">
-            La contraseña debe tener al menos 6 caracteres
-          </small>
-        </div>
-         
-        <p-button 
-          label="Iniciar sesión"
-          type="submit"
-          styleClass="biblioteca-button"
-          [disabled]="loginForm.invalid"
-          [loading]="false">
-        </p-button>
-        
-        <p class="terms-text">
-          Al iniciar sesión, aceptas nuestros términos y condiciones.
-        </p>
-      </form>
-      
-      <ng-template pTemplate="footer">
-        <div class="demo-info">
-          <strong>Demo:</strong> Usa 'bibliotecario&#64;iglesia.com' para acceso administrativo
-        </div>
-      </ng-template>
-    </p-card>
-  </div>
+    <ng-template pTemplate="footer">
+      <button pButton type="button" label="Login" (click)="login()" class="p-button-raised"></button>
+    </ng-template>
+  </p-card>
 </div>
