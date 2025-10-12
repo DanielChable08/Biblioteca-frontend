@@ -1,167 +1,192 @@
+
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
 <div class="full-container">
   
-<div class="main-header">
-    <div class="header-brand">
-      <i class="pi pi-home brand-logo"></i>
-      <div class="brand-info">
-        <span class="brand-title">Biblioteca Física</span>
-        <span class="admin-badge">Administrador</span>
-        <div class="brand-subtitle">Panel de administración del catálogo físico</div>
+  <div class="main-header">
+      <div class="header-brand">
+        <img src="assets/img/Logo-Dorado.png" class="brand-logo" alt="logo">
+        <div class="brand-info">
+          <span class="brand-title">Biblioteca Física <span class="admin-badge"><i class="pi pi-shield"></i> Administrador</span></span>
+          <div class="brand-subtitle">Panel de administración del catálogo físico</div>
+        </div>
+        
+      </div>
+      <div class="header-user-section">
+        <div class="user-text">
+          <span class="user-role">Bibliotecario(a)</span>
+          <span class="user-name">Bibliotecario</span>
+        </div>
+        <div class="user-avatar">B</div>
+      </div>
+  </div>
+  
+  <div class="search-and-stats-wrapper">
+    <div class="search-section">
+      <div class="search-container">
+        <i class="pi pi-search search-icon"></i>
+        <input type="text" pInputText placeholder="Buscar libros, autores, temas..." class="main-search-input" [(ngModel)]="terminoBusqueda" (keyup.enter)="buscar()">
+      </div>
+      <div class="custom-filter-dropdown-container" (click)="toggleDropdown()">
+        <div class="custom-filter-dropdown-trigger">
+          <i class="pi pi-filter"></i>
+          <span>{{ getDropdownText() }}</span>
+          <i class="pi pi-chevron-down" [class.rotated]="dropdownOpen"></i>
+        </div>
+        <div class="custom-filter-dropdown-panel" *ngIf="dropdownOpen">
+          <div class="filter-dropdown-option" [class.selected]="'Todas' === categoriaSeleccionada" (click)="selectCategoria('Todas'); $event.stopPropagation()">
+              <i class="pi pi-book"></i>
+              <span>Todas las categorías</span>
+          </div>
+          <div *ngFor="let categoria of categorias" 
+            class="filter-dropdown-option"
+            [class.selected]="categoria.nombre === categoriaSeleccionada"
+            (click)="selectCategoria(categoria.nombre); $event.stopPropagation()">
+            <i class="pi pi-tag"></i>
+            <span>{{ categoria.nombre }}</span>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="header-user-section">
-      <div class="user-text">
-        <span class="user-role">Bibliotecario(a)</span>
-        <span class="user-name">Bibliotecario</span>
-      </div>
-      <div class="user-avatar">B</div>
+  
+    <div class="info-stats-row">
+      <span class="main-stat">{{ allLibros.length }} libros en catálogo</span>
+      <span class="secondary-stat">Última actualización: Hoy</span>
+      <span class="secondary-stat">Nuevos ingresos: 3 libros esta semana</span>
     </div>
   </div>
-
   
-  <div class="search-section">
-    <div class="search-container">
-      <i class="pi pi-search search-icon"></i>
-      <input type="text" pInputText placeholder="Buscar libros, autores, temas..." class="main-search-input" [(ngModel)]="terminoBusqueda" />
+
+  <div class="admin-dashboard-panel">
+    <div class="panel-title-section">
+      <div>
+        <h2 class="panel-main-title">Panel de Administración</h2>
+        <p class="panel-description">Gestiona el catálogo de libros físicos de la iglesia</p>
+      </div>
+      <div class="admin-buttons">
+        <button pButton label="Agregar Libro" icon="pi pi-plus" class="admin-btn primary-btn" (click)="agregarLibro()"></button>
+        <button pButton label="Prestamos" icon="pi pi-address-book" class="admin-btn secondary-btn"></button>
+        <button pButton label="Exportar Datos" icon="pi pi-download" class="admin-btn secondary-btn"></button>
+        <button pButton label="Reportes" icon="pi pi-chart-bar" class="admin-btn tertiary-btn"></button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-box-header">
+                <span class="stat-box-title">Total de Libros</span>
+                <i class="pi pi-book gold-icon"></i>
+            </div>
+            <div class="stat-box-number">{{ allLibros.length }}</div>
+            <div class="stat-box-subtitle">En toda la biblioteca</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-header">
+                <span class="stat-box-title">Disponibles</span>
+                <i class="pi pi-check-square orange-icon"></i>
+            </div>
+              <div class="stat-box-number">
+                {{ EjemplaresDisponibles() }}
+              </div>
+            <div class="stat-box-subtitle">Listos para préstamo</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-header">
+                <span class="stat-box-title">Prestados</span>
+                <i class="pi pi-arrow-right-arrow-left gray-icon"></i>
+            </div>
+            <div class="stat-box-number">
+              {{EjemplaresPrestados()}}
+            </div>
+            <div class="stat-box-subtitle">Actualmente en préstamo</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-header">
+                <span class="stat-box-title">En Reparación</span>
+                <i class="pi pi-wrench red-icon"></i>
+            </div>
+            <div class="stat-box-number">
+              {{ EjemplaresReparacion() }}
+            </div>
+            <div class="stat-box-subtitle">Requieren atención</div>
+        </div>
+    </div>
+  </div>
+  
+  
+   <div class="categories-wrapper">
+      <h3 class="categories-title">Categorías</h3>
+      <div class="categories-buttons-row">
+        <button pButton 
+          [class]="'category-button ' + (esCategoriaActiva('Todas') ? 'active-category' : '')"
+          (click)="filtrarCategoria('Todas')">
+          <i class="pi pi-book"></i>
+          <span>Todas</span>
+          <b>{{ allLibros.length }}</b>
+        </button>
+        
+        <button *ngFor="let cat of categorias" pButton 
+          [class]="'category-button ' + (esCategoriaActiva(cat.nombre) ? 'active-category' : '')"
+          (click)="filtrarCategoria(cat.nombre)">
+           <i class="pi pi-tag"></i>
+          <span>{{ cat.nombre }}</span>
+          <b>{{ contadoresCategoria[cat.nombre] || 0 }}</b>
+        </button>
+      </div>
+    </div>
+  
+    <div class="catalog-title">
+      {{ categoriaSeleccionada === 'Todas' ? 'Catálogo Completo' : 'Categoría: ' + categoriaSeleccionada }} 
+      ({{ libros.length }} libro{{ libros.length !== 1 ? 's' : '' }})
     </div>
     
-    <div class="custom-filter-dropdown-container" (click)="toggleDropdown()">
-      <div class="custom-filter-dropdown-trigger">
-        <i class="pi pi-filter"></i>
-        <span>{{ getDropdownText() }}</span>
-        <i class="pi pi-chevron-down" [class.rotated]="dropdownOpen"></i>
-      </div>
-      <div class="custom-filter-dropdown-panel" *ngIf="dropdownOpen">
-        <div *ngFor="let categoria of categoriasLista" 
-          class="filter-dropdown-option"
-          [class.selected]="categoria.value === categoriaSeleccionada"
-          (click)="selectCategoria(categoria.value); $event.stopPropagation()">
-          <i [class]="categoria.icon"></i>
-          <span>{{ categoria.label === 'Todas' ? 'Todas las categorías' : categoria.label }}</span>
-          <b>({{ contadorCategorias[categoria.value] }})</b>
-        </div>
-      </div>
+    <div *ngIf="loading" style="text-align: center; padding: 2rem;">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2.5rem; color: var(--wine);"></i>
     </div>
-  </div>
-
-
-  <div class="info-stats-row">
-    <span class="main-stat">{{ libros.length }} libros en catálogo</span>
-    <span class="secondary-stat">Última actualización: Hoy</span>
-    <span class="secondary-stat">Nuevos ingresos: 3 libros esta semana</span>
-  </div>
-
-
- <div class="categories-wrapper">
-    <h3 class="categories-title">Categorías</h3>
-    <div class="categories-buttons-row">
-      <button pButton 
-        [class]="'category-button ' + (esCategoriaActiva('Todas') ? 'active-category' : '')"
-        (click)="filtrarCategoria('Todas')">
-        <i class="pi pi-book"></i>
-        <span>Todas</span>
-        <b>{{ contadorCategorias['Todas'] }}</b>
-      </button>
-      
-      <button pButton 
-        [class]="'category-button ' + (esCategoriaActiva('Sagradas Escrituras') ? 'active-category' : '')"
-        (click)="filtrarCategoria('Sagradas Escrituras')">
-        <i class="pi pi-plus"></i>
-        <span>Sagradas Escrituras</span>
-        <b>{{ contadorCategorias['Sagradas Escrituras'] }}</b>
-      </button>
-      
-      <button pButton 
-        [class]="'category-button ' + (esCategoriaActiva('Teología') ? 'active-category' : '')"
-        (click)="filtrarCategoria('Teología')">
-        <i class="pi pi-graduation-cap"></i>
-        <span>Teología</span>
-        <b>{{ contadorCategorias['Teología'] }}</b>
-      </button>
-      
-      <button pButton 
-        [class]="'category-button ' + (esCategoriaActiva('Devocionales') ? 'active-category' : '')"
-        (click)="filtrarCategoria('Devocionales')">
-        <i class="pi pi-heart"></i>
-        <span>Devocionales</span>
-        <b>{{ contadorCategorias['Devocionales'] }}</b>
-      </button>
-      
-      <button pButton 
-        [class]="'category-button ' + (esCategoriaActiva('Historia') ? 'active-category' : '')"
-        (click)="filtrarCategoria('Historia')">
-        <i class="pi pi-clock"></i>
-        <span>Historia</span>
-        <b>{{ contadorCategorias['Historia'] }}</b>
-      </button>
-      
-      <button pButton 
-        [class]="'category-button ' + (esCategoriaActiva('Himnarios') ? 'active-category' : '')"
-        (click)="filtrarCategoria('Himnarios')">
-        <i class="pi pi-music"></i>
-        <span>Himnarios</span>
-        <b>{{ contadorCategorias['Himnarios'] }}</b>
-      </button>
-      
-      <button pButton 
-        [class]="'category-button ' + (esCategoriaActiva('Oración') ? 'active-category' : '')"
-        (click)="filtrarCategoria('Oración')">
-        <i class="pi pi-star"></i>
-        <span>Oración</span>
-        <b>{{ contadorCategorias['Oración'] }}</b>
-      </button>
-      
-      <button pButton 
-        [class]="'category-button ' + (esCategoriaActiva('Biografías') ? 'active-category' : '')"
-        (click)="filtrarCategoria('Biografías')">
-        <i class="pi pi-user"></i>
-        <span>Biografías</span>
-        <b>{{ contadorCategorias['Biografías'] }}</b>
-      </button>
-    </div>
-  </div>
-
-  <div class="catalog-title">
-    {{ categoriaSeleccionada === 'Todas' ? 'Catálogo Completo' : 'Categoría: ' + categoriaSeleccionada }} 
-    ({{ librosFiltrados.length }} libro{{ librosFiltrados.length !== 1 ? 's' : '' }})
-  </div>
-  
-  <div class="catalog-grid">
-    <p-card *ngFor="let libro of librosFiltrados" class="book-card-compact">
-      <ng-template pTemplate="header">
-        <div class="book-image-container">
-          <img [src]="libro.img" alt="portada" class="book-img-compact" />
-          <span class="status-badge"
-            [ngClass]="libro.estado === 'Disponible' ? 'available' : libro.estado === 'Prestado' ? 'borrowed' : 'repair'">
-            {{ libro.estado }}
-          </span>
-        </div>
-      </ng-template>
-      
-      <div class="book-info-compact">
-        <h4 class="book-title-compact">{{ libro.titulo }}</h4>
-        <p class="book-author-compact">{{ libro.autor }}</p>
-        <span class="book-category-compact">{{ libro.categoria }}</span>
+    
+    <div *ngIf="!loading && libros.length > 0" class="catalog-grid">
+      <p-card *ngFor="let libro of libros" class="book-card-compact">
+        <ng-template pTemplate="header">
+          <div class="book-image-container">
+            <img [src]="libro.imagen || 'assets/img/placeholder.png'" alt="portada" class="book-img-compact" />
+             <span *ngIf="libro.ejemplares && libro.ejemplares.length > 0"
+                  class="status-badge"
+                  [ngClass]="getStatusClass(libro.ejemplares[0].estado?.nombre)">
+              {{ libro.ejemplares[0].estado?.nombre || 'Desconocido' }}
+            </span>
+          </div>
+        </ng-template>
         
-        <div class="book-details-compact">
-          <span class="detail-item-compact"><i class="pi pi-tag"></i> {{ libro.catalogCode }}</span>
-          <span class="detail-item-compact"><i class="pi pi-map-marker"></i> {{ libro.location }} - {{ libro.shelf }}</span>
-          <span class="detail-item-compact"><i class="pi pi-calendar"></i> {{ libro.publishYear }}</span>
-          <span class="detail-item-compact"><i class="pi pi-file"></i> {{ libro.pages }} páginas • {{ libro.format }}</span>
+        <div class="book-info-compact">
+          <h4 class="book-title-compact">{{ libro.titulo }}</h4>
+          <p class="book-author-compact">
+            {{ getAutoresAsString(libro.autores) }}
+          </p>
+          <span class="book-category-compact">{{ libro.categoria?.nombre || 'Sin categoría' }}</span>
+          
+          <div class="book-details-compact">
+            <span class="detail-item-compact">
+              <i class="pi pi-barcode"></i> {{ libro.ejemplares?.[0]?.codigo || 'Sin código' }}
+            </span>
+            <span class="detail-item-compact"><i class="pi pi-tag"></i> {{ libro.isbn }}</span>
+            <span class="detail-item-compact"><i class="pi pi-calendar"></i> {{ libro.anho }}</span>
+            <span class="detail-item-compact"><i class="pi pi-file"></i> {{ libro.paginas }} páginas</span>
+          </div>
         </div>
-      </div>
-
-      <div class="book-actions-compact">
-        <button pButton icon="pi pi-eye" class="action-btn-compact view-btn" pTooltip="Ver" (click)="verLibro(libro.id)"></button>
-        <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" pTooltip="Editar" (click)="editarLibro(libro.id)"></button>
-        <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" pTooltip="Eliminar" (click)="eliminarLibro(libro.id)"></button>
-      </div>
-    </p-card>
-  </div>
   
-  <div *ngIf="librosFiltrados.length === 0" class="no-books-message">
-    <i class="pi pi-info-circle"></i>
-    <h3>No hay libros en esta categoría</h3>
-    <p>La categoría "{{ categoriaSeleccionada }}" no contiene libros actualmente.</p>
-  </div>
+        <div class="book-actions-compact">
+          <button pButton icon="pi pi-align-left" class="action-btn-compact view-btn" pTooltip="Ver Detalles" (click)="verLibro(libro)"></button>
+          <button pButton icon="pi pi-pen-to-square" class="action-btn-compact edit-btn" pTooltip="Editar" (click)="editarLibro(libro)"></button>
+          <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" pTooltip="Eliminar" (click)="eliminarLibro(libro)"></button>
+          <button pButton icon="pi pi-file-plus" class="action-btn-compact edit-btn" pTooltip="Agregar Ejemplar" (click)="abrirModalAgregarEjemplar(libro)"></button>
+        </div>
+      </p-card>
+    </div>
+    
+    <div *ngIf="!loading && libros.length === 0" class="no-books-message">
+      <i class="pi pi-info-circle"></i>
+      <h3>No se encontraron libros</h3>
+      <p>No hay libros que coincidan con la búsqueda o el filtro aplicado.</p>
+    </div>
 </div>

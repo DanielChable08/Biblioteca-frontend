@@ -1,263 +1,262 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
-import { FormsModule } from '@angular/forms';
+import { DialogService, DynamicDialogModule } from 'primeng/dynamicdialog';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
-type CategoriaKey = 'Todas' | 'Sagradas Escrituras' | 'Teología' | 'Devocionales' | 'Historia' | 'Himnarios' | 'Oración' | 'Biografías';
+import { BookService } from '../../services/book.service';
+import { CatalogService } from '../../services/catalog.service';
+import { EjemplarService } from '../../services/ejemplar.service';
+import { Libro, Catalogo, Autor, Ejemplar } from '../../models/biblioteca';
+import { finalize, forkJoin, map, switchMap, of } from 'rxjs';
+import LibroFormularioComponent from '../libro-formulario/libro-formulario';
+import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
+import { Router } from '@angular/router';  
+
+import LibroDetalleComponent from '../libro-detalle/libro-detalle'; 
+type CategoriaKey = 'Todas' | string;
 
 @Component({
   selector: 'app-librarian-dashboard',
   standalone: true,
-  imports: [CommonModule, CardModule, ButtonModule, InputTextModule, TooltipModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardModule,
+    ButtonModule,
+    InputTextModule,
+    TooltipModule,
+    ToastModule,
+    ConfirmDialogModule,
+    DynamicDialogModule
+  ],
   templateUrl: './bibliotecario.html',
   styleUrls: ['./bibliotecario.css']
 })
-export class BibliotecarioComponent {
+export default class BibliotecarioComponent implements OnInit {
+  private bookService = inject(BookService);
+  private catalogService = inject(CatalogService);
+  private ejemplarService = inject(EjemplarService);
+  private dialogService = inject(DialogService);
+  private confirmationService = inject(ConfirmationService);
+  private messageService = inject(MessageService);
+  private router = inject(Router); 
+
+  libros: Libro[] = [];
+  allLibros: Libro[] = []; 
+  categorias: Catalogo[] = [];
+  
   categoriaSeleccionada: CategoriaKey = 'Todas';
   terminoBusqueda = '';
+  loading = true;
   dropdownOpen = false;
 
-  opcionesFiltro = [
-    { label: 'Todas las categorías', value: 'Todas', icon: 'pi pi-book' },
-    { label: 'Sagradas Escrituras', value: 'Sagradas Escrituras', icon: 'pi pi-plus' },
-    { label: 'Teología', value: 'Teología', icon: 'pi pi-graduation-cap' },
-    { label: 'Devocionales', value: 'Devocionales', icon: 'pi pi-heart' },
-    { label: 'Historia', value: 'Historia', icon: 'pi pi-clock' },
-    { label: 'Himnarios', value: 'Himnarios', icon: 'pi pi-music' },
-    { label: 'Oración', value: 'Oración', icon: 'pi pi-star' },
-    { label: 'Biografías', value: 'Biografías', icon: 'pi pi-user' }
-  ];
+  contadoresCategoria: { [key: string]: number } = {};
 
-  categoriasLista = [
-    { label: 'Todas', value: 'Todas' as CategoriaKey, icon: 'pi pi-book' },
-    { label: 'Sagradas Escrituras', value: 'Sagradas Escrituras' as CategoriaKey, icon: 'pi pi-plus' },
-    { label: 'Teología', value: 'Teología' as CategoriaKey, icon: 'pi pi-graduation-cap' },
-    { label: 'Devocionales', value: 'Devocionales' as CategoriaKey, icon: 'pi pi-heart' },
-    { label: 'Historia', value: 'Historia' as CategoriaKey, icon: 'pi pi-clock' },
-    { label: 'Himnarios', value: 'Himnarios' as CategoriaKey, icon: 'pi pi-music' },
-    { label: 'Oración', value: 'Oración' as CategoriaKey, icon: 'pi pi-star' },
-    { label: 'Biografías', value: 'Biografías' as CategoriaKey, icon: 'pi pi-user' }
-  ];
-
-  libros = [
-    {
-      id: '1',
-      img: 'https://images.unsplash.com/photo-1638276630550-36cccfdff836?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Biblia Reina Valera 1960',
-      autor: 'Sociedades Bíblicas Unidas',
-      categoria: 'Sagradas Escrituras' as CategoriaKey,
-      catalogCode: 'BIB001RVR',
-      location: 'Estantería Principal',
-      shelf: 'A-1',
-      publishYear: 1960,
-      pages: 1200,
-      format: 'Tapa Dura',
-      estado: 'Disponible'
-    },
-    {
-      id: '2',
-      img: 'https://images.unsplash.com/photo-1654193404293-886297721ca7?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Teología Sistemática',
-      autor: 'Wayne Grudem',
-      categoria: 'Teología' as CategoriaKey,
-      catalogCode: 'TEO001WGR',
-      location: 'Sección Teología',
-      shelf: 'B-3',
-      publishYear: 1994,
-      pages: 1290,
-      format: 'Tapa Blanda',
-      estado: 'Prestado'
-    },
-    {
-      id: '3',
-      img: 'https://images.unsplash.com/photo-1659570456681-c2745e7003aa?auto=format&fit=crop&w=400&q=80',
-      titulo: 'En Pos de lo Supremo',
-      autor: 'Oswald Chambers',
-      categoria: 'Devocionales' as CategoriaKey,
-      catalogCode: 'DEV001OCH',
-      location: 'Sección Devocionales',
-      shelf: 'C-2',
-      publishYear: 1935,
-      pages: 384,
-      format: 'Tapa Blanda',
-      estado: 'Disponible'
-    },
-    {
-      id: '4',
-      img: 'https://images.unsplash.com/photo-1595733533725-1a6bce052b84?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Historia de la Iglesia Cristiana',
-      autor: 'Justo L. González',
-      categoria: 'Historia' as CategoriaKey,
-      catalogCode: 'HIS001JGZ',
-      location: 'Sección Historia',
-      shelf: 'D-1',
-      publishYear: 1994,
-      pages: 658,
-      format: 'Tapa Dura',
-      estado: 'Disponible'
-    },
-    {
-      id: '5',
-      img: 'https://images.unsplash.com/photo-1622724316148-1e179e5589f2?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Himnario Bautista',
-      autor: 'Convención Bautista',
-      categoria: 'Himnarios' as CategoriaKey,
-      catalogCode: 'HIM001CBT',
-      location: 'Sección Música',
-      shelf: 'E-1',
-      publishYear: 2010,
-      pages: 560,
-      format: 'Espiral',
-      estado: 'Disponible'
-    },
-    {
-      id: '6',
-      img: 'https://images.unsplash.com/photo-1624935048859-9b3c9cc5ddf8?auto=format&fit=crop&w=400&q=80',
-      titulo: 'El Libro de Oración Común',
-      autor: 'Iglesia Episcopal',
-      categoria: 'Oración' as CategoriaKey,
-      catalogCode: 'ORA001IEP',
-      location: 'Sección Liturgia',
-      shelf: 'F-2',
-      publishYear: 1979,
-      pages: 1001,
-      format: 'Tapa Dura',
-      estado: 'En Reparación'
-    },
-    {
-      id: '7',
-      img: 'https://images.unsplash.com/photo-1638276630550-36cccfdff836?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Nuevo Testamento Interlineal',
-      autor: 'Francisco Lacueva',
-      categoria: 'Sagradas Escrituras' as CategoriaKey,
-      catalogCode: 'BIB002FLC',
-      location: 'Estantería Principal',
-      shelf: 'A-2',
-      publishYear: 1984,
-      pages: 896,
-      format: 'Tapa Blanda',
-      estado: 'Disponible'
-    },
-    {
-      id: '8',
-      img: 'https://images.unsplash.com/photo-1654193404293-886297721ca7?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Teología del Pacto',
-      autor: 'Michael Horton',
-      categoria: 'Teología' as CategoriaKey,
-      catalogCode: 'TEO002MHR',
-      location: 'Sección Teología',
-      shelf: 'B-4',
-      publishYear: 2006,
-      pages: 432,
-      format: 'Tapa Blanda',
-      estado: 'Disponible'
-    }
-  ];
-
- 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event) {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.custom-filter-dropdown-container')) {
-      this.dropdownOpen = false;
-    }
+  ngOnInit(): void {
+    this.loadInitialData();
   }
 
-  get librosFiltrados() {
-    let resultado = this.libros;
+  loadInitialData(): void {
+    this.loading = true;
     
+    forkJoin({
+      libros: this.bookService.getLibros(),
+      categorias: this.catalogService.getCategorias(),
+      ejemplares: this.ejemplarService.getEjemplares(),
+      estados: this.catalogService.getEstadosEjemplares()
+    }).pipe(
+      switchMap(({ libros, categorias, ejemplares, estados }) => {
+        if (libros.length === 0) {
+          return of({ libros: [], categorias });
+        }
+        
+        const autorRequests = libros.map(libro => 
+          this.bookService.getAutoresForLibro(libro.uuid)
+        );
+
+        return forkJoin(autorRequests).pipe(
+          map(autoresArray => {
+            const librosCompletos = libros.map((libro, index) => {
+              const categoriaDelLibro = categorias.find(cat => cat.id === libro.idCategoria);
+              const ejemplaresDelLibro = ejemplares
+                .filter(e => e.idLibro === libro.id)
+                .map(ejemplar => {
+                  const estadoDelEjemplar = estados.find(est => est.id === ejemplar.idEstadoEjemplar);
+                  return { ...ejemplar, estado: estadoDelEjemplar };
+                });
+              
+              return {
+                ...libro,
+                categoria: categoriaDelLibro,
+                autores: autoresArray[index],
+                ejemplares: ejemplaresDelLibro
+              };
+            });
+            return { libros: librosCompletos, categorias };
+          })
+        );
+      }),
+      finalize(() => this.loading = false)
+    ).subscribe({
+      next: ({ libros, categorias }) => {
+        this.allLibros = libros;
+        this.categorias = categorias;
+        this.actualizarContadores();
+        this.filtrarLibros();
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos.' });
+      }
+    });
+  }
+
+
+  
+
+  agregarLibro(): void {
+
+    this.router.navigate(['/admin/libros/nuevo']);
+  }
+  
+  filtrarLibros(): void {
+    let resultado = this.allLibros;
+
     if (this.categoriaSeleccionada !== 'Todas') {
-      resultado = resultado.filter(libro => libro.categoria === this.categoriaSeleccionada);
+      resultado = resultado.filter(libro => libro.categoria?.nombre === this.categoriaSeleccionada);
     }
     
     if (this.terminoBusqueda) {
       const termino = this.terminoBusqueda.toLowerCase();
       resultado = resultado.filter(libro => 
         libro.titulo.toLowerCase().includes(termino) ||
-        libro.autor.toLowerCase().includes(termino) ||
-        libro.categoria.toLowerCase().includes(termino) ||
-        libro.catalogCode.toLowerCase().includes(termino)
+        this.getAutoresAsString(libro.autores).toLowerCase().includes(termino) ||
+        libro.isbn.toLowerCase().includes(termino)
       );
     }
-    
-    return resultado;
+    this.libros = resultado;
   }
-
-  get contadorCategorias(): Record<CategoriaKey, number> {
-    const contador: Partial<Record<CategoriaKey, number>> = {};
-    
-    this.libros.forEach(libro => {
-      contador[libro.categoria] = (contador[libro.categoria] || 0) + 1;
-    });
-    
-    return {
-      'Todas': this.libros.length,
-      'Sagradas Escrituras': contador['Sagradas Escrituras'] || 0,
-      'Teología': contador['Teología'] || 0,
-      'Devocionales': contador['Devocionales'] || 0,
-      'Historia': contador['Historia'] || 0,
-      'Himnarios': contador['Himnarios'] || 0,
-      'Oración': contador['Oración'] || 0,
-      'Biografías': contador['Biografías'] || 0
-    };
-  }
-
-
-  toggleDropdown(): void {
-    this.dropdownOpen = !this.dropdownOpen;
-  }
-
-  selectCategoria(categoria: CategoriaKey): void {
-    this.categoriaSeleccionada = categoria;
-    this.dropdownOpen = false;
-  }
-
-  getDropdownText(): string {
-    if (this.categoriaSeleccionada === 'Todas') {
-      return 'Todas las categorías';
+  
+  getAutoresAsString(autores?: Autor[]): string {
+    if (!autores || autores.length === 0) {
+      return 'Autor no asignado';
     }
-    return this.categoriaSeleccionada;
+    return autores.map(a => `${a.nombre} ${a.apPaterno}`).join(', ');
   }
 
-  filtrarCategoria(categoria: CategoriaKey) {
-    this.categoriaSeleccionada = categoria;
-    console.log('Filtrado por:', categoria);
-    console.log('Libros encontrados:', this.librosFiltrados.length);
+  getStatusClass(estadoNombre?: string): string {
+    if (!estadoNombre) return 'unknown';
+    switch (estadoNombre.toLowerCase()) {
+      case 'disponible': return 'available';
+      case 'prestado': return 'borrowed';
+      case 'en reparación': return 'repair';
+      default: return 'unknown';
+    }
   }
 
+EjemplaresPrestados(): number {
+  if (!this.libros) return 0;
+  return this.libros.reduce((total, libro) => {
+    const prestados = libro.ejemplares?.filter(
+      (e: any) => e.estado?.nombre?.toLowerCase() === 'prestado'
+    ).length || 0;
+    return total + prestados;
+  }, 0);
+}
 
-  esCategoriaActiva(categoria: CategoriaKey): boolean {
-    return this.categoriaSeleccionada === categoria;
+EjemplaresDisponibles(): number {
+  if (!this.libros) return 0;
+  return this.libros.reduce((total, libro) => {
+    const disponibles = libro.ejemplares?.filter(
+      (e: any) => e.estado?.nombre?.toLowerCase() === 'disponible'
+    ).length || 0;
+    return total + disponibles;
+  }, 0);
+}
+
+EjemplaresReparacion(): number {
+  if (!this.libros) return 0;
+  return this.libros.reduce((total, libro) => {
+    const reparacion = libro.ejemplares?.filter(
+      (e: any) => e.estado?.nombre?.toLowerCase() === 'en reparación'
+    ).length || 0;
+    return total + reparacion;
+  }, 0);
+}
+
+
+  private actualizarContadores(): void {
+    const contadores: { [key: string]: number } = {};
+    this.categorias.forEach(cat => {
+      contadores[cat.nombre] = this.allLibros.filter(libro => libro.categoria?.id === cat.id).length;
+    });
+    this.contadoresCategoria = contadores;
   }
 
-  agregarLibro() {
-    console.log('Agregar nuevo libro');
+  buscar(): void { this.filtrarLibros(); }
+  filtrarCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.filtrarLibros(); }
+  toggleDropdown(): void { this.dropdownOpen = !this.dropdownOpen; }
+  selectCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.dropdownOpen = false; this.filtrarLibros(); }
+  getDropdownText(): string { return this.categoriaSeleccionada === 'Todas' ? 'Todas las categorías' : this.categoriaSeleccionada; }
+  esCategoriaActiva(categoria: CategoriaKey): boolean { return this.categoriaSeleccionada === categoria; }
+  
+  editarLibro(libro: Libro): void { this.messageService.add({ severity: 'info', summary: 'Próximamente', detail: 'La edición de libros se implementará a continuación.' }); }
+  
+
+  verLibro(libro: Libro): void {
+    this.dialogService.open(LibroDetalleComponent, {
+      header: 'Detalles del Libro',
+      width: '65%',
+      contentStyle: { "max-height": "90vh", "overflow": "auto" },
+      baseZIndex: 10000,
+      data: {
+        uuid: libro.uuid,
+        imagenUrl: libro.imagen
+      }
+    });
   }
 
-  importarCatalogo() {
-    console.log('Importar catálogo');
+  abrirModalAgregarEjemplar(libro : Libro): void {
+      const ref = this.dialogService.open(EjemplarFormularioComponent, {
+        header: `Agregar Ejemplar para: ${libro.titulo}`,
+        width: '600px',
+        data: {
+          idLibro: libro.id
+        }
+      });
+
+      ref.onClose.subscribe((ejemplarAgregado) => {
+        if (ejemplarAgregado) {
+          this.loadInitialData();
+        }
+      });
   }
 
-  exportarDatos() {
-    console.log('Exportar datos');
-  }
-
-  generarReportes() {
-    console.log('Generar reportes');
-  }
-
-  verLibro(id: string) {
-    console.log('Ver libro:', id);
-  }
-
-  editarLibro(id: string) {
-    console.log('Editar libro:', id);
-  }
-
-  eliminarLibro(id: string) {
-    console.log('Eliminar libro:', id);
+  eliminarLibro(libro: Libro): void {
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de eliminar el libro "${libro.titulo}"?`,
+      header: 'Confirmar eliminación',
+      icon: 'pi pi-exclamation-triangle' ,
+      accept: () => {
+        this.loading = true;
+        this.bookService.deleteLibro(libro.uuid).pipe(
+          finalize(() => this.loading = false)
+        ).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Libro eliminado.' });
+            this.allLibros = this.allLibros.filter(l => l.id !== libro.id);
+            this.filtrarLibros();
+            this.actualizarContadores();
+          },
+          error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el libro.' })
+        });
+      }
+    });
   }
 }

@@ -1,0 +1,222 @@
+:host {
+  --beige: #ede6d7;
+  --wine: #5c2b2e;
+  --gold: #d4af37;
+  --brown: #8b4513;
+  --gray: #c4c4c4;
+  --white: #ffffff;
+  display: block;
+  background-color: var(--beige);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.form-page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.form-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 2px solid var(--gold);
+}
+
+.form-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--wine);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.form-header h2 i {
+  color: var(--gold);
+  font-size: 1.5rem;
+}
+
+.form-header p {
+  color: var(--gray);
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  padding-left: 2.5rem;
+}
+
+.form-container {
+  background-color: var(--white);
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(92, 43, 46, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  transition: all 0.3s ease;
+}
+
+.form-container:hover {
+  box-shadow: 0 8px 25px rgba(92, 43, 46, 0.18);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 3rem;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.form-full-width {
+  grid-column: 1 / -1;
+  margin-top: 1.5rem;
+}
+
+label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--wine);
+}
+
+/* === Select con botón "Agregar" === */
+.input-with-button .select-with-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+:host ::ng-deep .input-with-button .p-treeselect {
+  flex: 1;
+}
+
+:host ::ng-deep .add-btn.p-button {
+  background: linear-gradient(135deg, #d4af37, #b9932a);
+  border: none;
+  color: #fff;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+:host ::ng-deep .add-btn.p-button:hover {
+  background: linear-gradient(135deg, #b9932a, #8a6d1d);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
+}
+
+
+:host ::ng-deep input.p-inputtext,
+:host ::ng-deep textarea.p-inputtextarea,
+:host ::ng-deep .p-treeselect,
+:host ::ng-deep .p-multiselect {
+  border: 1px solid var(--gray);
+  border-radius: 8px;
+  color: var(--wine);
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  padding: 0.6rem;
+}
+
+:host ::ng-deep input.p-inputtext:focus,
+:host ::ng-deep textarea.p-inputtextarea:focus,
+:host ::ng-deep .p-inputtext:focus-visible,
+:host ::ng-deep .p-inputnumber-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+  outline: none;
+}
+
+.ejemplar-section {
+  background-color: #fdfcf9;
+  border: 1px solid #f0e9dc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.ejemplar-section:hover {
+  box-shadow: 0 4px 15px rgba(92, 43, 46, 0.08);
+}
+
+.ejemplar-title {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--wine);
+  border-bottom: 1px solid #e0d9ca;
+  padding-bottom: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+/* === Footer Botones === */
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--beige);
+}
+
+:host ::ng-deep .p-button-wine {
+  background: var(--wine) !important;
+  border-color: var(--wine) !important;
+  color: var(--white) !important;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(92, 43, 46, 0.15);
+}
+
+:host ::ng-deep .p-button-wine:hover {
+  background: #4a2224 !important;
+  border-color: #4a2224 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(92, 43, 46, 0.25);
+}
+
+/* Botón cancelar con dorado */
+:host ::ng-deep .p-button-cancel {
+  background: linear-gradient(135deg, #d4af37, #b9932a) !important;
+  border: none !important;
+  color: var(--white) !important;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+
+:host ::ng-deep .p-button-cancel:hover {
+  background: linear-gradient(135deg, #b9932a, #8a6d1d) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.35);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

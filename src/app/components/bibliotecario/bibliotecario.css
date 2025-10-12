@@ -19,7 +19,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 2rem 2rem 0 2rem;
-  background: var(--beige);
+  background: var(--white);
 }
 
 .header-brand {
@@ -29,8 +29,16 @@
 }
 
 .brand-logo {
-  font-size: 2.2rem;
-  color: var(--gold);
+  width: 60px;
+  height: 80px;
+  margin-left:10px;
+  margin-right:10px;
+}
+.logo-capilla {
+  width: 100px;
+  height: 57px;
+  margin-left:100px;
+  margin-right:10px;
 }
 
 .brand-title {
@@ -98,6 +106,8 @@
   align-items: center;
   gap: 1rem;
   padding: 1.5rem 2rem 0 2rem;
+  background: var(--white);
+  
 }
 
 .search-container {
@@ -124,7 +134,17 @@
   background: var(--white);
   font-size: 1rem;
   color: var(--wine);
+    
 }
+
+input[type="text"]:focus,
+input[type="search"]:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+  transition: all 0.3s ease;
+}
+
 
 .main-search-input::placeholder {
   color: var(--gray);
@@ -228,8 +248,10 @@
 .info-stats-row {
   display: flex;
   gap: 2rem;
-  padding: 1rem 2rem 0 2rem;
+  padding: 1rem 2rem 1rem 2rem;
   align-items: center;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray);
 }
 
 .main-stat {
@@ -244,11 +266,10 @@
 
 
 .admin-dashboard-panel {
-  background: var(--white);
-  margin: 2rem;
+  background: var(--beige);
+  margin: 1rem;
   border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
 }
 
 .panel-title-section {
@@ -266,7 +287,7 @@
 }
 
 .panel-description {
-  color: var(--gray);
+  color: var(--wine);
   margin: 0;
   font-size: 0.95rem;
 }
@@ -319,7 +340,7 @@
 
 .stat-box {
   background: var(--white);
-  border: 1px solid #E5E7EB;
+  border: 1px solid #c5c5c7;
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -361,17 +382,18 @@
 
 .categories-wrapper {
   background: var(--white);
-  margin: 2rem 2rem 2rem 2rem;
+  margin: 1rem 2rem 1rem 2rem;
   border-radius: 12px;
-  padding: 2rem;
+  padding: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border:1px solid var(--gray);
 }
 
 .categories-title {
   color: var(--wine);
   font-size: 1.3rem;
   font-weight: 600;
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.8rem 0;
 }
 
 .categories-buttons-row {
@@ -383,7 +405,7 @@
 .category-button {
   background: #F4ECD7 !important;
   color: var(--wine) !important;
-  border: 1px solid var(--wine) !important;
+  border: 1px solid var(--gray) !important;
   padding: 0.6rem 1rem !important;
   border-radius: 12px !important;
   font-weight: 600 !important;
@@ -426,7 +448,7 @@
 
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 1.2rem;
   padding: 0 2rem;
 }
@@ -448,7 +470,7 @@
 
 .book-image-container {
   position: relative;
-  height: 140px;
+  height: 180px;
   overflow: hidden;
 }
 
@@ -486,7 +508,7 @@
 
 
 .book-info-compact {
-  padding: 1rem;
+  padding: 10px;
 }
 
 .book-title-compact {
@@ -535,12 +557,12 @@
 
 .book-actions-compact {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0 1rem 1rem 1rem;
+  padding: 0 0.5rem 0.1rem 0.2rem;
   border-top: 1px solid #f0f0f0;
-  margin-top: 0.8rem;
-  padding-top: 0.8rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
 }
 
 .action-btn-compact {
@@ -557,15 +579,15 @@
 }
 
 .view-btn {
-  color: var(--gold) !important;
+  color: var(--wine) !important;
 }
 
 .edit-btn {
-  color: var(--brown) !important;
+  color: var(--wine) !important;
 }
 
 .delete-btn {
-  color: #dc3545 !important;
+  color: var(--wine) !important;
 }
 
 .action-btn-compact:hover {
@@ -618,6 +640,7 @@
 .active-category {
   box-shadow: 0 4px 12px rgba(92, 43, 46, 0.2) !important;
 }
+
 
 
 @media (max-width: 768px) {

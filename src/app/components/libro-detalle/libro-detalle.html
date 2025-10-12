@@ -1,0 +1,64 @@
+<div class="book-detail-container">
+
+  <div *ngIf="loading" class="spinner-container">
+    <p-progressSpinner strokeWidth="4"></p-progressSpinner>
+  </div>
+
+
+  <div *ngIf="error" class="error-container">
+    <i class="pi pi-times-circle"></i>
+    <h3>Error al cargar el libro</h3>
+    <p>No se pudieron obtener los detalles del libro. Inténtalo de nuevo más tarde.</p>
+  </div>
+
+  <div *ngIf="!loading && libro">
+    <div class="detail-grid">
+      <div class="book-cover-container">
+         <img [src]="libro.imagen || 'assets/img/placeholder.png'" alt="portada" class="book-img-compact" />
+      </div>
+
+      <div class="book-info-container">
+        <p-tag [value]="libro.categoria?.nombre || 'Sin Categoría'" severity="warning" styleClass="category-tag"></p-tag>
+        <h2 class="book-title">{{ libro.titulo }}</h2>
+        <p class="book-authors">{{ getAutoresAsString(libro.autores) }}</p>
+        
+        <p-divider></p-divider>
+
+        <div class="details-section">
+          <div class="detail-item"><span class="detail-label"><i class="pi pi-tag"></i> ISBN</span><span class="detail-value">{{formatIsbn(libro.isbn) }}</span></div>
+          <div class="detail-item"><span class="detail-label"><i class="pi pi-building"></i> Editorial</span><span class="detail-value">{{ libro.editorial?.nombre || 'N/A' }}</span></div>
+          <div class="detail-item"><span class="detail-label"><i class="pi pi-calendar"></i> Año</span><span class="detail-value">{{ libro.anho }}</span></div>
+          <div class="detail-item"><span class="detail-label"><i class="pi pi-globe"></i> Idioma</span><span class="detail-value">{{ libro.idioma?.nombre || 'N/A' }}</span></div>
+          <div class="detail-item"><span class="detail-label"><i class="pi pi-file"></i> Páginas</span><span class="detail-value">{{ libro.paginas }}</span></div>
+          <div class="detail-item"><span class="detail-label"><i class="pi pi-book"></i> Tipo de pasta</span><span class="detail-value">{{ libro.pasta || 'N/A' }}</span></div>
+        </div>
+
+        <p-divider></p-divider>
+        
+        <div class="summary-section">
+          <h3>Resumen</h3>
+          <p>{{ libro.resumen }}</p>
+        </div>
+
+        <div class="ejemplares-section">
+          <h3>Ejemplares</h3>
+          <ul *ngIf="libro.ejemplares && libro.ejemplares.length > 0; else noEjemplares">
+            <li *ngFor="let ejemplar of libro.ejemplares">
+              <span class="ejemplar-code"><i class="pi pi-barcode"></i> {{ ejemplar.codigo }}</span>
+              <span class="ejemplar-location"><i class="pi pi-map-marker"></i> {{ ejemplar.ubicacion || 'Sin ubicación' }}</span>
+              <p-tag [value]="ejemplar.estado?.nombre || 'Desconocido'" [ngClass]="getStatusClass(ejemplar.estado?.nombre)"></p-tag>
+            </li>
+          </ul>
+          <ng-template #noEjemplares>
+            <p>No hay ejemplares registrados para este libro.</p>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="!loading" class="dialog-footer">
+    <p-button label="Cerrar" icon="pi pi-times-circle" styleClass="p-button-wine" (click)="cerrarModal()"></p-button>
+    </div>
+
+  </div>
+</div>

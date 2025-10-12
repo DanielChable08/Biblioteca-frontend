@@ -1,0 +1,126 @@
+:host {
+  --wine: #5c2b2e;
+  --gray: #c4c4c4;
+  --white: #ffffff;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: transparent !important;
+}
+
+:host ::ng-deep .p-dialog-content {
+  background: var(--white) !important;
+  padding: 0 !important;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 600px;
+  background: var(--white);
+  padding: 2.2rem 2rem 1.7rem 2rem;
+  margin: 0 auto;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--wine);
+}
+
+.p-inputgroup {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+:host ::ng-deep input.p-inputtext,
+:host ::ng-deep .p-select {
+  border: 1.5px solid var(--gray);
+  border-radius: 9px;
+  color: var(--wine);
+  font-size: 0.98rem;
+  padding: 0.7rem;
+  flex: 1;
+  background: var(--white);
+}
+
+:host ::ng-deep input.p-inputtext:focus,
+:host ::ng-deep .p-select:focus {
+  border-color: var(--wine);
+  outline: none;
+}
+
+:host ::ng-deep .p-button-cancel,
+:host ::ng-deep .p-button-add,
+:host ::ng-deep .p-dialog .p-dialog-close {
+  background: var(--white) !important;
+  border: 1.5px solid var(--gray) !important;
+  color: var(--wine) !important;
+  border-radius: 9px !important;
+  width: 2.7rem !important;
+  height: 2.7rem !important;
+  min-width: 2.7rem !important;
+  min-height: 2.7rem !important;
+  font-size: 1.22rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+:host ::ng-deep .p-button-cancel:hover,
+:host ::ng-deep .p-button-add:hover,
+:host ::ng-deep .p-dialog .p-dialog-close:hover {
+  background: var(--gray) !important;
+  color: var(--white) !important;
+  border-color: var(--gray) !important;
+}
+
+:host ::ng-deep .p-button-wine {
+  background: var(--wine) !important;
+  border: 1.5px solid var(--wine) !important;
+  color: var(--white) !important;
+  border-radius: 9px;
+  font-weight: 600;
+  padding: 0.78rem 1.6rem;
+  font-size: 1.03rem;
+  box-shadow: none !important;
+}
+
+:host ::ng-deep .p-button-wine:hover {
+  background: #442023 !important;
+  border-color: #442023 !important;
+}
+
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.2rem;
+  margin-top: 2rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--white);
+}
+
+
+
+@media (max-width: 600px) {
+  .form-container {
+    max-width: 98vw;
+    padding: 1rem;
+  }
+  .form-footer {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header {
+  display: none !important;
+}

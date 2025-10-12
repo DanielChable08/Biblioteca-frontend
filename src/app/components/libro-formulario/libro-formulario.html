@@ -1,0 +1,54 @@
+<p-toast></p-toast>
+<div class="form-page-container">
+  <div class="form-header">
+    <h2><i class="pi pi-plus-circle"></i> Agregar Nuevo Libro</h2>
+    <p>Completa la información para registrar un nuevo título en el catálogo.</p>
+  </div>
+
+  <form [formGroup]="libroForm" (ngSubmit)="onSubmit()" class="form-container">
+    <div class="form-grid">
+      <div class="form-column">
+        <div class="field">
+          <label for="titulo">Título del Libro *</label>
+          <input id="titulo" pInputText formControlName="titulo">
+        </div>
+        <div class="field">
+          <label for="autores">Autor(es) *</label>
+          <p-multiSelect id="autores" [options]="autores" formControlName="idAutores" optionLabel="nombre" optionValue="id" display="chip" placeholder="Selecciona uno o más autores"></p-multiSelect>
+        </div>
+        <div class="field">
+          <label for="resumen">Resumen *</label>
+          <textarea id="resumen" pInputTextarea formControlName="resumen" [rows]="5" [autoResize]="true"></textarea>
+        </div>
+        <div class="field">
+          <label for="imagen">URL de la Portada</label>
+          <div class="p-inputgroup">
+            <span class="p-inputgroup-addon"><i class="pi pi-link"></i></span>
+            <input id="imagen" pInputText formControlName="imagen" placeholder="https://ejemplo.com/portada.jpg">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-column">
+        <div class="field-group">
+          <div class="field"><label for="isbn">ISBN *</label><input id="isbn" pInputText formControlName="isbn"></div>
+          <div class="field"><label for="anho">Año *</label><p-inputNumber id="anho" formControlName="anho" [useGrouping]="false"></p-inputNumber></div>
+          <div class="field"><label for="paginas">Páginas *</label><p-inputNumber id="paginas" formControlName="paginas"></p-inputNumber></div>
+        </div>
+        <div class="field"><label for="categoria">Categoría *</label><p-select id="categoria" [options]="categorias" formControlName="idCategoria" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select></div>
+        <div class="field"><label for="editorial">Editorial *</label><p-select id="editorial" [options]="editoriales" formControlName="idEditorial" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select></div>
+        <div class="field"><label for="idioma">Idioma *</label><p-select id="idioma" [options]="idiomas" formControlName="idIdioma" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select></div>
+        <div class="field"><label for="tipoLibro">Tipo de Libro *</label><p-select id="tipoLibro" [options]="tiposLibro" formControlName="idTipoLibro" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select></div>
+        <div class="field-group">
+          <div class="field"><label for="edicion">Edición</label><input id="edicion" pInputText formControlName="edicion"></div>
+          <div class="field"><label for="pasta">Tipo de Pasta</label><input id="pasta" pInputText formControlName="pasta"></div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="form-footer">
+      <p-button label="Cancelar" styleClass="p-button-wine" (click)="cancelar()"></p-button>
+      <p-button label="Guardar Libro" type="submit" [loading]="isSubmitting" icon="pi pi-check" styleClass="p-button-wine"></p-button>
+    </div>
+  </form>
+</div>

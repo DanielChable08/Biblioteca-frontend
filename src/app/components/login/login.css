@@ -12,62 +12,44 @@
 
 
 .login-container {
+  position: relative;
   display: flex;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--beige-suave);
-}
-
-.left-column {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--vino-profundo) 0%, #4a1f21 50%, var(--vino-degradado) 100%);
-  padding: 2rem;
-}
-
-.welcome-content {
-  text-align: center;
-  color: var(--blanco-puro);
-  max-width: 500px;
-}
-
-.stained-glass-window {
-  width: 350px;
-  height: 400px;
-  margin: 0 auto 2rem;
   overflow: hidden;
-  box-shadow: 0 0 20px rgba(255,255,255,0.1);
-  border: 6px solid var(--cafe-moka);
-  border-radius: 12px;
 }
 
-.welcome-text h1 {
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin: 0.3rem 0;
-  color: var(--blanco-puro);
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-  line-height: 1.2;
+
+.login-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('../../../assets/img/capilla.jpeg') center/cover no-repeat;
+  filter: blur(1px) brightness(0.8);
+  z-index: 0;
 }
 
-.welcome-text p {
-  font-size: 1rem;
-  max-width: 350px;
-  margin: 1.5rem auto 0;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.9);
+
+.login-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: #ede6d7a2;
+  z-index: 1;
 }
+
 
 .right-column {
+  position: relative;
+  z-index: 2;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--beige-suave);
   padding: 2rem;
 }
+
+
 
 
 :host ::ng-deep .biblioteca-card {
