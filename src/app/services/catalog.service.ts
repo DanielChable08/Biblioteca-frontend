@@ -53,4 +53,18 @@ export class CatalogService {
   createEstadoEjemplar(data: { nombre: string }): Observable<EstadoEjemplar> {
     return this.http.post<EstadoEjemplar>(`${this.apiUrl}/estados-ejemplares`, data);
   }
+
+  createCategoria(data: { nombre: string }): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/categorias`, data);
+  }
+  createEditorial(data: { nombre: string }): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/editoriales`, data);
+  }
+  createIdioma(data: { nombre: string }): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/idiomas`, data);
+  }
+  createTipoLibro(data: { nombre: string }): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/tipos-libros`, data);
+  }
+  
 }

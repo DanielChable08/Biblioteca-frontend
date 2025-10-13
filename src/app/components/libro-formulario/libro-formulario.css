@@ -5,12 +5,15 @@
   --brown: #8b4513;
   --gray: #c4c4c4;
   --white: #ffffff;
+
   display: block;
   background-color: var(--beige);
   min-height: 100vh;
   padding: 2rem 1rem;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+  color: var(--wine);
 }
+
 
 .form-page-container {
   max-width: 1200px;
@@ -18,10 +21,11 @@
   animation: fadeIn 0.5s ease-in-out;
 }
 
+
 .form-header {
   margin-bottom: 2rem;
-  padding-bottom: 1.2rem;
-  border-bottom: 2px solid var(--gold);
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.4);
 }
 
 .form-header h2 {
@@ -39,16 +43,17 @@
 }
 
 .form-header p {
-  color: var(--gray);
+  color: #6b5e5f;
   font-size: 1rem;
   margin-top: 0.5rem;
   padding-left: 2.5rem;
 }
 
+
 .form-container {
   background-color: var(--white);
   padding: 2.5rem;
-  border-radius: 16px;
+  border-radius: 20px;
   box-shadow: 0 6px 20px rgba(92, 43, 46, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.15);
   transition: all 0.3s ease;
@@ -78,13 +83,8 @@
 
 .field-group {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
-}
-
-.form-full-width {
-  grid-column: 1 / -1;
-  margin-top: 1.5rem;
 }
 
 label {
@@ -93,85 +93,73 @@ label {
   color: var(--wine);
 }
 
-/* === Select con botón "Agregar" === */
-.input-with-button .select-with-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-:host ::ng-deep .input-with-button .p-treeselect {
-  flex: 1;
-}
-
-:host ::ng-deep .add-btn.p-button {
-  background: linear-gradient(135deg, #d4af37, #b9932a);
-  border: none;
-  color: #fff;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
-}
-
-:host ::ng-deep .add-btn.p-button:hover {
-  background: linear-gradient(135deg, #b9932a, #8a6d1d);
-  transform: translateY(-2px);
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
-}
-
 
 :host ::ng-deep input.p-inputtext,
 :host ::ng-deep textarea.p-inputtextarea,
-:host ::ng-deep .p-treeselect,
-:host ::ng-deep .p-multiselect {
-  border: 1px solid var(--gray);
-  border-radius: 8px;
+:host ::ng-deep .p-multiselect,
+:host ::ng-deep .p-select,
+:host ::ng-deep .p-inputnumber-input {
+  border: 1px solid #d5cbbd;
+  border-radius: 10px;
   color: var(--wine);
   transition: all 0.3s ease;
   font-size: 0.95rem;
-  padding: 0.6rem;
+  padding: 0.7rem 2rem;
+  width: 100%;
+}
+
+:host ::ng-deep .p-multiselect,
+:host ::ng-deep .p-select {
+  min-height: 3rem;
+  width: 100%;
 }
 
 :host ::ng-deep input.p-inputtext:focus,
 :host ::ng-deep textarea.p-inputtextarea:focus,
-:host ::ng-deep .p-inputtext:focus-visible,
-:host ::ng-deep .p-inputnumber-input:focus {
+:host ::ng-deep .p-inputnumber-input:focus,
+:host ::ng-deep .p-select:not(.p-disabled).p-focus,
+:host ::ng-deep .p-multiselect:not(.p-disabled).p-focus {
   border-color: var(--gold);
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.35);
   outline: none;
 }
 
-.ejemplar-section {
-  background-color: #fdfcf9;
-  border: 1px solid #f0e9dc;
-  padding: 1.5rem;
-  border-radius: 12px;
+
+:host ::ng-deep .p-inputgroup {
+  display: flex;
+  align-items: center;
+}
+
+:host ::ng-deep .p-inputgroup .p-multiselect,
+:host ::ng-deep .p-inputgroup .p-select {
+  flex: 1;
+}
+
+:host ::ng-deep .p-inputgroup button.p-button {
+  background: var(--wine);
+  margin-left:5px;
+  border: none;
+  color: var(--white);
+  border-radius: 5%;
+  width: 2.4rem;
+  height: 2.4rem;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
 }
 
-.ejemplar-section:hover {
-  box-shadow: 0 4px 15px rgba(92, 43, 46, 0.08);
+:host ::ng-deep .p-inputgroup button.p-button:hover {
+  background: #55292b;
+  transform: translateY(-2px);
 }
 
-.ejemplar-title {
-  font-weight: 600;
-  font-size: 1.05rem;
-  color: var(--wine);
-  border-bottom: 1px solid #e0d9ca;
-  padding-bottom: 0.8rem;
-  margin-bottom: 1rem;
-}
 
-/* === Footer Botones === */
 .form-footer {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--beige);
+  border-top: 1px solid #e7dfd1;
 }
 
 :host ::ng-deep .p-button-wine {
@@ -179,35 +167,71 @@ label {
   border-color: var(--wine) !important;
   color: var(--white) !important;
   font-weight: 600;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  padding: 0.8rem 1.8rem;
   transition: all 0.3s ease !important;
   box-shadow: 0 4px 12px rgba(92, 43, 46, 0.15);
 }
 
 :host ::ng-deep .p-button-wine:hover {
   background: #4a2224 !important;
-  border-color: #4a2224 !important;
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(92, 43, 46, 0.25);
 }
 
-/* Botón cancelar con dorado */
-:host ::ng-deep .p-button-cancel {
-  background: linear-gradient(135deg, #d4af37, #b9932a) !important;
-  border: none !important;
-  color: var(--white) !important;
+:host ::ng-deep .p-button-text.p-button-danger {
+  color: var(--wine) !important;
   font-weight: 600;
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
 }
 
-:host ::ng-deep .p-button-cancel:hover {
-  background: linear-gradient(135deg, #b9932a, #8a6d1d) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.35);
+
+:host ::ng-deep .p-dialog {
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header {
+  background: var(--wine);
+  color: var(--white);
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-content {
+  background: var(--white);
+  padding: 1.5rem;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-footer {
+  background: #f7f3ec;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e0d8c5;
+}
+
+/* === Toast === */
+:host ::ng-deep .p-toast {
+  top: 1.5rem;
+  right: 1.5rem;
+}
+
+:host ::ng-deep .p-toast-message {
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-container {
+    padding: 1.5rem;
+  }
+
+  .form-header h2 {
+    font-size: 1.6rem;
+  }
 }
 
 @keyframes fadeIn {

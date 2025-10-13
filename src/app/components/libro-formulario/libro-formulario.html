@@ -14,7 +14,10 @@
         </div>
         <div class="field">
           <label for="autores">Autor(es) *</label>
-          <p-multiSelect id="autores" [options]="autores" formControlName="idAutores" optionLabel="nombre" optionValue="id" display="chip" placeholder="Selecciona uno o más autores"></p-multiSelect>
+          <div class="p-inputgroup">
+            <p-multiSelect id="autores" [options]="autores" formControlName="idAutores" optionLabel="nombre" optionValue="id" display="chip" placeholder="Selecciona"></p-multiSelect>
+            <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('autor')" pTooltip="Agregar autor" tooltipPosition="top"></button>
+          </div>
         </div>
         <div class="field">
           <label for="resumen">Resumen *</label>
@@ -35,20 +38,62 @@
           <div class="field"><label for="anho">Año *</label><p-inputNumber id="anho" formControlName="anho" [useGrouping]="false"></p-inputNumber></div>
           <div class="field"><label for="paginas">Páginas *</label><p-inputNumber id="paginas" formControlName="paginas"></p-inputNumber></div>
         </div>
-        <div class="field"><label for="categoria">Categoría *</label><p-select id="categoria" [options]="categorias" formControlName="idCategoria" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select></div>
-        <div class="field"><label for="editorial">Editorial *</label><p-select id="editorial" [options]="editoriales" formControlName="idEditorial" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select></div>
-        <div class="field"><label for="idioma">Idioma *</label><p-select id="idioma" [options]="idiomas" formControlName="idIdioma" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select></div>
-        <div class="field"><label for="tipoLibro">Tipo de Libro *</label><p-select id="tipoLibro" [options]="tiposLibro" formControlName="idTipoLibro" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select></div>
+        <div class="field">
+          <label for="categoria">Categoría *</label>
+          <div class="p-inputgroup">
+            <p-select id="categoria" [options]="categorias" formControlName="idCategoria" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select>
+            <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('categoria')" pTooltip="Agregar categoría" tooltipPosition="top"></button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="editorial">Editorial *</label>
+          <div class="p-inputgroup">
+            <p-select id="editorial" [options]="editoriales" formControlName="idEditorial" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select>
+            <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('editorial')" pTooltip="Agregar editorial" tooltipPosition="top"></button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="idioma">Idioma *</label>
+          <div class="p-inputgroup">
+            <p-select id="idioma" [options]="idiomas" formControlName="idIdioma" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select>
+            <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('idioma')" pTooltip="Agregar idioma" tooltipPosition="top"></button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="tipoLibro">Tipo de Libro *</label>
+          <div class="p-inputgroup">
+            <p-select id="tipoLibro" [options]="tiposLibro" formControlName="idTipoLibro" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select>
+            <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('tipoLibro')" pTooltip="Agregar tipo de libro" tooltipPosition="top"></button>
+          </div>
+        </div>
         <div class="field-group">
           <div class="field"><label for="edicion">Edición</label><input id="edicion" pInputText formControlName="edicion"></div>
           <div class="field"><label for="pasta">Tipo de Pasta</label><input id="pasta" pInputText formControlName="pasta"></div>
         </div>
       </div>
     </div>
-  
+    
     <div class="form-footer">
-      <p-button label="Cancelar" styleClass="p-button-wine" (click)="cancelar()"></p-button>
+      <p-button label="Cancelar" styleClass="p-button-wine" icon="pi pi-times-circle" (click)="cancelar()"></p-button>
       <p-button label="Guardar Libro" type="submit" [loading]="isSubmitting" icon="pi pi-check" styleClass="p-button-wine"></p-button>
     </div>
   </form>
 </div>
+
+<p-dialog [header]="'Agregar Nuevo ' + (catalogoSiendoAgregado | titlecase)" [(visible)]="displayCatalogoDialog" [modal]="true" [style]="{width: '450px'}">
+  <form [formGroup]="catalogoForm" (ngSubmit)="guardarNuevoCatalogo()" class="mini-form">
+    <div *ngIf="catalogoSiendoAgregado === 'autor'">
+      <div class="field"><label for="nombreAutor">Nombre(s) *</label><input id="nombreAutor" pInputText formControlName="nombre"></div>
+      <div class="field"><label for="apPaterno">Apellido Paterno *</label><input id="apPaterno" pInputText formControlName="apPaterno"></div>
+      <div class="field"><label for="apMaterno">Apellido Materno</label><input id="apMaterno" pInputText formControlName="apMaterno"></div>
+    </div>
+    <div *ngIf="catalogoSiendoAgregado !== 'autor'" class="field">
+      <label for="nombreCatalogo">Nombre *</label>
+      <input id="nombreCatalogo" pInputText formControlName="nombre" autofocus>
+    </div>
+    <div class="form-footer">
+      <p-button label="Cancelar" icon="pi pi-times-circle" styleClass="p-button-wine" (click)="displayCatalogoDialog=false" type="button"></p-button>
+      <p-button label="Guardar" icon="pi pi-check" type="submit" styleClass="p-button-wine" icon="pi pi-check"></p-button>
+    </div>
+  </form>
+</p-dialog>
