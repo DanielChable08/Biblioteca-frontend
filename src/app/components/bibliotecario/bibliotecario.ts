@@ -206,7 +206,10 @@ EjemplaresReparacion(): number {
   getDropdownText(): string { return this.categoriaSeleccionada === 'Todas' ? 'Todas las categorías' : this.categoriaSeleccionada; }
   esCategoriaActiva(categoria: CategoriaKey): boolean { return this.categoriaSeleccionada === categoria; }
   
-  editarLibro(libro: Libro): void { this.messageService.add({ severity: 'info', summary: 'Próximamente', detail: 'La edición de libros se implementará a continuación.' }); }
+  
+  editarLibro(libro: Libro): void {
+   this.router.navigate(['/admin/libros/editar', libro.uuid]);
+  }
   
 
   verLibro(libro: Libro): void {

@@ -22,6 +22,7 @@ export class BookService {
     return this.http.get<Libro[]>(this.apiUrl, { params: httpParams });
   }
 
+
   getLibroByUuid(uuid: string): Observable<Libro> {
     return this.http.get<Libro>(`${this.apiUrl}/${uuid}`);
   }

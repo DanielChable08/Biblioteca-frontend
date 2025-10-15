@@ -1,8 +1,10 @@
 <p-toast></p-toast>
 <div class="form-page-container">
   <div class="form-header">
-    <h2><i class="pi pi-plus-circle"></i> Agregar Nuevo Libro</h2>
-    <p>Completa la información para registrar un nuevo título en el catálogo.</p>
+    <h2 *ngIf="!isEditMode"><i class="pi pi-plus-circle"></i> Agregar Nuevo Libro</h2>
+    <h2 *ngIf="isEditMode"><i class="pi pi-pencil"></i> Editar Libro</h2>
+    <p *ngIf="!isEditMode">Completa la información para registrar un nuevo título en el catálogo.</p>
+    <p *ngIf="isEditMode">Modifica la información del libro seleccionado.</p>
   </div>
 
   <form [formGroup]="libroForm" (ngSubmit)="onSubmit()" class="form-container">
@@ -27,10 +29,15 @@
           <label for="imagen">URL de la Portada</label>
           <div class="p-inputgroup">
             <span class="p-inputgroup-addon"><i class="pi pi-link"></i></span>
-            <input id="imagen" pInputText formControlName="imagen" placeholder="https://ejemplo.com/portada.jpg">
+            <input 
+              id="imagen" 
+              pInputText 
+              formControlName="imagen" 
+              placeholder="https://ejemplo.com/portada.jpg"
+            >
           </div>
-        </div>
       </div>
+    </div>
 
       <div class="form-column">
         <div class="field-group">
@@ -41,7 +48,7 @@
         <div class="field">
           <label for="categoria">Categoría *</label>
           <div class="p-inputgroup">
-            <p-select id="categoria" [options]="categorias" formControlName="idCategoria" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select>
+            <p-select id="categoria" dataKey="id" [options]="categorias" formControlName="idCategoria" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select>
             <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('categoria')" pTooltip="Agregar categoría" tooltipPosition="top"></button>
           </div>
         </div>
@@ -75,7 +82,7 @@
     
     <div class="form-footer">
       <p-button label="Cancelar" styleClass="p-button-wine" icon="pi pi-times-circle" (click)="cancelar()"></p-button>
-      <p-button label="Guardar Libro" type="submit" [loading]="isSubmitting" icon="pi pi-check" styleClass="p-button-wine"></p-button>
+      <p-button [label]="isEditMode ? 'Actualizar Libro' : 'Guardar Libro'" type="submit" [loading]="isSubmitting" icon="pi pi-check" styleClass="p-button-wine"></p-button>
     </div>
   </form>
 </div>
@@ -92,8 +99,8 @@
       <input id="nombreCatalogo" pInputText formControlName="nombre" autofocus>
     </div>
     <div class="form-footer">
-      <p-button label="Cancelar" icon="pi pi-times-circle" styleClass="p-button-wine" (click)="displayCatalogoDialog=false" type="button"></p-button>
-      <p-button label="Guardar" icon="pi pi-check" type="submit" styleClass="p-button-wine" icon="pi pi-check"></p-button>
+      <button type="button" pButton label="Cancelar" icon="pi pi-times-circle" styleClass="p-button-wine" (click)="displayCatalogoDialog=false"></button>
+      <button type="submit" pButton label="Guardar" icon="pi pi-check" styleClass="p-button-wine"></button>
     </div>
   </form>
 </p-dialog>

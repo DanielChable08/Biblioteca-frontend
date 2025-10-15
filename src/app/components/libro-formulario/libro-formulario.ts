@@ -1,11 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { CommonModule, TitleCasePipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { finalize, map, switchMap } from 'rxjs';
+import { finalize, map, switchMap, forkJoin } from 'rxjs';
 
-// --- IMPORTS DE PRIMENG CORREGIDOS ---
+// --- IMPORTS DE PRIMENG ---
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -19,7 +19,6 @@ import { TooltipModule } from 'primeng/tooltip';
 // Services and Models
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
-import { EjemplarService } from '../../services/ejemplar.service';
 import { Autor, Catalogo, Libro } from '../../models/biblioteca';
 
 type TipoCatalogo = 'autor' | 'categoria' | 'editorial' | 'idioma' | 'tipoLibro';
@@ -30,7 +29,7 @@ type TipoCatalogo = 'autor' | 'categoria' | 'editorial' | 'idioma' | 'tipoLibro'
   imports: [
     CommonModule, ReactiveFormsModule, ButtonModule, InputTextModule,
     TextareaModule, SelectModule, MultiSelectModule, InputNumberModule,
-    ToastModule, DialogModule, TooltipModule
+    ToastModule, DialogModule, TooltipModule, TitleCasePipe
   ],
   templateUrl: './libro-formulario.html',
   styleUrls: ['./libro-formulario.css']
@@ -39,9 +38,10 @@ export default class LibroFormularioComponent implements OnInit {
   private fb = inject(FormBuilder);
   private catalogService = inject(CatalogService);
   private bookService = inject(BookService);
-  private ejemplarService = inject(EjemplarService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
 
   libroForm!: FormGroup;
   catalogoForm!: FormGroup;
@@ -51,22 +51,26 @@ export default class LibroFormularioComponent implements OnInit {
   editoriales: Catalogo[] = [];
   idiomas: Catalogo[] = [];
   tiposLibro: Catalogo[] = [];
-  condiciones: Catalogo[] = [];
-  estados: Catalogo[] = [];
   
   isSubmitting = false;
   displayCatalogoDialog = false;
   catalogoSiendoAgregado: TipoCatalogo | null = null;
+  
+  isEditMode = false;
+  private libroUuid: string | null = null;
 
   ngOnInit(): void {
     this.initForms();
-    this.loadCatalogs();
+    this.libroUuid = this.route.snapshot.paramMap.get('uuid');
+    this.isEditMode = !!this.libroUuid;
+    
+    this.loadCatalogsAndData();
   }
 
   private initForms(): void {
     this.libroForm = this.fb.group({
       titulo: ['', Validators.required],
-      idAutores: [null, Validators.required],
+      idAutores: [[], Validators.required],
       resumen: ['', Validators.required],
       isbn: ['', [Validators.required, Validators.maxLength(13)]],
       anho: [new Date().getFullYear(), [Validators.required, Validators.pattern('^[0-9]{4}$')]],
@@ -77,10 +81,7 @@ export default class LibroFormularioComponent implements OnInit {
       idIdioma: [null, Validators.required],
       idTipoLibro: [null, Validators.required],
       imagen: [''],
-      pasta: [''],
-      ubicacionEjemplar: [''],
-      idCondicionFisicaEjemplar: [null, Validators.required],
-      idEstadoEjemplar: [null, Validators.required]
+      pasta: ['']
     });
 
     this.catalogoForm = this.fb.group({
@@ -90,14 +91,101 @@ export default class LibroFormularioComponent implements OnInit {
     });
   }
 
-  private loadCatalogs(): void {
-    this.catalogService.getAutores().subscribe(data => this.autores = data);
-    this.catalogService.getCategorias().subscribe(data => this.categorias = data);
-    this.catalogService.getEditoriales().subscribe(data => this.editoriales = data);
-    this.catalogService.getIdiomas().subscribe(data => this.idiomas = data);
-    this.catalogService.getTiposLibros().subscribe(data => this.tiposLibro = data);
-    this.catalogService.getCondicionesFisicas().subscribe(data => this.condiciones = data);
-    this.catalogService.getEstadosEjemplares().subscribe(data => this.estados = data);
+  private loadCatalogsAndData(): void {
+    // 1. Cargamos todos los catálogos primero
+    forkJoin({
+      autores: this.catalogService.getAutores(),
+      categorias: this.catalogService.getCategorias(),
+      editoriales: this.catalogService.getEditoriales(),
+      idiomas: this.catalogService.getIdiomas(),
+      tiposLibro: this.catalogService.getTiposLibros()
+    }).subscribe(catalogs => {
+      this.autores = catalogs.autores;
+      this.categorias = catalogs.categorias;
+      this.editoriales = catalogs.editoriales;
+      this.idiomas = catalogs.idiomas;
+      this.tiposLibro = catalogs.tiposLibro;
+
+      // 2. Si estamos en modo edición, cargamos los datos del libro
+      if (this.isEditMode && this.libroUuid) {
+        this.loadBookData(this.libroUuid);
+      }
+    });
+  }
+  
+  private loadBookData(uuid: string): void {
+    forkJoin({
+      libro: this.bookService.getLibroByUuid(uuid),
+      autores: this.bookService.getAutoresForLibro(uuid)
+    }).subscribe(({ libro, autores }) => {
+      
+      console.log('Libro recibido:', libro);
+      console.log('¿Tiene imagen?', libro.imagen);
+      
+      // Si NO tiene imagen, haz una petición adicional para obtenerla
+      if (!libro.imagen || libro.imagen === '') {
+        console.log('⚠️ Imagen no encontrada, buscando en lista completa...');
+        
+        this.bookService.getLibros().subscribe(libros => {
+          const libroConImagen = libros.find(l => l.uuid === uuid);
+          
+          if (libroConImagen?.imagen) {
+            console.log('✅ Imagen encontrada en lista:', libroConImagen.imagen);
+            libro.imagen = libroConImagen.imagen;
+          } else {
+            console.log('❌ Imagen no encontrada en lista tampoco');
+          }
+          
+          this.fillForm(libro, autores);
+        });
+      } else {
+        // Si ya tiene imagen, úsala directamente
+        console.log('✅ Imagen encontrada directamente:', libro.imagen);
+        this.fillForm(libro, autores);
+      }
+    });
+  }
+
+  // Método auxiliar para evitar duplicación de código
+  private fillForm(libro: any, autores: any[]): void {
+    const autoresIds = autores.map(a => a.id);
+    
+    // Extrae los IDs de los objetos anidados
+    const idCategoria = libro.categoria?.id || null;
+    const idEditorial = libro.editorial?.id || null;
+    const idIdioma = libro.idioma?.id || null;
+    const idTipoLibro = libro.tipoLibro?.id || null;
+    const imagenUrl = libro.imagen || '';
+    
+    console.log('Valores a asignar al formulario:', {
+      idCategoria,
+      idEditorial,
+      idIdioma,
+      idTipoLibro,
+      autoresIds,
+      imagenUrl
+    });
+    
+    // Asigna todos los valores del libro
+    this.libroForm.patchValue({
+      titulo: libro.titulo,
+      resumen: libro.resumen,
+      isbn: libro.isbn,
+      anho: parseInt(libro.anho, 10),
+      paginas: libro.paginas,
+      edicion: libro.edicion || '',
+      pasta: libro.pasta || '',
+      imagen: imagenUrl,
+      idCategoria: idCategoria,
+      idEditorial: idEditorial,
+      idIdioma: idIdioma,
+      idTipoLibro: idTipoLibro,
+      idAutores: autoresIds
+    });
+    
+    console.log('✅ Formulario completado. Valor de imagen:', this.libroForm.get('imagen')?.value);
+    
+    this.cdr.detectChanges();
   }
   
   abrirModalAgregar(tipo: TipoCatalogo): void {
@@ -122,20 +210,39 @@ export default class LibroFormularioComponent implements OnInit {
     const tipo = this.catalogoSiendoAgregado;
 
     switch(tipo) {
-      case 'autor': request$ = this.catalogService.createAutor(payload); break;
-      case 'categoria': request$ = this.catalogService.createCategoria({ nombre: payload.nombre }); break;
-      case 'editorial': request$ = this.catalogService.createEditorial({ nombre: payload.nombre }); break;
-      case 'idioma': request$ = this.catalogService.createIdioma({ nombre: payload.nombre }); break;
-      case 'tipoLibro': request$ = this.catalogService.createTipoLibro({ nombre: payload.nombre }); break;
+      case 'autor': 
+        request$ = this.catalogService.createAutor(payload); 
+        break;
+      case 'categoria': 
+        request$ = this.catalogService.createCategoria({ nombre: payload.nombre }); 
+        break;
+      case 'editorial': 
+        request$ = this.catalogService.createEditorial({ nombre: payload.nombre }); 
+        break;
+      case 'idioma': 
+        request$ = this.catalogService.createIdioma({ nombre: payload.nombre }); 
+        break;
+      case 'tipoLibro': 
+        request$ = this.catalogService.createTipoLibro({ nombre: payload.nombre }); 
+        break;
       default:
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Tipo de catálogo no soportado.' });
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'Tipo de catálogo no soportado.' 
+        });
         return;
     }
 
     request$.subscribe(nuevoItem => {
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: `${tipo.charAt(0).toUpperCase() + tipo.slice(1)} agregado.`});
+      this.messageService.add({ 
+        severity: 'success', 
+        summary: 'Éxito', 
+        detail: `${tipo.charAt(0).toUpperCase() + tipo.slice(1)} agregado.`
+      });
       this.displayCatalogoDialog = false;
 
+      // Actualiza el array correspondiente y selecciona el nuevo item
       switch(tipo) {
         case 'autor':
           this.autores = [...this.autores, nuevoItem as Autor];
@@ -159,14 +266,19 @@ export default class LibroFormularioComponent implements OnInit {
           this.libroForm.get('idTipoLibro')?.setValue(nuevoItem.id);
           break;
       }
+      
+      this.cdr.detectChanges();
     });
   }
 
-  
   onSubmit(): void {
     if (this.libroForm.invalid) {
       this.libroForm.markAllAsTouched();
-      this.messageService.add({ severity: 'warn', summary: 'Formulario Incompleto', detail: 'Por favor, rellena todos los campos requeridos.' });
+      this.messageService.add({ 
+        severity: 'warn', 
+        summary: 'Formulario Incompleto', 
+        detail: 'Por favor, rellena todos los campos requeridos.' 
+      });
       return;
     }
 
@@ -178,9 +290,9 @@ export default class LibroFormularioComponent implements OnInit {
       isbn: formValues.isbn,
       anho: formValues.anho.toString(),
       resumen: formValues.resumen,
-      edicion: formValues.edicion,
-      pasta: formValues.pasta,
-      imagen: formValues.imagen,
+      edicion: formValues.edicion || '',
+      pasta: formValues.pasta || '',
+      imagen: formValues.imagen || '',
       paginas: formValues.paginas,
       idTipoLibro: formValues.idTipoLibro,
       idCategoria: formValues.idCategoria,
@@ -188,22 +300,59 @@ export default class LibroFormularioComponent implements OnInit {
       idIdioma: formValues.idIdioma,
     };
 
-    this.bookService.createLibro(libroPayload).pipe(
-      switchMap((libroCreado: Libro) => {
-        const autoresPayload = formValues.idAutores.map((id: number) => ({ idAutor: id }));
-        return this.bookService.addAutoresToLibro(libroCreado.uuid, autoresPayload).pipe(map(() => libroCreado));
-      }),
-      finalize(() => this.isSubmitting = false)
-    ).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Libro, autores y ejemplar creados correctamente.' });
-        setTimeout(() => this.router.navigate(['/admin']), 1500);
-      },
-      error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear el libro.' });
-        console.error(err);
-      }
-    });
+    if (this.isEditMode && this.libroUuid) {
+      this.bookService.updateLibro(this.libroUuid, libroPayload).pipe(
+        switchMap((libroActualizado: Libro) => {
+          const autoresPayload = formValues.idAutores.map((id: number) => ({ idAutor: id }));
+          return this.bookService.addAutoresToLibro(libroActualizado.uuid, autoresPayload);
+        }),
+        finalize(() => this.isSubmitting = false)
+      ).subscribe({
+        next: () => {
+          this.messageService.add({ 
+            severity: 'success', 
+            summary: 'Éxito', 
+            detail: 'Libro actualizado correctamente.' 
+          });
+          setTimeout(() => this.router.navigate(['/admin']), 1500);
+        },
+        error: (err) => {
+          this.messageService.add({ 
+            severity: 'error', 
+            summary: 'Error', 
+            detail: 'No se pudo actualizar el libro.' 
+          });
+          console.error(err);
+        }
+      });
+    } else {
+      this.bookService.createLibro(libroPayload).pipe(
+        switchMap((libroCreado: Libro) => {
+          const autoresPayload = formValues.idAutores.map((id: number) => ({ idAutor: id }));
+          return this.bookService.addAutoresToLibro(libroCreado.uuid, autoresPayload).pipe(
+            map(() => libroCreado)
+          );
+        }),
+        finalize(() => this.isSubmitting = false)
+      ).subscribe({
+        next: () => {
+          this.messageService.add({ 
+            severity: 'success', 
+            summary: 'Éxito', 
+            detail: 'Libro creado correctamente.' 
+          });
+          setTimeout(() => this.router.navigate(['/admin']), 1500);
+        },
+        error: (err) => {
+          this.messageService.add({ 
+            severity: 'error', 
+            summary: 'Error', 
+            detail: 'No se pudo crear el libro.' 
+          });
+          console.error(err);
+        }
+      });
+    }
   }
 
   cancelar(): void {

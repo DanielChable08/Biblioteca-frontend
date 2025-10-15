@@ -17,12 +17,14 @@ export const routes: Routes = [
   {
     path: 'admin',
     loadComponent: () => import('./components/bibliotecario/bibliotecario').then(m => m.default)
-  },
-  
- { 
+  }, 
+  { 
     path: 'admin/libros/nuevo', 
     loadComponent: () => import('./components/libro-formulario/libro-formulario').then(m => m.default)
   },
-
+  { 
+    path: 'admin/libros/editar/:uuid', 
+    loadComponent: () => import('./components/libro-formulario/libro-formulario').then(m => m.default)
+  },
   { path: '**', redirectTo: '/login' }
 ];
