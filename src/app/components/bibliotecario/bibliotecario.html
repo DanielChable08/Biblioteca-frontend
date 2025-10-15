@@ -1,6 +1,6 @@
 
 <p-toast></p-toast>
-<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
 
 <div class="full-container">
   
@@ -183,6 +183,15 @@
         </div>
       </p-card>
     </div>
+
+            <p-confirmDialog>
+              <ng-template pTemplate="message" let-message>
+                  <div class="flex flex-column align-items-center text-center gap-3">
+                      <i [class]="message.icon" class="dialog-icon"></i>
+                      <p class="dialog-message">{{ message.message }}</p>
+                  </div>
+              </ng-template>
+          </p-confirmDialog>
     
     <div *ngIf="!loading && libros.length === 0" class="no-books-message">
       <i class="pi pi-info-circle"></i>

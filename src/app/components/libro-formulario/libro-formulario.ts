@@ -5,7 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { finalize, map, switchMap, forkJoin } from 'rxjs';
 
-// --- IMPORTS DE PRIMENG ---
+
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -16,7 +16,7 @@ import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 
-// Services and Models
+
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
 import { Autor, Catalogo, Libro } from '../../models/biblioteca';
@@ -92,7 +92,7 @@ export default class LibroFormularioComponent implements OnInit {
   }
 
   private loadCatalogsAndData(): void {
-    // 1. Cargamos todos los catálogos primero
+
     forkJoin({
       autores: this.catalogService.getAutores(),
       categorias: this.catalogService.getCategorias(),
@@ -106,7 +106,7 @@ export default class LibroFormularioComponent implements OnInit {
       this.idiomas = catalogs.idiomas;
       this.tiposLibro = catalogs.tiposLibro;
 
-      // 2. Si estamos en modo edición, cargamos los datos del libro
+
       if (this.isEditMode && this.libroUuid) {
         this.loadBookData(this.libroUuid);
       }
@@ -122,35 +122,35 @@ export default class LibroFormularioComponent implements OnInit {
       console.log('Libro recibido:', libro);
       console.log('¿Tiene imagen?', libro.imagen);
       
-      // Si NO tiene imagen, haz una petición adicional para obtenerla
+
       if (!libro.imagen || libro.imagen === '') {
-        console.log('⚠️ Imagen no encontrada, buscando en lista completa...');
+        console.log(' Imagen no encontrada, buscando en lista completa...');
         
         this.bookService.getLibros().subscribe(libros => {
           const libroConImagen = libros.find(l => l.uuid === uuid);
           
           if (libroConImagen?.imagen) {
-            console.log('✅ Imagen encontrada en lista:', libroConImagen.imagen);
+            console.log(' Imagen encontrada en lista:', libroConImagen.imagen);
             libro.imagen = libroConImagen.imagen;
           } else {
-            console.log('❌ Imagen no encontrada en lista tampoco');
+            console.log(' Imagen no encontrada en lista tampoco');
           }
           
           this.fillForm(libro, autores);
         });
       } else {
-        // Si ya tiene imagen, úsala directamente
-        console.log('✅ Imagen encontrada directamente:', libro.imagen);
+
+        console.log(' Imagen encontrada directamente:', libro.imagen);
         this.fillForm(libro, autores);
       }
     });
   }
 
-  // Método auxiliar para evitar duplicación de código
+
   private fillForm(libro: any, autores: any[]): void {
     const autoresIds = autores.map(a => a.id);
     
-    // Extrae los IDs de los objetos anidados
+  
     const idCategoria = libro.categoria?.id || null;
     const idEditorial = libro.editorial?.id || null;
     const idIdioma = libro.idioma?.id || null;
@@ -166,7 +166,7 @@ export default class LibroFormularioComponent implements OnInit {
       imagenUrl
     });
     
-    // Asigna todos los valores del libro
+
     this.libroForm.patchValue({
       titulo: libro.titulo,
       resumen: libro.resumen,
@@ -183,7 +183,7 @@ export default class LibroFormularioComponent implements OnInit {
       idAutores: autoresIds
     });
     
-    console.log('✅ Formulario completado. Valor de imagen:', this.libroForm.get('imagen')?.value);
+    console.log(' Formulario completado. Valor de imagen:', this.libroForm.get('imagen')?.value);
     
     this.cdr.detectChanges();
   }
@@ -242,7 +242,7 @@ export default class LibroFormularioComponent implements OnInit {
       });
       this.displayCatalogoDialog = false;
 
-      // Actualiza el array correspondiente y selecciona el nuevo item
+
       switch(tipo) {
         case 'autor':
           this.autores = [...this.autores, nuevoItem as Autor];

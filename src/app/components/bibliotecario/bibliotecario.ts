@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogService, DynamicDialogModule } from 'primeng/dynamicdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmPopupModule } from 'primeng/confirmpopup';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
@@ -33,6 +34,7 @@ type CategoriaKey = 'Todas' | string;
     InputTextModule,
     TooltipModule,
     ToastModule,
+    ConfirmPopupModule,
     ConfirmDialogModule,
     DynamicDialogModule
   ],
@@ -245,8 +247,16 @@ EjemplaresReparacion(): number {
     this.confirmationService.confirm({
       message: `¿Estás seguro de eliminar el libro "${libro.titulo}"?`,
       header: 'Confirmar eliminación',
-      icon: 'pi pi-exclamation-triangle' ,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar', 
+      rejectLabel: 'No',        
+
+
+      acceptButtonStyleClass: 'p-button-danger custom-accept-button',
+      rejectButtonStyleClass: 'p-button-text custom-reject-button',
+
       accept: () => {
+
         this.loading = true;
         this.bookService.deleteLibro(libro.uuid).pipe(
           finalize(() => this.loading = false)
