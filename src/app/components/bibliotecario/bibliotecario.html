@@ -217,7 +217,10 @@
         <p class="book-author-compact">
           {{ getAutoresAsString(libro.autores) }}
         </p>
-        <span class="book-category-compact">{{ libro.categoria?.nombre || 'Sin categoría' }}</span>
+        <span class="book-category-compact" [title]="libro.categoria?.nombre">
+          {{ libro.categoria?.nombre | slice : 0 : 22
+          }}{{ libro.categoria!.nombre.length > 22 ? '...' : '' }}
+        </span>
 
         <div class="book-details-compact">
           <span class="detail-item-compact">
