@@ -1,13 +1,17 @@
 :host {
-  --beige: #EDE6D7;
-  --wine: #5C2B2E;
-  --gold: #D4AF37;
-  --brown: #8B4513;
-  --gray: #C4C4C4;
-  --white: #FFFFFF;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 0.9rem;
 }
 
-.spinner-container, .error-container {
+.p-divider-horizontal {
+  border-block-start: 1px solid var(--beige) !important;
+}
+.p-divider-horizontal::before {
+  border-block-start: 1px solid var(--beige) !important;
+}
+
+.spinner-container,
+.error-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -25,30 +29,22 @@
 
 .detail-grid {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 2fr 3fr;
   gap: 2rem;
   padding: 1rem;
 }
 
 .book-cover-container {
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.book-cover-image {
-  display: block;
   width: 100%;
-  max-width: 280px; 
-  height: auto;
-  aspect-ratio: 2 / 3; 
-  
-  object-fit: cover;
-  background-color: var(--beige); 
-
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  height: 100%;
+  overflow: hidden;
+}
+.book-cover-container img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  display: block !important;
 }
 
 .book-info-container {
@@ -103,7 +99,8 @@
   color: var(--wine);
 }
 
-.summary-section h3, .ejemplares-section h3 {
+.summary-section h3,
+.ejemplares-section h3 {
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--wine);
@@ -126,7 +123,6 @@
   gap: 0.8rem;
 }
 
-
 .ejemplares-section li {
   background-color: var(--beige);
   padding: 0.75rem 1rem;
@@ -136,7 +132,8 @@
   align-items: center;
 }
 
-.ejemplar-code, .ejemplar-location {
+.ejemplar-code,
+.ejemplar-location {
   color: var(--brown);
   display: flex;
   align-items: center;
@@ -147,26 +144,19 @@
   font-weight: 600;
 }
 
-
-.dialog-footer {
-  text-align: right;
-  border-top: 1px solid var(--beige);
-  padding: 1rem 1rem 0 1rem;
-  margin-top: 1.5rem;
+.ejemplares-section .available {
+  background: #dbffe5;
+  color: #1e5527;
 }
-
-:host ::ng-deep .p-button.p-button-wine {
-    background: var(--wine);
-    border: 1px solid var(--wine);
-    color: var(--white);
+.ejemplares-section .borrowed {
+  background: #efd8cf;
+  color: #7e2222;
 }
-
-:host ::ng-deep .p-button.p-button-wine:hover {
-    background: #4a2224; 
-    border-color: #4a2224;
+.ejemplares-section .repair {
+  background: #fbdedf;
+  color: #881e1e;
 }
-
-.ejemplares-section .available { background: #DBFFE5; color: #1e5527; }
-.ejemplares-section .borrowed { background: #efd8cf; color: #7e2222; }
-.ejemplares-section .repair { background: #fbdedf; color: #881e1e; }
-.ejemplares-section .unknown { background: #e9ecef; color: #495057; }
+.ejemplares-section .unknown {
+  background: #e9ecef;
+  color: #495057;
+}
