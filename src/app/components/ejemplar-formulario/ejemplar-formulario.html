@@ -1,11 +1,12 @@
-
 <form [formGroup]="ejemplarForm" (ngSubmit)="onSubmit()" class="form-container">
   <div class="field">
-    <label for="ubicacion">Ubicación</label>
-    <input id="ubicacion" pInputText formControlName="ubicacion" placeholder="Ej: Estante A-3" />
+    <label for="ubicacion"><i class="pi pi-map-marker"></i> Ubicación</label>
+    <input id="ubicacion" pInputText class="form-comp" formControlName="ubicacion" placeholder="Ej: Estante A-3" />
   </div>
   <div class="field">
-    <label for="condicion">Condición Física *</label>
+    <label for="condicion"
+      ><i class="pi pi-book"></i> Condición Física <label class="text red">*</label></label
+    >
     <div class="p-inputgroup">
       <p-select
         id="condicion"
@@ -14,12 +15,21 @@
         optionLabel="nombre"
         optionValue="id"
         placeholder="Selecciona una condición"
+        class="form-comp"
       ></p-select>
-      <button type="button" pButton icon="pi pi-plus" class="p-button-wine" (click)="abrirModalAgregar('condicion')"></button>
+      <button
+        type="button"
+        pButton
+        icon="pi pi-plus"
+        class="btn-primary"
+        (click)="abrirModalAgregar('condicion')"
+      ></button>
     </div>
   </div>
   <div class="field">
-    <label for="estado">Estado Inicial *</label>
+    <label for="estado"
+      ><i class="pi pi-address-book"></i> Estado Inicial <label class="text red">*</label></label
+    >
     <div class="p-inputgroup">
       <p-select
         id="estado"
@@ -28,25 +38,44 @@
         optionLabel="nombre"
         optionValue="id"
         placeholder="Selecciona un estado"
+        class="form-comp"
       ></p-select>
-      <button type="button" pButton icon="pi pi-plus" class="p-button-wine" (click)="abrirModalAgregar('estado')"></button>
+      <button
+        type="button"
+        pButton
+        icon="pi pi-plus"
+        class="btn-primary"
+        (click)="abrirModalAgregar('estado')"
+      ></button>
     </div>
   </div>
   <div class="form-footer">
-    <button type="button" pButton icon="pi pi-times-circle" class="p-button-wine" (click)="cancelar()">Cancelar</button>
-    <button type="submit" pButton icon="pi pi-check" class="p-button-wine" [loading]="isSubmitting">Guardar</button>
+    <button type="button" pButton class="btn-info text" (click)="cancelar()">Cancelar</button>
+    <button type="submit" pButton icon="pi pi-check" class="btn-primary" [loading]="isSubmitting">
+      Guardar
+    </button>
   </div>
 </form>
 
-<p-dialog [(visible)]="displayCatalogoDialog" [modal]="true" [style]="{width: '600px'}">
+<p-dialog
+  header="Agregar {{ catalogoSiendoAgregado === 'condicion' ? 'Nueva Condición' : 'Nuevo Estado' }}"
+  [(visible)]="displayCatalogoDialog"
+  draggable="false"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  dismissableMask="false"
+  focusOnShow="false"
+>
   <form [formGroup]="catalogoForm" (ngSubmit)="guardarNuevoCatalogo()" class="form-container">
     <div class="field">
-      <label for="nuevoNombre"> Agregar Nueva {{ catalogoSiendoAgregado === 'condicion' ? 'Condición' : 'Estado' }}</label>
-      <input id="nuevoNombre" pInputText formControlName="nombre" autofocus>
+      <label for="nuevoNombre"> Nombre</label>
+      <input id="nuevoNombre" pInputText formControlName="nombre" autofocus />
     </div>
     <div class="form-footer">
-      <button type="button" pButton icon="pi pi-times-circle" class="p-button-wine" (click)="displayCatalogoDialog=false">Cancelar</button>
-      <button type="submit" pButton icon="pi pi-check" class="p-button-wine">Guardar</button>
+      <button type="button" pButton class="btn-info text" (click)="displayCatalogoDialog = false">
+        Cancelar
+      </button>
+      <button type="submit" pButton icon="pi pi-check" class="btn-primary">Guardar</button>
     </div>
   </form>
 </p-dialog>

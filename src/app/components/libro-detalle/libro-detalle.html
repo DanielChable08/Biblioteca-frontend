@@ -14,7 +14,7 @@
   <div *ngIf="!loading && libro">
     <div class="detail-grid">
       <div class="book-cover-container">
-         <img [src]="libro.imagen || 'assets/img/placeholder.png'" alt="portada" class="book-img-compact" />
+         <img [src]="libro.imagen || 'assets/img/placeholder.png'" alt="portada" />
       </div>
 
       <div class="book-info-container">
@@ -54,10 +54,6 @@
           </ng-template>
         </div>
       </div>
-    </div>
-    
-    <div *ngIf="!loading" class="dialog-footer">
-    <p-button label="Cerrar" icon="pi pi-times-circle" styleClass="p-button-wine" (click)="cerrarModal()"></p-button>
     </div>
 
   </div>
