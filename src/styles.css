@@ -227,6 +227,9 @@ input:hover {
 }
 input:focus {
   border-color: var(--wine) !important;
+}
+input.form-comp:focus {
+  border-color: var(--gold) !important;
   box-shadow: 0 0 6px var(--gold-transparent-4) !important;
 }
 input.form-comp:hover {
