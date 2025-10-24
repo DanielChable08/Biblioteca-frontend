@@ -153,6 +153,19 @@ export default class BibliotecarioComponent implements OnInit {
     this.libros = resultado;
   }
 
+  formatIsbn(isbn: string | undefined): string {
+    if (!isbn || isbn.length !== 13) {
+      return isbn || 'N/A';
+    }
+    return [
+      isbn.slice(0, 3),
+      isbn.slice(3, 6),
+      isbn.slice(6, 9),
+      isbn.slice(9, 12),
+      isbn.slice(12, 13)
+    ].join('-');
+  }
+
   getAutoresAsString(autores?: Autor[]): string {
     if (!autores || autores.length === 0) {
       return 'Autor no asignado';

@@ -226,7 +226,7 @@
           <span class="detail-item-compact">
             <i class="pi pi-barcode"></i> {{ libro.ejemplares?.[0]?.codigo || 'Sin código' }}
           </span>
-          <span class="detail-item-compact"><i class="pi pi-tag"></i> {{ libro.isbn }}</span>
+          <span class="detail-item-compact"><i class="pi pi-tag"></i> {{ formatIsbn(libro.isbn) }}</span>
           <span class="detail-item-compact"><i class="pi pi-calendar"></i> {{ libro.anho }}</span>
           <span class="detail-item-compact"
             ><i class="pi pi-file"></i> {{ libro.paginas }} páginas</span
