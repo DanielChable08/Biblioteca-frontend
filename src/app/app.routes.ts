@@ -26,5 +26,17 @@ export const routes: Routes = [
     path: 'admin/libros/editar/:uuid', 
     loadComponent: () => import('./components/libro-formulario/libro-formulario').then(m => m.default)
   },
+  {
+    path: 'admin/usuarios', 
+    loadComponent: () => import('./components/usuarios/usuarios').then(m => m.default)
+  },
+  {
+    path: 'admin/usuarios/nuevo',
+    loadComponent: () => import('./components/usuario-formulario/usuario-formulario').then(m => m.default)
+  },
+  {
+    path: 'admin/usuarios/editar/:uuid',
+    loadComponent: () => import('./components/usuario-formulario/usuario-formulario').then(m => m.default)
+  },
   { path: '**', redirectTo: '/login' }
 ];

@@ -1,0 +1,184 @@
+/* src/app/components/usuario-formulario/usuario-formulario.css */
+
+/* --- COPY STYLES FROM libro-formulario.css HERE --- */
+/* Make sure to include the :host variables */
+:host {
+  --beige: #ede6d7;
+  --wine: #5c2b2e;
+  --gold: #d4af37;
+  --brown: #8b4513;
+  --gray: #c4c4c4;
+  --white: #ffffff;
+
+  display: block;
+  background-color: var(--beige);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+  color: var(--wine);
+}
+
+
+.form-page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+
+.form-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+}
+
+.form-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--wine);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.form-header h2 i {
+  color: var(--gold);
+  font-size: 1.5rem;
+}
+
+.form-header p {
+  color: #6b5e5f;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  padding-left: 2.5rem; /* Adjust if icon size changes */
+}
+
+
+.form-container {
+  background-color: var(--white);
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(92, 43, 46, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  transition: all 0.3s ease;
+}
+
+.form-container:hover {
+  box-shadow: 0 8px 25px rgba(92, 43, 46, 0.18);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two columns */
+  gap: 2rem 3rem;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Space between fields in a column */
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Space between label and input */
+}
+
+/* If you need grouped fields side-by-side (like ISBN/Year in book form) */
+/* .field-group { ... } */
+
+label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--wine);
+}
+
+/* --- Input Styles (Copied) --- */
+:host ::ng-deep input.p-inputtext,
+:host ::ng-deep .p-password-input, /* Added for password */
+:host ::ng-deep .p-select {
+  border: 1px solid #d5cbbd;
+  border-radius: 10px;
+  color: var(--wine);
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  padding: 0.7rem 1rem; /* Adjusted padding slightly */
+  width: 100%;
+}
+/* Ensure password component takes full width */
+:host ::ng-deep .p-password {
+    width: 100%;
+}
+
+:host ::ng-deep .p-select {
+  min-height: calc(1.4rem + 1.4rem + 2px); /* Match input height */
+}
+
+:host ::ng-deep input.p-inputtext:focus,
+:host ::ng-deep .p-password-input:focus,
+:host ::ng-deep .p-select:not(.p-disabled).p-focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.35);
+  outline: none;
+}
+
+/* --- Footer and Button Styles (Copied) --- */
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e7dfd1;
+}
+
+:host ::ng-deep .p-button-wine {
+  background: var(--wine) !important;
+  border-color: var(--wine) !important;
+  color: var(--white) !important;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 0.8rem 1.8rem;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(92, 43, 46, 0.15);
+}
+
+:host ::ng-deep .p-button-wine:hover {
+  background: #4a2224 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(92, 43, 46, 0.25);
+}
+
+/* Add styles for error messages */
+.p-error {
+    font-size: 0.8rem;
+    color: #e74c3c; /* A standard error red */
+    margin-top: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: 1fr; /* Stack columns on smaller screens */
+  }
+
+  .form-container {
+    padding: 1.5rem;
+  }
+
+  .form-header h2 {
+    font-size: 1.6rem;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
