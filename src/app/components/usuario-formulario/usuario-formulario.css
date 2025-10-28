@@ -1,7 +1,3 @@
-/* src/app/components/usuario-formulario/usuario-formulario.css */
-
-/* --- COPY STYLES FROM libro-formulario.css HERE --- */
-/* Make sure to include the :host variables */
 :host {
   --beige: #ede6d7;
   --wine: #5c2b2e;
@@ -20,7 +16,7 @@
 
 
 .form-page-container {
-  max-width: 1200px;
+  max-width: 1200px; 
   margin: 0 auto;
   animation: fadeIn 0.5s ease-in-out;
 }
@@ -43,14 +39,14 @@
 
 .form-header h2 i {
   color: var(--gold);
-  font-size: 1.5rem;
+  font-size: 1.5rem; 
 }
 
 .form-header p {
   color: #6b5e5f;
   font-size: 1rem;
   margin-top: 0.5rem;
-  padding-left: 2.5rem; /* Adjust if icon size changes */
+  padding-left: 2.5rem; 
 }
 
 
@@ -69,24 +65,21 @@
 
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Two columns */
+  grid-template-columns: 1fr 1fr;
   gap: 2rem 3rem;
 }
 
 .form-column {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; /* Space between fields in a column */
+  gap: 1.5rem;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; /* Space between label and input */
+  gap: 0.5rem;
 }
-
-/* If you need grouped fields side-by-side (like ISBN/Year in book form) */
-/* .field-group { ... } */
 
 label {
   font-weight: 600;
@@ -94,36 +87,50 @@ label {
   color: var(--wine);
 }
 
-/* --- Input Styles (Copied) --- */
+
 :host ::ng-deep input.p-inputtext,
-:host ::ng-deep .p-password-input, /* Added for password */
-:host ::ng-deep .p-select {
+:host ::ng-deep .p-password-input,
+:host ::ng-deep .p-select .p-select-label { 
   border: 1px solid #d5cbbd;
   border-radius: 10px;
   color: var(--wine);
   transition: all 0.3s ease;
   font-size: 0.95rem;
-  padding: 0.7rem 1rem; /* Adjusted padding slightly */
+  padding: 0.7rem 1rem; 
   width: 100%;
+  box-sizing: border-box; 
 }
-/* Ensure password component takes full width */
+
 :host ::ng-deep .p-password {
-    width: 100%;
+  width: 100%;
+  display: block;
 }
 
 :host ::ng-deep .p-select {
-  min-height: calc(1.4rem + 1.4rem + 2px); /* Match input height */
+  width: 100%;
+  border: 1px solid #d5cbbd; 
+  border-radius: 10px; 
 }
+:host ::ng-deep .p-select .p-select-label {
+    border: none; 
+    padding: 0.7rem 1rem; 
+}
+
 
 :host ::ng-deep input.p-inputtext:focus,
 :host ::ng-deep .p-password-input:focus,
 :host ::ng-deep .p-select:not(.p-disabled).p-focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.35);
+  border-color: var(--gold) !important; 
+  box-shadow: 0 0 0 1px var(--gold) !important; 
   outline: none;
 }
 
-/* --- Footer and Button Styles (Copied) --- */
+:host ::ng-deep .p-select.p-focus {
+    box-shadow: 0 0 0 1px var(--gold) !important;
+}
+
+
+
 .form-footer {
   display: flex;
   justify-content: flex-end;
@@ -150,17 +157,28 @@ label {
   box-shadow: 0 6px 18px rgba(92, 43, 46, 0.25);
 }
 
-/* Add styles for error messages */
+
 .p-error {
     font-size: 0.8rem;
-    color: #e74c3c; /* A standard error red */
+    color: #ef4444; 
     margin-top: 0.25rem;
 }
 
-/* Responsive adjustments */
+
+:host ::ng-deep .p-toast {
+  top: 1.5rem;
+  right: 1.5rem;
+}
+
+:host ::ng-deep .p-toast-message {
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+
 @media (max-width: 900px) {
   .form-grid {
-    grid-template-columns: 1fr; /* Stack columns on smaller screens */
+    grid-template-columns: 1fr;
   }
 
   .form-container {
@@ -171,6 +189,7 @@ label {
     font-size: 1.6rem;
   }
 }
+
 
 @keyframes fadeIn {
   from {

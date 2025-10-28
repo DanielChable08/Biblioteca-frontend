@@ -1,25 +1,30 @@
 <p-toast></p-toast>
-<div class="form-page-container"> <div class="form-header">      <h2><i class="pi pi-user-plus"></i> Agregar Nuevo Usuario</h2>
-    <p>Completa la información para registrar un nuevo usuario en el sistema.</p>
+<div class="form-page-container">
+  <div class="form-header">
+    <h2 *ngIf="!isEditMode"><i class="pi pi-user-plus"></i> Agregar Nuevo Usuario</h2>
+    <h2 *ngIf="isEditMode"><i class="pi pi-user-edit"></i> Editar Usuario</h2>
+    <p *ngIf="!isEditMode">Completa la información para registrar un nuevo usuario en el sistema.</p>
+    <p *ngIf="isEditMode">Modifica la información del usuario seleccionado.</p>
   </div>
 
-  <form [formGroup]="usuarioForm" (ngSubmit)="onSubmit()" class="form-container"> <div class="form-grid"> <div class="form-column">
+  <form [formGroup]="usuarioForm" (ngSubmit)="onSubmit()" class="form-container">
+    <div class="form-grid"> <div class="form-column">
         <div class="field">
-          <label for="nombre">Nombre(s) *</label>
+          <label for="nombre">Nombre(s) <label class="text red">*</label></label>
           <input id="nombre" pInputText formControlName="nombre" placeholder="Nombre del usuario">
           <small class="p-error" *ngIf="isFieldInvalid('nombre')">El nombre es requerido.</small>
         </div>
         <div class="field">
-          <label for="apPaterno">Apellido Paterno *</label>
+          <label for="apPaterno">Apellido Paterno <label class="text red">*</label></label>
           <input id="apPaterno" pInputText formControlName="apPaterno" placeholder="Apellido paterno">
            <small class="p-error" *ngIf="isFieldInvalid('apPaterno')">El apellido paterno es requerido.</small>
         </div>
         <div class="field">
-          <label for="apMaterno">Apellido Materno</label>
+          <label for="apMaterno">Apellido Materno <label class="text red">*</label></label>
           <input id="apMaterno" pInputText formControlName="apMaterno" placeholder="Apellido materno (opcional)">
         </div>
          <div class="field">
-          <label for="telefono">Teléfono *</label>
+          <label for="telefono">Teléfono <label class="text red">*</label></label>
           <input id="telefono" pInputText formControlName="telefono" placeholder="Ej: 9991234567" maxlength="10">
            <small class="p-error" *ngIf="isFieldInvalid('telefono')">Ingresa un teléfono válido de 10 dígitos.</small>
         </div>
@@ -27,23 +32,25 @@
 
       <div class="form-column">
         <div class="field">
-          <label for="email">Correo Electrónico *</label>
+          <label for="email">Correo Electrónico <label class="text red">*</label></label>
           <input id="email" pInputText formControlName="email" type="email" placeholder="usuario@ejemplo.com">
            <small class="p-error" *ngIf="isFieldInvalid('email')">Ingresa un correo válido.</small>
         </div>
         <div class="field">
-          <label for="password">Contraseña *</label>
-          <p-password inputId="password" formControlName="password" placeholder="Mínimo 6 caracteres" [feedback]="false" [toggleMask]="true" styleClass="w-full"></p-password>
-           <small class="p-error" *ngIf="isFieldInvalid('password')">La contraseña es requerida (mín. 6 caracteres).</small>
+          <label for="password">Contraseña <label class="text red">*</label></label> <span *ngIf="isEditMode">(Dejar en blanco para no cambiar)</span>
+          <p-password inputId="password" formControlName="password" placeholder="{{ isEditMode ? 'Nueva contraseña (opcional)' : 'Mínimo 6 caracteres' }}" [feedback]="false" [toggleMask]="true" styleClass="w-full"></p-password>
+           <small class="p-error" *ngIf="isFieldInvalid('password') && !isEditMode">La contraseña es requerida (mín. 6 caracteres).</small>
+           <small class="p-error" *ngIf="isFieldInvalid('password') && isEditMode">La contraseña debe tener al menos 6 caracteres.</small>
         </div>
         <div class="field">
-          <label for="tipoPersona">Rol / Tipo de Usuario *</label>
-           <p-select id="tipoPersona" [options]="tiposPersona" formControlName="idTipoPersona" optionLabel="nombre" optionValue="id" placeholder="Selecciona un rol"></p-select>
+          <label for="tipoPersona">Rol / Tipo de Usuario <label class="text red">*</label></label>
+          <p-select id="tipoPersona" [options]="tiposPersona" formControlName="idTipoPersona" optionLabel="nombre" optionValue="id" placeholder="Selecciona un rol"></p-select>
           <small class="p-error" *ngIf="isFieldInvalid('idTipoPersona')">Debes seleccionar un rol.</small>
         </div>
       </div>
-    </div> <div class="form-footer"> <p-button label="Cancelar" styleClass="p-button-wine" icon="pi pi-times-circle" (click)="cancelar()"></p-button>
-      <p-button label="Guardar Usuario" type="submit" [loading]="isSubmitting" icon="pi pi-check" styleClass="p-button-wine" [disabled]="usuarioForm.invalid"></p-button>
-    </div>
+
+    </div> <div class="form-footer">
+      <p-button label="Cancelar" styleClass="p-button-wine" icon="pi pi-times-circle" (click)="cancelar()"></p-button>
+      <p-button [label]="isEditMode ? 'Actualizar Usuario' : 'Guardar Usuario'" type="submit" [loading]="isSubmitting" icon="pi pi-check" styleClass="p-button-wine" [disabled]="usuarioForm.invalid && !isEditMode"></p-button> </div>
   </form>
 </div>

@@ -131,8 +131,11 @@ export default class BibliotecarioComponent implements OnInit {
 
 
   agregarLibro(): void {
-
     this.router.navigate(['/admin/libros/nuevo']);
+  }
+
+  UsuariosList(): void {
+    this.router.navigate(['/admin/usuarios']);
   }
 
   filtrarLibros(): void {
