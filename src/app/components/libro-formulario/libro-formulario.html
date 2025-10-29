@@ -1,106 +1,368 @@
 <p-toast></p-toast>
-<div class="form-page-container">
-  <div class="form-header">
-    <h2 *ngIf="!isEditMode"><i class="pi pi-plus-circle"></i> Agregar Nuevo Libro</h2>
-    <h2 *ngIf="isEditMode"><i class="pi pi-pencil"></i> Editar Libro</h2>
-    <p *ngIf="!isEditMode">Completa la información para registrar un nuevo título en el catálogo.</p>
-    <p *ngIf="isEditMode">Modifica la información del libro seleccionado.</p>
+<div class="m-0 p-0">
+  <div class="header-container">
+    <div class="form-header-container">
+      <div class="form-header">
+        <h2 *ngIf="!isEditMode"><i class="pi pi-plus-circle"></i> Agregar Nuevo Libro</h2>
+        <h2 *ngIf="isEditMode"><i class="pi pi-pencil"></i> Editar Libro</h2>
+        <p *ngIf="!isEditMode">
+          Completa la información para registrar un nuevo título en el catálogo.
+        </p>
+        <p *ngIf="isEditMode">Modifica la información del libro seleccionado.</p>
+      </div>
+    </div>
   </div>
-
-  <form [formGroup]="libroForm" (ngSubmit)="onSubmit()" class="form-container">
-    <div class="form-grid">
-      <div class="form-column">
-        <div class="field">
-          <label for="titulo">Título del Libro *</label>
-          <input id="titulo" pInputText formControlName="titulo">
-        </div>
-        <div class="field">
-          <label for="autores">Autor(es) *</label>
-          <div class="p-inputgroup">
-            <p-multiSelect id="autores" [options]="autores" formControlName="idAutores" optionLabel="nombre" optionValue="id" display="chip" placeholder="Selecciona"></p-multiSelect>
-            <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('autor')" pTooltip="Agregar autor" tooltipPosition="top"></button>
-          </div>
-        </div>
-        <div class="field">
-          <label for="resumen">Resumen *</label>
-          <textarea id="resumen" pInputTextarea formControlName="resumen" [rows]="5" [autoResize]="true"></textarea>
-        </div>
-        <div class="field">
-          <label for="imagen">URL de la Portada</label>
-          <div class="p-inputgroup">
-            <span class="p-inputgroup-addon"><i class="pi pi-link"></i></span>
-            <input 
-              id="imagen" 
-              pInputText 
-              formControlName="imagen" 
-              placeholder="https://ejemplo.com/portada.jpg"
+  <div class="form-page-container">
+    <form [formGroup]="libroForm" (ngSubmit)="onSubmit()" class="form-container">
+      <div class="form-grid">
+        <div class="form-column">
+          <div class="field">
+            <label for="titulo">Título del Libro <label class="text red">*</label></label>
+            <input
+              class="form-comp"
+              id="titulo"
+              pInputText
+              formControlName="titulo"
+              placeholder="Ej: 'Demian'"
+            />
+            <div
+              class="error-msg text red"
+              [@dropIn]
+              *ngIf="
+                (libroForm.get('titulo')?.dirty || isSubmitting) && libroForm.get('titulo')?.invalid
+              "
             >
+              <small *ngIf="libroForm.get('titulo')?.errors?.['required']">
+                El título es obligatorio.
+              </small>
+            </div>
           </div>
-      </div>
-    </div>
+          <div class="field">
+            <label for="autores">Autor(es) <label class="text red">*</label></label>
+            <div class="p-inputgroup">
+              <p-multiSelect
+                id="autores"
+                class="form-comp full-w"
+                [options]="autores"
+                formControlName="idAutores"
+                optionLabel="displayName"
+                optionValue="id"
+                display="chip"
+                placeholder="Seleccionar autor(es)"
+                emptyFilterMessage="Sin coincidencias encontradas"
+                [ngClass]="{
+                  'p-invalid':
+                    libroForm.get('idAutores')?.invalid &&
+                    (libroForm.get('idAutores')?.dirty || isSubmitting)
+                }"
+                [selectedItemsLabel]="'{0} seleccionados'"
+              >
+                > ></p-multiSelect
+              >
+              <button
+                type="button"
+                pButton
+                icon="pi pi-plus"
+                class="btn-primary"
+                (click)="abrirModalAgregar('autor')"
+                pTooltip="Agregar autor"
+                tooltipPosition="top"
+              ></button>
+            </div>
+            <div
+              class="error-msg text red"
+              [@dropIn]
+              *ngIf="
+                (libroForm.get('idAutores')?.dirty || isSubmitting) &&
+                libroForm.get('idAutores')?.invalid
+              "
+            >
+              <small *ngIf="libroForm.get('idAutores')?.errors?.['required']">
+                Seleccionar al menos un autor es obligatorio.
+              </small>
+            </div>
+          </div>
+          <div class="field">
+            <label for="resumen">Resumen <label class="text red">*</label></label>
+            <textarea
+              id="resumen"
+              class="form-comp pb-3"
+              pInputTextarea
+              formControlName="resumen"
+              [rows]="7"
+              [autoResize]="true"
+              placeholder="Ej: 'En la historia del siglo XX es complicado encontrar autores más influyentes que Hermann Hesse. Sus libros han actuado como estímulo espiritual para diversas oleadas de jóvenes hartos de estar sujetos a unos patrones de vida demasiado estrechos. El legado de Hesse es una extensa, profunda y riquísima obra...'"
+            ></textarea>
+            <div
+              class="error-msg text red"
+              [@dropIn]
+              *ngIf="
+                (libroForm.get('resumen')?.dirty || isSubmitting) &&
+                libroForm.get('resumen')?.invalid
+              "
+            >
+              <small *ngIf="libroForm.get('resumen')?.errors?.['required']">
+                Escribir el resumen es obligatorio.
+              </small>
+            </div>
+          </div>
+          <div class="field">
+            <label for="imagen">URL de la Portada</label>
+            <div class="p-inputgroup">
+              <span class="p-inputgroup-addon pr-2"><i class="pi pi-link"></i></span>
+              <input
+                id="imagen"
+                pInputText
+                class="form-comp full-w"
+                formControlName="imagen"
+                placeholder="https://ejemplo.com/portada.jpg"
+              />
+            </div>
+          </div>
+        </div>
 
-      <div class="form-column">
-        <div class="field-group">
-          <div class="field"><label for="isbn">ISBN *</label><input id="isbn" pInputText formControlName="isbn"></div>
-          <div class="field"><label for="anho">Año *</label><p-inputNumber id="anho" formControlName="anho" [useGrouping]="false"></p-inputNumber></div>
-          <div class="field"><label for="paginas">Páginas *</label><p-inputNumber id="paginas" formControlName="paginas"></p-inputNumber></div>
-        </div>
-        <div class="field">
-          <label for="categoria">Categoría *</label>
-          <div class="p-inputgroup">
-            <p-select id="categoria" dataKey="id" [options]="categorias" formControlName="idCategoria" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select>
-            <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('categoria')" pTooltip="Agregar categoría" tooltipPosition="top"></button>
+        <div class="form-column">
+          <div>
+            <div
+              class="fields-row"
+              [ngClass]="{
+                'p-invalid':
+                  (libroForm.get('isbnDisplay')?.invalid &&
+                    (libroForm.get('isbnDisplay')?.dirty || isSubmitting)) ||
+                  (libroForm.get('anho')?.invalid &&
+                    (libroForm.get('anho')?.dirty || isSubmitting)) ||
+                  (libroForm.get('paginas')?.invalid &&
+                    (libroForm.get('paginas')?.dirty || isSubmitting))
+              }"
+            >
+              <div class="">
+                <label for="isbn">ISBN <label class="text red">*</label></label
+                ><input
+                  id="isbn"
+                  class="form-comp full-w"
+                  pInputText
+                  maxlength="17"
+                  formControlName="isbnDisplay"
+                  placeholder="Ej: '978-607-453-611-9'"
+                />
+              </div>
+              <div class="">
+                <label for="anho">Año <label class="text red">*</label></label>
+                <input
+                  id="anho"
+                  class="form-comp full-w"
+                  pInputText
+                  formControlName="anho"
+                  placeholder="Ej: '2019'"
+                  maxlength="4"
+                  (input)="soloNumeros($event)"
+                />
+              </div>
+              <div class="">
+                <label for="paginas">Páginas <label class="text red">*</label></label>
+                <input
+                  id="paginas"
+                  class="form-comp full-w"
+                  pInputText
+                  formControlName="paginas"
+                  placeholder="Ej: '183'"
+                  maxlength="4"
+                  (input)="soloNumeros($event)"
+                />
+              </div>
+            </div>
+            <div
+              class="text red mt-2"
+              [@dropIn]
+              *ngIf="
+                ((libroForm.get('isbnDisplay')?.dirty || isSubmitting) &&
+                  libroForm.get('isbnDisplay')?.invalid) ||
+                ((libroForm.get('anho')?.dirty || isSubmitting) &&
+                  libroForm.get('anho')?.invalid) ||
+                ((libroForm.get('paginas')?.dirty || isSubmitting) &&
+                  libroForm.get('paginas')?.invalid)
+              "
+            >
+              <small
+                *ngIf="(libroForm.get('isbnDisplay')?.errors?.['required']) || 
+              (libroForm.get('anho')?.errors?.['required']) || 
+              (libroForm.get('paginas')?.errors?.['required'])"
+              >
+                El ISBN, el año y las páginas son campos obligatorios. </small
+              ><br />
+              <small *ngIf="libroForm.get('isbn')?.errors?.['pattern']"
+                >El ISBN debe tener exactamente 13 dígitos.</small
+              >
+            </div>
           </div>
-        </div>
-        <div class="field">
-          <label for="editorial">Editorial *</label>
-          <div class="p-inputgroup">
-            <p-select id="editorial" [options]="editoriales" formControlName="idEditorial" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select>
-            <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('editorial')" pTooltip="Agregar editorial" tooltipPosition="top"></button>
+          <div class="field">
+            <label for="tipoLibro">Tipo de Libro <label class="text red">*</label></label>
+            <div class="p-inputgroup">
+              <p-select
+                id="tipoLibro"
+                [options]="tiposLibro"
+                class="form-comp full-w"
+                formControlName="idTipoLibro"
+                optionLabel="nombre"
+                optionValue="id"
+                placeholder="Seleccionar tipo"
+              ></p-select>
+              <button
+                type="button"
+                pButton
+                icon="pi pi-plus"
+                class="btn-primary"
+                (click)="abrirModalAgregar('tipoLibro')"
+                pTooltip="Agregar tipo de libro"
+                tooltipPosition="top"
+              ></button>
+            </div>
           </div>
-        </div>
-        <div class="field">
-          <label for="idioma">Idioma *</label>
-          <div class="p-inputgroup">
-            <p-select id="idioma" [options]="idiomas" formControlName="idIdioma" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select>
-            <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('idioma')" pTooltip="Agregar idioma" tooltipPosition="top"></button>
+          <div class="field">
+            <label for="categoria">Categoría <label class="text red">*</label></label>
+            <div class="p-inputgroup">
+              <p-select
+                id="categoria"
+                dataKey="id"
+                class="form-comp full-w"
+                [options]="categorias"
+                formControlName="idCategoria"
+                optionLabel="nombre"
+                optionValue="id"
+                placeholder="Seleccionar categoría"
+              ></p-select>
+              <button
+                type="button"
+                pButton
+                icon="pi pi-plus"
+                class="btn-primary"
+                (click)="abrirModalAgregar('categoria')"
+                pTooltip="Agregar categoría"
+                tooltipPosition="top"
+              ></button>
+            </div>
           </div>
-        </div>
-        <div class="field">
-          <label for="tipoLibro">Tipo de Libro *</label>
-          <div class="p-inputgroup">
-            <p-select id="tipoLibro" [options]="tiposLibro" formControlName="idTipoLibro" optionLabel="nombre" optionValue="id" placeholder="Selecciona"></p-select>
-            <button type="button" pButton icon="pi pi-plus" class="p-button-secondary" (click)="abrirModalAgregar('tipoLibro')" pTooltip="Agregar tipo de libro" tooltipPosition="top"></button>
+          <div class="field">
+            <label for="editorial">Editorial <label class="text red">*</label></label>
+            <div class="p-inputgroup">
+              <p-select
+                id="editorial"
+                [options]="editoriales"
+                formControlName="idEditorial"
+                class="form-comp full-w"
+                optionLabel="nombre"
+                optionValue="id"
+                placeholder="Seleccionar editorial"
+              ></p-select>
+              <button
+                type="button"
+                pButton
+                icon="pi pi-plus"
+                class="btn-primary"
+                (click)="abrirModalAgregar('editorial')"
+                pTooltip="Agregar editorial"
+                tooltipPosition="top"
+              ></button>
+            </div>
           </div>
-        </div>
-        <div class="field-group">
-          <div class="field"><label for="edicion">Edición</label><input id="edicion" pInputText formControlName="edicion"></div>
-          <div class="field"><label for="pasta">Tipo de Pasta</label><input id="pasta" pInputText formControlName="pasta"></div>
+          <div class="field">
+            <label for="idioma">Idioma <label class="text red">*</label></label>
+            <div class="p-inputgroup">
+              <p-select
+                id="idioma"
+                [options]="idiomas"
+                class="form-comp full-w"
+                formControlName="idIdioma"
+                optionLabel="nombre"
+                optionValue="id"
+                placeholder="Seleccionar idioma"
+              ></p-select>
+              <button
+                type="button"
+                pButton
+                icon="pi pi-plus"
+                class="btn-primary"
+                (click)="abrirModalAgregar('idioma')"
+                pTooltip="Agregar idioma"
+                tooltipPosition="top"
+              ></button>
+            </div>
+          </div>
+          <div class="field-group">
+            <div class="field">
+              <label for="edicion">Edición</label
+              ><input
+                id="edicion"
+                class="form-comp"
+                pInputText
+                formControlName="edicion"
+                placeholder="Ej: 'Primera edición: febrero de...'"
+                maxlength="50"
+              />
+            </div>
+            <div class="field">
+              <label for="pasta">Tipo de Pasta</label
+              ><input
+                id="pasta"
+                class="form-comp"
+                pInputText
+                formControlName="pasta"
+                placeholder="Ej: 'Dura'"
+                maxlength="50"
+              />
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <div class="form-footer">
-      <p-button label="Cancelar" styleClass="p-button-wine" icon="pi pi-times-circle" (click)="cancelar()"></p-button>
-      <p-button [label]="isEditMode ? 'Actualizar Libro' : 'Guardar Libro'" type="submit" [loading]="isSubmitting" icon="pi pi-check" styleClass="p-button-wine"></p-button>
-    </div>
-  </form>
+
+      <div class="form-footer">
+        <p-button label="Cancelar" styleClass="btn-info text" (click)="cancelar()"></p-button>
+        <p-button
+          [label]="isEditMode ? 'Actualizar Libro' : 'Guardar Libro'"
+          type="submit"
+          [loading]="isSubmitting"
+          icon="pi pi-check"
+          styleClass="btn-primary"
+        ></p-button>
+      </div>
+    </form>
+  </div>
 </div>
 
-<p-dialog [header]="'Agregar Nuevo ' + (catalogoSiendoAgregado | titlecase)" [(visible)]="displayCatalogoDialog" [modal]="true" [style]="{width: '450px'}">
+<p-dialog
+  [header]="'Agregar ' + (tituloDialog | titlecase)"
+  [(visible)]="displayCatalogoDialog"
+  [modal]="true"
+  [style]="{ width: '450px' }"
+>
   <form [formGroup]="catalogoForm" (ngSubmit)="guardarNuevoCatalogo()" class="mini-form">
     <div *ngIf="catalogoSiendoAgregado === 'autor'">
-      <div class="field"><label for="nombreAutor">Nombre(s) *</label><input id="nombreAutor" pInputText formControlName="nombre"></div>
-      <div class="field"><label for="apPaterno">Apellido Paterno *</label><input id="apPaterno" pInputText formControlName="apPaterno"></div>
-      <div class="field"><label for="apMaterno">Apellido Materno</label><input id="apMaterno" pInputText formControlName="apMaterno"></div>
+      <div class="field">
+        <label for="nombreAutor" class="m-0">Nombre(s) <label class="text red">*</label></label
+        ><input id="nombreAutor" class="form-comp" pInputText formControlName="nombre" />
+      </div>
+      <div class="field">
+        <label for="apPaterno" class="m-0">Apellido Paterno <label class="text red">*</label></label
+        ><input id="apPaterno" class="form-comp" pInputText formControlName="apPaterno" />
+      </div>
+      <div class="field">
+        <label for="apMaterno" class="m-0">Apellido Materno</label
+        ><input id="apMaterno" class="form-comp" pInputText formControlName="apMaterno" />
+      </div>
     </div>
     <div *ngIf="catalogoSiendoAgregado !== 'autor'" class="field">
-      <label for="nombreCatalogo">Nombre *</label>
-      <input id="nombreCatalogo" pInputText formControlName="nombre" autofocus>
+      <label for="nombreCatalogo" class="m-0">Nombre <label class="text red">*</label></label>
+      <input id="nombreCatalogo" class="form-comp" pInputText formControlName="nombre" autofocus />
     </div>
     <div class="form-footer">
-      <button type="button" pButton label="Cancelar" icon="pi pi-times-circle" styleClass="p-button-wine" (click)="displayCatalogoDialog=false"></button>
-      <button type="submit" pButton label="Guardar" icon="pi pi-check" styleClass="p-button-wine"></button>
+      <button
+        type="button"
+        pButton
+        label="Cancelar"
+        class="btn-info text"
+        (click)="displayCatalogoDialog = false"
+      ></button>
+      <button type="submit" pButton label="Guardar" icon="pi pi-check" class="btn-primary"></button>
     </div>
   </form>
 </p-dialog>

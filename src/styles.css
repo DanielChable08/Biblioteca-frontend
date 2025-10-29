@@ -29,6 +29,18 @@
   --slate-300: #cbd5e1dd;
   --slate-500: #64748b;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --p-checkbox-checked-background: #d4af37 !important;
+  --p-checkbox-checked-border-color: #d4af37 !important;
+  --p-checkbox-checked-hover-background: #cca832 !important;
+  --p-checkbox-checked-hover-border-color: #cca832 !important;
+
+  --p-inputtext-invalid-border-color: #c3002f !important;
+  --p-inputtext-invalid-placeholder-color: #c3002f !important;
+  --p-textarea-invalid-border-color: #c3002f !important;
+  --p-textarea-invalid-placeholder-color: #c3002f !important;
+  --p-multiselect-invalid-border-color: #c3002f !important;
+  --p-multiselect-invalid-placeholder-color: #c3002f !important;
 }
 
 /* Fondo Global */
@@ -45,6 +57,21 @@ body {
   width: 100%;
   flex: 1;
 }
+.w-60 {
+  width: 60%;
+}
+.w-50 {
+  width: 50%;
+}
+.w-40 {
+  width: 40%;
+}
+.w-25 {
+  width: 25%;
+}
+.w-20 {
+  width: 20%;
+}
 
 /*Estilos Chips*/
 .chip-compact {
@@ -53,10 +80,10 @@ body {
 
 .chip-admin {
   background: #d4af37 !important;
-  color: #5c2b2e !important;
+  color: var(--wine) !important;
 }
 .chip-admin .p-chip-icon.pi {
-  color: #5c2b2e !important;
+  color: var(--wine) !important;
 }
 
 /*Estilos Btn*/
@@ -173,63 +200,84 @@ button.ani-one:hover {
   font-weight: 700;
   font-size: 1.2rem;
   height: 65px;
-  color: #5c2b2e;
+  color: var(--wine);
 }
 /* Delete Dialog */
 .confirm-delete-dialog .p-dialog-header {
   color: var(--red-700);
 }
-/* Opcional: que el contenido tenga contraste */
 .confirm-delete-dialog .p-dialog-content {
   color: black;
 }
 
-/*Estilos Select*/
-.p-select.p-component {
+/*Estilos Select, MultiSelect*/
+.p-select.p-component,
+.p-multiselect.p-component:not(.p-invalid) {
   border-color: var(--slate-300) !important;
-  box-shadow: none !important;
 }
-.p-select:hover {
+.p-select:hover,
+.p-multiselect:hover {
   border-color: var(--slate-500) !important;
 }
 .p-placeholder.p-select-label {
+  font-size: 0.95rem;
   padding: 0.75rem 0.9rem;
   color: var(--slate-500) !important;
 }
 .p-select-label {
+  font-size: 0.95rem;
   padding: 0.75rem 0.9rem !important;
-  color: #5c2b2e !important;
+  color: var(--wine) !important;
 }
-.p-select-option[data-p-focused='true']:not([aria-selected='true']) {
+.p-select-label.ng-star-inserted {
+  font-size: 0.95rem;
+}
+.p-select-option[data-p-focused='true']:not([aria-selected='true']),
+.p-multiselect-option[data-p-focused='true']:not([aria-selected='true']) {
   background: var(--beig-transparent-5) !important;
   color: var(--wine) !important;
 }
-.p-select-option[data-p-focused='true']:hover {
+.p-select-option[data-p-focused='true']:hover,
+.p-multiselect-option[data-p-focused='true']:hover {
   background: var(--beige) !important;
   color: var(--wine) !important;
 }
-.p-select-option-selected {
+.p-select-option-selected,
+.p-multiselect-option-selected {
   background: var(--beige) !important;
   color: var(--wine) !important;
 }
-/*Form Select*/
-.form-comp.p-select:hover {
+/*Form Select, MultiSelect*/
+.form-comp.p-select:hover,
+.form-comp.p-multiselect:hover {
   border-color: var(--gold) !important;
   box-shadow: 0 0 6px var(--gold-tranqdesparent-4) !important;
 }
 
-/*Estilos Input*/
-.p-inputtext {
+/*Estilos Input y Textarea*/
+.p-inputtext,
+.p-textarea {
   color: var(--wine) !important;
 }
-input:hover {
+input:hover,
+.p-component.p-inputnumber:hover,
+.p-textarea:hover {
   border-color: var(--wine) !important;
 }
-input:focus {
+input:focus,
+.p-component.p-inputnumber:focus,
+.p-textarea:focus {
   border-color: var(--wine) !important;
+}
+input.form-comp:focus,
+.p-textarea.form-comp:focus,
+.form-comp.p-component.p-inputnumber .p-inputnumber-input:focus {
+  border-color: var(--gold) !important;
   box-shadow: 0 0 6px var(--gold-transparent-4) !important;
 }
-input.form-comp:hover {
+input.form-comp:hover,
+.p-textarea.form-comp:hover,
+.form-comp.p-component.p-inputnumber .p-inputnumber-input:hover {
   border-color: var(--gold) !important;
   box-shadow: 0 0 6px var(--gold-transparent-4) !important;
 }
@@ -237,4 +285,30 @@ input.form-comp:hover {
 .searchbar {
   height: 44px;
   padding: 0 15px 0 45px !important;
+}
+
+/*Estilos Multi-Select*/
+.p-multiselect-label.p-placeholder {
+  font-size: 0.95rem !important;
+  padding-top: 0.7rem !important;
+  padding-bottom: 0.7rem !important;
+}
+.p-multiselect-label:not(.p-invalid) {
+  font-size: 0.95rem !important;
+  padding: 0.7rem 0.7rem !important;
+  color: var(--wine);
+}
+.p-multiselect-chip.p-chip {
+  background-color: var(--beig-transparent-5);
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  color: var(--wine);
+}
+.p-chip-remove-icon.p-icon {
+  color: var(--wine);
+}
+
+/*Estilos TextArea*/
+.p-textarea.form-comp {
+  font-size: 0.95rem;
 }

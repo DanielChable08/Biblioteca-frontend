@@ -1,19 +1,9 @@
 :host {
-  --beige: #ede6d7;
-  --wine: #5c2b2e;
-  --gold: #d4af37;
-  --brown: #8b4513;
-  --gray: #c4c4c4;
-  --white: #ffffff;
-
   display: block;
   background-color: var(--beige);
   min-height: 100vh;
-  padding: 2rem 1rem;
-  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
   color: var(--wine);
 }
-
 
 .form-page-container {
   max-width: 1200px;
@@ -21,11 +11,20 @@
   animation: fadeIn 0.5s ease-in-out;
 }
 
-
 .form-header {
-  margin-bottom: 2rem;
   padding-bottom: 1rem;
   border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+  max-width: 1200px;
+}
+.form-header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 12px;
+  padding-bottom: 10px;
+}
+.header-container {
+  background-color: white;
+  margin-bottom: 2rem;
 }
 
 .form-header h2 {
@@ -35,6 +34,7 @@
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  margin-top: 0;
 }
 
 .form-header h2 i {
@@ -48,7 +48,6 @@
   margin-top: 0.5rem;
   padding-left: 2.5rem;
 }
-
 
 .form-container {
   background-color: var(--white);
@@ -87,71 +86,53 @@
   gap: 1rem;
 }
 
+.mini-form .field + .field {
+  border-top: 1px solid var(--slate-200);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
 label {
   font-weight: 600;
   font-size: 0.95rem;
   color: var(--wine);
 }
 
-
-:host ::ng-deep input.p-inputtext,
-:host ::ng-deep textarea.p-inputtextarea,
-:host ::ng-deep .p-multiselect,
-:host ::ng-deep .p-select,
-:host ::ng-deep .p-inputnumber-input {
-  border: 1px solid #d5cbbd;
-  border-radius: 10px;
-  color: var(--wine);
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-  padding: 0.7rem 2rem;
-  width: 100%;
+.fields-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 12px;
+  align-items: end;
 }
 
-:host ::ng-deep .p-multiselect,
-:host ::ng-deep .p-select {
-  min-height: 3rem;
-  width: 100%;
+.fields-row > div {
+  display: flex;
+  flex-direction: column;
 }
 
-:host ::ng-deep input.p-inputtext:focus,
-:host ::ng-deep textarea.p-inputtextarea:focus,
-:host ::ng-deep .p-inputnumber-input:focus,
-:host ::ng-deep .p-select:not(.p-disabled).p-focus,
-:host ::ng-deep .p-multiselect:not(.p-disabled).p-focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.35);
-  outline: none;
+.fields-row label {
+  margin-bottom: 8px;
+}
+.fields-row:not(.p-invalid) input {
+  margin-top: 8px;
+  margin-bottom: 16px;
+  transition: 1s;
 }
 
+:host ::ng-deep input.p-inputtext {
+  font-size: 0.95rem !important;
+  padding-top: 0.7rem !important;
+  padding-bottom: 0.7rem !important;
+}
 
 :host ::ng-deep .p-inputgroup {
   display: flex;
   align-items: center;
 }
 
-:host ::ng-deep .p-inputgroup .p-multiselect,
-:host ::ng-deep .p-inputgroup .p-select {
-  flex: 1;
-}
-
 :host ::ng-deep .p-inputgroup button.p-button {
-  background: var(--wine);
-  margin-left:5px;
-  border: none;
-  color: var(--white);
-  border-radius: 5%;
-  width: 2.4rem;
-  height: 2.4rem;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  margin-left: 5px;
 }
-
-:host ::ng-deep .p-inputgroup button.p-button:hover {
-  background: #55292b;
-  transform: translateY(-2px);
-}
-
 
 .form-footer {
   display: flex;
@@ -159,42 +140,12 @@ label {
   gap: 1rem;
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #e7dfd1;
+  border-top: 1px solid var(--slate-200);
 }
-
-:host ::ng-deep .p-button-wine {
-  background: var(--wine) !important;
-  border-color: var(--wine) !important;
-  color: var(--white) !important;
-  font-weight: 600;
-  border-radius: 10px;
-  padding: 0.8rem 1.8rem;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 4px 12px rgba(92, 43, 46, 0.15);
-}
-
-:host ::ng-deep .p-button-wine:hover {
-  background: #4a2224 !important;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(92, 43, 46, 0.25);
-}
-
-:host ::ng-deep .p-button-text.p-button-danger {
-  color: var(--wine) !important;
-  font-weight: 600;
-}
-
 
 :host ::ng-deep .p-dialog {
   border-radius: 16px !important;
   overflow: hidden;
-}
-
-:host ::ng-deep .p-dialog .p-dialog-header {
-  background: var(--wine);
-  color: var(--white);
-  font-weight: 600;
-  padding: 1rem 1.5rem;
 }
 
 :host ::ng-deep .p-dialog .p-dialog-content {
@@ -218,7 +169,6 @@ label {
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
-
 
 @media (max-width: 900px) {
   .form-grid {
