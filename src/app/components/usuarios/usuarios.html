@@ -1,0 +1,75 @@
+<p-toast></p-toast>
+<p-confirmDialog> <ng-template pTemplate="message" let-message>
+        <div class="flex flex-column align-items-center text-center gap-3">
+            <i [class]="message.icon" class="dialog-icon"></i>
+            <p class="dialog-message">{{ message.message }}</p>
+        </div>
+    </ng-template>
+</p-confirmDialog>
+
+
+  <div class="page-header">
+    <div class="header-left"> <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
+        <h2><i class="pi pi-users user-icon"></i> Gestión de Usuarios</h2>
+    </div>
+    <p-button label="Agregar Usuario" icon="pi pi-user-plus" styleClass="p-button-wine" (click)="agregarUsuario()"></p-button>
+  </div>
+
+<div class="admin-page-container">
+  <p-table #dtUsuarios [value]="usuarios" [loading]="loading" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
+           [globalFilterFields]="['nombre','apPaterno','apMaterno','email','tipoPersona.nombre']" styleClass="p-datatable-striped p-datatable-gridlines custom-table"
+           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios" [showCurrentPageReport]="true">
+
+    <ng-template pTemplate="caption">
+      <div class="table-header">
+        <span>Lista de Usuarios</span>
+        <div class="filter-container">
+           <span class="p-input-icon-left">
+              <i class="pi pi-search"></i>
+              <input pInputText type="text" [(ngModel)]="globalFilter" (input)="applyFilterGlobal(dtUsuarios, $event)" placeholder="Buscar..." class="table-search-input" /> </span>
+           <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtUsuarios)" pTooltip="Limpiar filtro"></p-button> </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre"></p-sortIcon></th>
+        <th pSortableColumn="email">Email <p-sortIcon field="email"></p-sortIcon></th>
+        <th pSortableColumn="telefono">Teléfono <p-sortIcon field="telefono"></p-sortIcon></th>
+        <th pSortableColumn="tipoPersona.nombre">Rol <p-sortIcon field="tipoPersona.nombre"></p-sortIcon></th>
+        <th style="width: 10rem;">Acciones</th> </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-usuario>
+      <tr>
+        <td>{{ usuario.nombre }} {{ usuario.apPaterno }} {{ usuario.apMaterno || '' }}</td>
+        <td>{{ usuario.email }}</td>
+        <td>{{ usuario.telefono }}</td>
+        <td>
+          <span class="user-role-badge">
+            {{ usuario.tipoPersona?.nombre || 'N/A' }}
+          </span>
+        </td>
+        <td>
+          <div class="table-actions">
+            <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" pTooltip="Editar" (click)="editarUsuario(usuario)"></button>
+            <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" pTooltip="Eliminar" (click)="eliminarUsuario(usuario)"></button>
+            </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5" class="text-center empty-message">No se encontraron usuarios.</td>
+      </tr>
+    </ng-template>
+
+     <ng-template pTemplate="loadingbody">
+        <tr>
+            <td colspan="5" class="text-center loading-message">Cargando usuarios...</td>
+        </tr>
+    </ng-template>
+
+  </p-table>
+</div>
