@@ -61,6 +61,14 @@
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.header-user-section:hover {
+  background-color: var(--beige);
 }
 
 .user-text {
@@ -647,4 +655,58 @@
   .custom-filter-dropdown-container {
     min-width: auto;
   }
+}
+
+/* ========================================= */
+/* === ESTILOS PARA EL MENÚ DE CATÁLOGOS === */
+/* ========================================= */
+
+:host ::ng-deep .p-menu.p-component {
+    background: var(--white);
+    border: 1px solid var(--gray);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(92, 43, 46, 0.15);
+    padding: 0.5rem 0;
+    margin-top: 0.5rem;
+}
+
+:host ::ng-deep .p-menu .p-menuitem {
+    margin: 0;
+}
+
+:host ::ng-deep .p-menu .p-menuitem-link {
+    color: var(--wine);
+    padding: 0.75rem 1.25rem;
+    transition: background-color 0.2s;
+}
+
+:host ::ng-deep .p-menu .p-menuitem-link:hover {
+    background-color: var(--beige);
+}
+
+:host ::ng-deep .p-menu .p-menuitem-icon {
+    color: var(--wine);
+    margin-right: 0.75rem;
+}
+
+:host ::ng-deep .p-menu .p-menuitem-text {
+    font-weight: 500;
+}
+
+:host ::ng-deep .p-menu .p-menuitem.menu-header .p-menuitem-text {
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    padding: 0.5rem 1.25rem 0.25rem 1.25rem;
+}
+
+:host ::ng-deep .p-menu .p-menuitem.menu-header .p-menuitem-link:hover {
+    background-color: transparent !important;
+    cursor: default;
+}
+
+:host ::ng-deep .p-menu .p-menu-separator {
+    border-top: 1px solid var(--beige);
+    margin: 0.5rem 0;
 }

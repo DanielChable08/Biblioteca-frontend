@@ -1,0 +1,90 @@
+<p-toast></p-toast>
+<p-confirmDialog>
+    <ng-template pTemplate="message" let-message>
+        <div class="flex flex-column align-items-center text-center gap-3">
+            <i [class]="message.icon" class="dialog-icon"></i>
+            <p class="dialog-message">{{ message.message }}</p>
+        </div>
+    </ng-template>
+</p-confirmDialog>
+
+<div class="admin-page-container">
+  
+  <div class="header-container">
+    <div class="form-header-container">
+      <div class="form-header page-header-layout">
+        <div class="header-left">
+          <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
+          <h2><i class="pi pi-address-book user-icon"></i> Gestión de Préstamos</h2>
+        </div>
+        <div class="header-right">
+          <p-button label="Nuevo Préstamo" icon="pi pi-plus" styleClass="p-button-wine" (click)="agregarPrestamo()"></p-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p-table #dtPrestamos [value]="prestamos" [loading]="loading" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
+           [globalFilterFields]="['lector.nombre', 'lector.apPaterno', 'bibliotecario.nombre', 'estadoPrestamo.nombre', 'fechaPrestamo']" 
+           styleClass="p-datatable-striped p-datatable-gridlines custom-table"
+           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} préstamos" [showCurrentPageReport]="true">
+
+    <ng-template pTemplate="caption">
+      <div class="table-header">
+        <span>Lista de Préstamos</span>
+        <div class="filter-container">
+           <span class="p-input-icon-left">
+              <i class="pi pi-search"></i>
+              <input pInputText type="text" [(ngModel)]="globalFilter" (input)="applyFilterGlobal(dtPrestamos, $event)" placeholder="Buscar..." class="table-search-input" />
+           </span>
+           <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtPrestamos)" pTooltip="Limpiar filtro"></p-button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="lector.nombre">Lector <p-sortIcon field="lector.nombre"></p-sortIcon></th>
+        <th pSortableColumn="bibliotecario.nombre">Bibliotecario <p-sortIcon field="bibliotecario.nombre"></p-sortIcon></th>
+        <th pSortableColumn="fechaPrestamo">Fecha Préstamo <p-sortIcon field="fechaPrestamo"></p-sortIcon></th>
+        <th pSortableColumn="fechaDevolucion">Fecha Devolución <p-sortIcon field="fechaDevolucion"></p-sortIcon></th>
+        <th pSortableColumn="estadoPrestamo.nombre">Estado <p-sortIcon field="estadoPrestamo.nombre"></p-sortIcon></th>
+        <th style="width: 10rem;">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-prestamo>
+      <tr>
+        <td>{{ prestamo.lector?.nombre }} {{ prestamo.lector?.apPaterno }}</td>
+        <td>{{ prestamo.bibliotecario?.nombre }} {{ prestamo.bibliotecario?.apPaterno }}</td>
+        <td>{{ prestamo.fechaPrestamo | date:'dd/MM/yyyy' }}</td>
+        <td>{{ prestamo.fechaDevolucion | date:'dd/MM/yyyy' }}</td>
+        <td>
+          <span class="user-role-badge" [ngClass]="getEstadoClass(prestamo.estadoPrestamo?.nombre)">
+            {{ prestamo.estadoPrestamo?.nombre || 'N/A' }}
+          </span>
+        </td>
+        <td>
+          <div class="table-actions">
+            <button pButton icon="pi pi-eye" class="action-btn-compact view-btn" pTooltip="Ver Detalles" (click)="verDetalles(prestamo)"></button>
+            <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" pTooltip="Editar" (click)="editarPrestamo(prestamo)"></button>
+            <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" pTooltip="Anular" (click)="eliminarPrestamo(prestamo)"></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="6" class="text-center empty-message">No se encontraron préstamos.</td>
+      </tr>
+    </ng-template>
+
+     <ng-template pTemplate="loadingbody">
+        <tr>
+            <td colspan="6" class="text-center loading-message">Cargando préstamos...</td>
+        </tr>
+    </ng-template>
+
+  </p-table>
+</div>

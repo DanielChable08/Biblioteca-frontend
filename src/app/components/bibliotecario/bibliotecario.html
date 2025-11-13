@@ -14,7 +14,11 @@
         <div class="brand-subtitle">Panel de administración del catálogo físico</div>
       </div>
     </div>
-    <div class="header-user-section">
+    
+    <div class="header-user-section" 
+         (click)="menu.toggle($event)"
+         pTooltip="Catálogos y Opciones" 
+         tooltipPosition="bottom">
       <div class="user-text">
         <span class="user-role">Bibliotecario(a)</span>
         <span class="user-name">Bibliotecario</span>
@@ -22,6 +26,8 @@
       <div class="user-avatar">B</div>
     </div>
   </div>
+  
+  <p-menu #menu [model]="catalogMenuItems" [popup]="true" [appendTo]="'body'"></p-menu>
 
   <div class="search-and-stats-wrapper">
     <div class="search-section">
@@ -96,6 +102,7 @@
           label="Prestamos"
           icon="pi pi-book"
           class="btn-primary outlined ani-one"
+          (click)="PrestamosList()"
         ></button>
         <button
           pButton
@@ -220,7 +227,7 @@
         </p>
         <span class="book-category-compact" [title]="libro.categoria?.nombre">
           {{ libro.categoria?.nombre | slice : 0 : 22
-          }}{{ libro.categoria!.nombre.length > 22 ? '...' : '' }}
+          }}{{ (libro.categoria?.nombre?.length || 0) > 22 ? '...' : '' }}
         </span>
 
         <div class="book-details-compact">

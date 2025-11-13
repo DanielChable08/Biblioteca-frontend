@@ -1,3 +1,6 @@
+/* Pega aquí TODO el CSS de usuario-lista (el que me diste en el prompt) */
+/* ... (todos los estilos de .header-container, .form-header, .admin-page-container, .custom-table, .action-btn-compact, etc.) ... */
+
 :host {
   --wine: #5C2B2E;
   --gold: #D4AF37;
@@ -8,8 +11,7 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-
-
+/* --- Estilos de Encabezado (Copiados de usuario-lista) --- */
 .header-container {
   background-color: white;
   margin-bottom: 2rem;
@@ -48,57 +50,22 @@
 
 .form-header h2 i {
   color: var(--gold);
-  font-size: 2.5rem;
+  font-size: 2.5rem; /* Ajustado */
 }
-
-.back-button {
-  color: var(--wine);
-  font-size: 1.2rem;
-  transition: color 0.3s;
-}
-
-.back-button:hover {
-  color: var(--gold);
-}
-
-.header-right .p-button-wine {
-  background-color: var(--wine);
-  border: none;
-  color: white;
-  font-weight: 600;
-  border-radius: 10px;
-  transition: background-color 0.3s, transform 0.2s;
-}
-
-.header-right .p-button-wine:hover {
-  background-color: var(--gold);
-  color: var(--wine);
-  transform: scale(1.03);
-}
-
-
-
-.admin-page-container {
-  padding: 2rem;
-  background-color: var(--beige);
-  min-height: calc(100vh - 4rem); 
-}
-
-
 
 .back-button {
   color: var(--wine) !important;
   margin-right: 0.5rem; 
 }
 .back-button:hover {
-    background-color: rgba(92, 43, 46, 0.1) !important;
+  background-color: rgba(92, 43, 46, 0.1) !important;
 }
 
 .user-icon{
-  font-size: 2rem;
+  font-size: 2rem; /* Heredado de usuario-lista */
 }
 
-
+/* Botón principal (p-button-wine) */
 :host ::ng-deep .p-button-wine {
   background: var(--wine) !important;
   border-color: var(--wine) !important;
@@ -112,14 +79,20 @@
   transform: translateY(-1px); 
 }
 
+/* --- Estilos de Tabla (Copiados de usuario-lista) --- */
+.admin-page-container {
+  padding: 2rem;
+  background-color: var(--beige);
+  min-height: calc(100vh - 4rem); 
+}
 
 :host ::ng-deep .custom-table.p-datatable { 
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 3px 12px rgba(92, 43, 46, 0.08);
   border: 1px solid var(--gray);
+  margin: 0; /* Quitamos el margen para que .admin-page-container controle el padding */
 }
-
 
 :host ::ng-deep .custom-table .p-datatable-header {
   background-color: var(--white);
@@ -145,7 +118,6 @@
     gap: 0.8rem; 
 }
 
-
 :host ::ng-deep .table-search-input.p-inputtext {
   border: 1px solid var(--gray) !important;
   border-radius: 8px !important; 
@@ -156,7 +128,6 @@
   border-color: var(--gold) !important;
   box-shadow: 0 0 0 1px var(--gold) !important;
 }
-
 
 :host ::ng-deep .clear-filter-button.p-button.p-button-outlined {
   color: var(--wine) !important;
@@ -174,7 +145,6 @@
   border-color: var(--wine) !important;
 }
 
-
 :host ::ng-deep .custom-table .p-datatable-thead > tr > th {
   background-color: #f8f6f2; 
   color: var(--wine);
@@ -182,18 +152,15 @@
   border-color: var(--gray) !important;
 }
 
-
 :host ::ng-deep .custom-table .p-datatable-tbody > tr > td {
   border-color: #e0d8c5 !important;
   color: var(--brown);
   vertical-align: middle;
 }
 
-
-:host ::ng-deep .custom-table .p-datatable-tbody > tr:hover {
+:host ::ng-deep .custom-table .p-datatable-tbody > tr:not(.p-datatable-emptymessage):hover {
     background-color: #f4ecd7 !important; 
 }
-
 
 :host ::ng-deep .custom-table .p-paginator {
     background-color: var(--white);
@@ -206,14 +173,14 @@
     color: var(--white);
 }
 
-
 .empty-message, .loading-message {
     color: var(--gray);
     font-style: italic;
     padding: 2rem;
+    text-align: center; /* Asegura centrado */
 }
 
-
+/* Badge de Rol (Copiado de usuario-lista) */
 .user-role-badge {
   background: var(--gold);
   color: var(--wine);
@@ -225,7 +192,7 @@
   text-transform: capitalize;
 }
 
-
+/* Botones de Acción (Copiados de usuario-lista) */
 .table-actions {
   display: flex;
   justify-content: center;
@@ -247,22 +214,44 @@
   cursor: pointer;
 }
 
-
 .action-btn-compact.edit-btn { color: var(--wine) !important; }
 .action-btn-compact.delete-btn { color: var(--wine) !important; }
-
+.action-btn-compact.view-btn { color: var(--wine) !important; } /* Para el botón de "ver detalles" */
 
 .action-btn-compact:hover {
   background: var(--beige) !important;
   transform: scale(1.15);
 }
 
+/* --- NUEVOS ESTILOS PARA ESTADOS DE PRÉSTAMO --- */
+/* (Sobreescribe el .user-role-badge genérico) */
 
+.user-role-badge.status-activo {
+  background-color: #bbf7d0; /* Verde */
+  color: #166534;
+}
+.user-role-badge.status-devuelto {
+  background-color: #e5e7eb; /* Gris */
+  color: #4b5563;
+}
+.user-role-badge.status-atrasado {
+  background-color: #fecaca; /* Rojo */
+  color: #b91c1c;
+}
+.user-role-badge.status-desconocido {
+  background-color: var(--gray);
+  color: var(--white);
+}
+
+/* --- Media Queries (Copiadas de usuario-lista) --- */
 @media (max-width: 768px) {
     .admin-page-container {
         padding: 1rem;
     }
-    .page-header {
+    .form-header-container {
+        padding: 0 1rem; /* Ajusta padding en móvil */
+    }
+    .form-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
@@ -280,7 +269,7 @@
         font-size: 0.9rem; 
         padding: 0.6rem 0.5rem; 
     }
-    .action-buttons {
+    .table-actions {
         gap: 0.2rem;
     }
 }

@@ -1,0 +1,386 @@
+<p-toast></p-toast>
+
+<div class="header-container">
+  <div class="form-header-container">
+    <div class="form-header page-header">
+      <div class="header-left">
+        <button
+          pButton
+          icon="pi pi-arrow-left"
+          class="p-button-text back-button"
+          (click)="regresar()"
+          pTooltip="Regresar"
+          tooltipPosition="bottom">
+        </button>
+        <h2>
+          <i class="pi pi-book"></i>
+          {{ isEditMode ? 'Editar Préstamo' : 'Nuevo Préstamo' }}
+        </h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="form-page-container">
+  <form [formGroup]="prestamoForm" (ngSubmit)="onSubmit()" class="form-container">
+    
+    <!-- INFORMACIÓN DEL PRÉSTAMO -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <i class="pi pi-info-circle"></i>
+        Información del Préstamo
+      </h3>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label for="fechaPrestamo">
+            <i class="pi pi-calendar"></i> Fecha de Préstamo <span class="required">*</span>
+          </label>
+          <p-datePicker
+            id="fechaPrestamo"
+            formControlName="fechaPrestamo"
+            [showIcon]="true"
+            dateFormat="yy-mm-dd"
+            placeholder="Selecciona la fecha"
+            appendTo="body"
+            [showTime]="true"
+            hourFormat="24"
+            styleClass="w-full">
+          </p-datePicker>
+          <small class="p-error" *ngIf="prestamoForm.get('fechaPrestamo')?.invalid && prestamoForm.get('fechaPrestamo')?.touched">
+            La fecha de préstamo es requerida
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="fechaLimite">
+            <i class="pi pi-calendar"></i> Fecha Límite <span class="required">*</span>
+          </label>
+          <p-datePicker
+            id="fechaLimite"
+            formControlName="fechaLimite"
+            [showIcon]="true"
+            dateFormat="yy-mm-dd"
+            placeholder="Selecciona la fecha límite"
+            appendTo="body"
+            [showTime]="true"
+            hourFormat="24"
+            [minDate]="minFechaLimite"
+            styleClass="w-full">
+          </p-datePicker>
+          <small class="p-error" *ngIf="prestamoForm.get('fechaLimite')?.invalid && prestamoForm.get('fechaLimite')?.touched">
+            La fecha límite es requerida
+          </small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label for="bibliotecario">
+            <i class="pi pi-user"></i> Bibliotecario <span class="required">*</span>
+          </label>
+          <div class="p-inputgroup">
+            <p-select
+              id="bibliotecario"
+              [options]="bibliotecarios"
+              formControlName="idBibliotecario"
+              optionLabel="nombreCompleto"
+              optionValue="id"
+              placeholder="Selecciona un bibliotecario"
+              [filter]="true"
+              filterBy="nombreCompleto"
+              appendTo="body"
+              styleClass="w-full">
+              <ng-template let-persona pTemplate="item">
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-user"></i>
+                  <span>{{ persona.nombre }} {{ persona.apPaterno }} {{ persona.apMaterno }}</span>
+                </div>
+              </ng-template>
+            </p-select>
+            <button
+              type="button"
+              pButton
+              icon="pi pi-plus"
+              class="p-button-wine btn-add-catalog"
+              pTooltip="Agregar bibliotecario"
+              (click)="abrirModalAgregar('bibliotecario')">
+            </button>
+          </div>
+          <small class="p-error" *ngIf="prestamoForm.get('idBibliotecario')?.invalid && prestamoForm.get('idBibliotecario')?.touched">
+            El bibliotecario es requerido
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="lector">
+            <i class="pi pi-users"></i> Lector <span class="required">*</span>
+          </label>
+          <div class="p-inputgroup">
+            <p-select
+              id="lector"
+              [options]="lectores"
+              formControlName="idLector"
+              optionLabel="nombreCompleto"
+              optionValue="id"
+              placeholder="Selecciona un lector"
+              [filter]="true"
+              filterBy="nombreCompleto"
+              appendTo="body"
+              styleClass="w-full">
+              <ng-template let-persona pTemplate="item">
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-user"></i>
+                  <span>{{ persona.nombre }} {{ persona.apPaterno }} {{ persona.apMaterno }}</span>
+                </div>
+              </ng-template>
+            </p-select>
+            <button
+              type="button"
+              pButton
+              icon="pi pi-plus"
+              class="p-button-wine btn-add-catalog"
+              pTooltip="Agregar lector"
+              (click)="abrirModalAgregar('lector')">
+            </button>
+          </div>
+          <small class="p-error" *ngIf="prestamoForm.get('idLector')?.invalid && prestamoForm.get('idLector')?.touched">
+            El lector es requerido
+          </small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label for="estadoPrestamo">
+            <i class="pi pi-info-circle"></i> Estado del Préstamo <span class="required">*</span>
+          </label>
+          <div class="p-inputgroup">
+            <p-select
+              id="estadoPrestamo"
+              [options]="estadosPrestamo"
+              formControlName="idEstadoPrestamo"
+              optionLabel="nombre"
+              optionValue="id"
+              placeholder="Selecciona un estado"
+              appendTo="body"
+              styleClass="w-full">
+            </p-select>
+            <button
+              type="button"
+              pButton
+              icon="pi pi-plus"
+              class="p-button-wine btn-add-catalog"
+              pTooltip="Agregar estado"
+              (click)="abrirModalAgregar('estadoPrestamo')">
+            </button>
+          </div>
+          <small class="p-error" *ngIf="prestamoForm.get('idEstadoPrestamo')?.invalid && prestamoForm.get('idEstadoPrestamo')?.touched">
+            El estado es requerido
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- EJEMPLARES -->
+    <div class="form-section">
+      <div class="section-header">
+        <h3 class="section-title">
+          <i class="pi pi-book"></i>
+          Ejemplares a Prestar
+        </h3>
+        <button
+          type="button"
+          pButton
+          label="Agregar Ejemplar"
+          icon="pi pi-plus"
+          class="p-button-outlined btn-add-ejemplar"
+          (click)="abrirModalEjemplar()">
+        </button>
+      </div>
+
+      <div class="ejemplares-list" *ngIf="ejemplaresSeleccionados.length > 0">
+        <div class="ejemplar-card" *ngFor="let ejemplar of ejemplaresSeleccionados; let i = index">
+          <div class="ejemplar-info">
+            <div class="ejemplar-code">
+              <i class="pi pi-bookmark"></i>
+              <strong>{{ ejemplar.codigo }}</strong>
+            </div>
+            <div class="ejemplar-details">
+              <span class="libro-titulo">{{ ejemplar.libro?.titulo }}</span>
+              <span class="libro-meta">
+                {{ getAutoresNombres(ejemplar) }}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            pButton
+            icon="pi pi-times"
+            class="p-button-rounded p-button-text p-button-danger"
+            pTooltip="Eliminar"
+            (click)="removerEjemplar(i)">
+          </button>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="ejemplaresSeleccionados.length === 0">
+        <i class="pi pi-inbox"></i>
+        <p>No hay ejemplares seleccionados</p>
+        <small>Presiona "Agregar Ejemplar" para comenzar</small>
+      </div>
+    </div>
+
+    <!-- BOTONES DE ACCIÓN -->
+    <div class="form-footer">
+      <button
+        type="button"
+        pButton
+        label="Cancelar"
+        icon="pi pi-times"
+        class="p-button-text p-button-secondary"
+        (click)="regresar()">
+      </button>
+      <button
+        type="submit"
+        pButton
+        [label]="isEditMode ? 'Actualizar' : 'Guardar'"
+        icon="pi pi-check"
+        class="p-button-wine btn-primary"
+        [loading]="isSubmitting"
+        [disabled]="prestamoForm.invalid || ejemplaresSeleccionados.length === 0">
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- MODAL PARA AGREGAR CATÁLOGOS -->
+<p-dialog
+  [header]="getTituloModal()"
+  [(visible)]="displayCatalogoModal"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  [draggable]="false"
+  [dismissableMask]="false">
+  
+  <form [formGroup]="catalogoForm" (ngSubmit)="guardarCatalogo()" class="modal-form">
+    <div class="field">
+      <label for="nombreCatalogo">
+        Nombre <span class="required">*</span>
+      </label>
+      <input
+        id="nombreCatalogo"
+        pInputText
+        formControlName="nombre"
+        placeholder="Ingresa el nombre"
+        class="w-full"
+      />
+    </div>
+
+    <div class="modal-footer">
+      <button
+        type="button"
+        pButton
+        label="Cancelar"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="displayCatalogoModal = false">
+      </button>
+      <button
+        type="submit"
+        pButton
+        label="Guardar"
+        icon="pi pi-check"
+        class="p-button-wine"
+        [loading]="catalogoSubmitting"
+        [disabled]="catalogoForm.invalid">
+      </button>
+    </div>
+  </form>
+</p-dialog>
+
+<!-- MODAL PARA SELECCIONAR EJEMPLARES -->
+<p-dialog
+  header="Seleccionar Ejemplares"
+  [(visible)]="displayEjemplarModal"
+  [modal]="true"
+  [style]="{ width: '900px', maxHeight: '80vh' }"
+  [draggable]="false"
+  [dismissableMask]="false">
+  
+  <div class="ejemplar-modal-content">
+    <div class="search-container">
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="ejemplarFilter"
+          (input)="filtrarEjemplares()"
+          placeholder="Buscar por código o título..."
+          class="w-full"
+        />
+      </span>
+    </div>
+
+    <div class="ejemplares-grid">
+      <div
+        class="ejemplar-item"
+        *ngFor="let ejemplar of ejemplaresFiltrados"
+        [class.selected]="isEjemplarSeleccionado(ejemplar)"
+        (click)="toggleEjemplar(ejemplar)">
+        <div class="ejemplar-checkbox">
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="isEjemplarSeleccionado(ejemplar)"
+            (ngModelChange)="toggleEjemplar(ejemplar)">
+          </p-checkbox>
+        </div>
+        <div class="ejemplar-content">
+          <div class="ejemplar-code">
+            <i class="pi pi-bookmark"></i>
+            <strong>{{ ejemplar.codigo }}</strong>
+          </div>
+          <div class="ejemplar-title">{{ ejemplar.libro?.titulo }}</div>
+          <div class="ejemplar-authors">
+            {{ getAutoresNombres(ejemplar) }}
+          </div>
+          <div class="ejemplar-meta">
+            <span class="badge" [class]="'badge-' + ejemplar.estado?.nombre">
+              {{ ejemplar.estado?.nombre }}
+            </span>
+            <span class="ubicacion" *ngIf="ejemplar.ubicacion">
+              <i class="pi pi-map-marker"></i>
+              {{ ejemplar.ubicacion }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="ejemplaresFiltrados.length === 0">
+      <i class="pi pi-inbox"></i>
+      <p>No se encontraron ejemplares disponibles</p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      type="button"
+      pButton
+      label="Cancelar"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="displayEjemplarModal = false">
+    </button>
+    <button
+      type="button"
+      pButton
+      [label]="'Agregar (' + ejemplaresSeleccionados.length + ')'"
+      icon="pi pi-check"
+      class="p-button-wine"
+      (click)="confirmarEjemplares()"
+      [disabled]="ejemplaresSeleccionados.length === 0">
+    </button>
+  </ng-template>
+</p-dialog>

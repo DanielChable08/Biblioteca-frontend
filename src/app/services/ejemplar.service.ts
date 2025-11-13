@@ -18,4 +18,6 @@ export class EjemplarService {
   createEjemplar(ejemplarData: any): Observable<Ejemplar> {
     return this.http.post<Ejemplar>(this.apiUrl, ejemplarData);
   }
+
+  
 }

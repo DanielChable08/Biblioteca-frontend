@@ -1,0 +1,160 @@
+<p-toast></p-toast>
+<p-confirmDialog>
+  <ng-template pTemplate="message" let-message>
+    <div class="flex flex-column align-items-center text-center gap-3">
+      <i [class]="message.icon" class="dialog-icon"></i>
+      <p class="dialog-message">{{ message.message }}</p>
+    </div>
+  </ng-template>
+</p-confirmDialog>
+
+<div class="header-container">
+  <div class="form-header-container">
+    <div class="form-header page-header">
+      <div class="header-left">
+        <button
+          pButton
+          icon="pi pi-arrow-left back"
+          class="p-button-text back-button"
+          (click)="regresar()"
+          pTooltip="Regresar al Panel"
+          tooltipPosition="bottom">
+        </button>
+        <h2><i class="pi pi-book user-icon"></i> Gestión de Tipos de Libros</h2>
+      </div>
+
+      <div class="header-right">
+        <p-button
+          label="Agregar Tipo"
+          icon="pi pi-plus"
+          styleClass="p-button-wine"
+          (click)="abrirModalAgregar()">
+        </p-button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="admin-page-container">
+  <p-table 
+    #dtTipos 
+    [value]="tipos" 
+    [loading]="loading" 
+    [paginator]="true" 
+    [rows]="10" 
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [globalFilterFields]="['nombre']" 
+    styleClass="p-datatable-striped p-datatable-gridlines custom-table"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} tipos" 
+    [showCurrentPageReport]="true">
+
+    <ng-template pTemplate="caption">
+      <div class="table-header">
+        <span>Lista de Tipos de Libros</span>
+        <div class="filter-container">
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              type="text" 
+              [(ngModel)]="globalFilter" 
+              (input)="applyFilterGlobal(dtTipos, $event)" 
+              placeholder="Buscar..." 
+              class="table-search-input" />
+          </span>
+          <p-button 
+            icon="pi pi-filter-slash" 
+            styleClass="p-button-outlined clear-filter-button" 
+            (click)="clearFilter(dtTipos)" 
+            pTooltip="Limpiar filtro">
+          </p-button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="nombre">Tipo de Libro <p-sortIcon field="nombre"></p-sortIcon></th>
+        <th style="width: 10rem;">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-tipo>
+      <tr>
+        <td>{{ tipo.nombre }}</td>
+        <td>
+          <div class="table-actions">
+            <button 
+              pButton 
+              icon="pi pi-pencil" 
+              class="action-btn-compact edit-btn" 
+              pTooltip="Editar" 
+              (click)="abrirModalEditar(tipo)">
+            </button>
+            <button 
+              pButton 
+              icon="pi pi-trash" 
+              class="action-btn-compact delete-btn" 
+              pTooltip="Eliminar" 
+              (click)="eliminar(tipo)">
+            </button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="2" class="text-center empty-message">No se encontraron tipos de libros.</td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="loadingbody">
+      <tr>
+        <td colspan="2" class="text-center loading-message">Cargando tipos...</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- MODAL FORMULARIO -->
+<p-dialog
+  [header]="isEditMode ? 'Editar Tipo de Libro' : 'Agregar Nuevo Tipo'"
+  [(visible)]="displayModal"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  [draggable]="false"
+  [dismissableMask]="false"
+  [focusOnShow]="false">
+  
+  <form [formGroup]="tipoForm" (ngSubmit)="onSubmit()" class="form-container">
+    <div class="field">
+      <label for="nombre">
+        <i class="pi pi-book"></i> Tipo de Libro <span class="text red">*</span>
+      </label>
+      <input 
+        id="nombre" 
+        pInputText 
+        formControlName="nombre" 
+        placeholder="Ej: Físico, Digital, Audiolibro" 
+      />
+      <small class="p-error" *ngIf="tipoForm.get('nombre')?.invalid && tipoForm.get('nombre')?.touched">
+        El nombre es requerido
+      </small>
+    </div>
+    <div class="form-footer">
+      <button type="button" pButton class="btn-info text" (click)="cerrarModal()">
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        pButton 
+        icon="pi pi-check" 
+        class="btn-primary" 
+        [loading]="isSubmitting" 
+        [disabled]="tipoForm.invalid">
+        Guardar
+      </button>
+    </div>
+  </form>
+</p-dialog>

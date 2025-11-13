@@ -1,4 +1,4 @@
-
+// ============ INTERFACES BASE ============
 export interface Catalogo {
   id: number;
   nombre: string;
@@ -13,8 +13,20 @@ export interface Autor {
   uuid: string;
 }
 
+// ============ EXTENSIONES DE CATALOGO ============
+export interface Editorial extends Catalogo {}
+
+export interface Idioma extends Catalogo {}
+
+export interface TipoLibro extends Catalogo {}
+
+export interface CondicionFisica extends Catalogo {}
+
 export interface EstadoEjemplar extends Catalogo {}
 
+
+
+// ============ EJEMPLAR ============
 export interface Ejemplar {
   id: number;
   codigo: string;
@@ -24,23 +36,29 @@ export interface Ejemplar {
   idCondicionFisicaEjemplar: number;
   idEstadoEjemplar: number;
   estado?: EstadoEjemplar;
+  condicionFisica?: CondicionFisica;
+  libro?: Libro;    
 }
 
-
-export interface TipoPersona extends Catalogo {}
+// ============ PERSONA ============
+export interface TipoPersona {
+  id: number;
+  uuid?: string;
+  nombre: string; // "Bibliotecario", "Lector", etc.
+}
 
 export interface Persona {
   id: number;
+  uuid: string;
   nombre: string;
   apPaterno: string;
   apMaterno: string;
-  telefono: string;
+  telefono?: string;
   idTipoPersona: number;
-  uuid: string;
+  tipoPersona?: TipoPersona; // Relación opcional
 }
 
-
-
+// ============ LIBRO ============
 export interface Libro {
   id: number;
   titulo: string;
@@ -56,11 +74,12 @@ export interface Libro {
   idIdioma: number;
   uuid: string;
 
-  autores?: Autor[]; 
+  // Propiedades opcionales para datos relacionados
+  autores?: Autor[];
   categoria?: Catalogo;
-  editorial?: Catalogo;
-  idioma?: Catalogo;
-  tipoLibro?: Catalogo;
+  editorial?: Editorial;
+  idioma?: Idioma;
+  tipoLibro?: TipoLibro;
   imagen?: string;
   ejemplares?: Ejemplar[];
 }
@@ -77,6 +96,65 @@ export interface LibroPayload {
   idCategoria: number;
   idEditorial: number;
   idIdioma: number;
-  idAutores: number[]; 
+  idAutores: number[];
+}
+
+export interface EjemplarPayload {
+  codigo: string;
+  ubicacion: string | null;
+  idLibro: number;
+  idCondicionFisicaEjemplar: number;
+  idEstadoEjemplar: number;
+}
+
+export interface PersonaPayload {
+  nombre: string;
+  apPaterno: string;
+  apMaterno: string;
+  telefono: string;
+  idTipoPersona: number;
+}
+
+// Agregar estas interfaces al archivo existente
+
+export interface Prestamo {
+  id: number;
+  uuid: string;
+  fechaPrestamo: string;
+  fechaLimite: string;
+  fechaDevolucion: string | null;
+  idBibliotecario: number;
+  idLector: number;
+  idEstadoPrestamo: number;
+  estadoPrestamo?: EstadoPrestamo;
+  bibliotecario?: Persona;
+  lector?: Persona;
+  detalles?: DetallePrestamo[];
+}
+
+export interface DetallePrestamo {
+  id: number;
+  uuid: string;
+  idPrestamo: number;
+  idEjemplar: number;
+  fechaDevolucion: string | null;
+  idEstadoEjemplar: number;
+  ejemplar?: Ejemplar;
+  estadoEjemplar?: EstadoEjemplar;
+}
+
+export interface EstadoPrestamo extends Catalogo {}
+
+export interface PrestamoPayload {
+  fechaPrestamo: string;
+  fechaLimite: string;
+  idBibliotecario: number;
+  idLector: number;
+  idEstadoPrestamo: number;
+}
+
+export interface DetallePrestamoPayload {
+  idEjemplar: number;
+  idEstadoEjemplar: number;
 }
 

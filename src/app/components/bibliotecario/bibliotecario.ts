@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogService, DynamicDialogModule } from 'primeng/dynamicdialog';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService, MenuItem } from 'primeng/api';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -20,6 +20,8 @@ import { DividerModule } from 'primeng/divider';
 import { ChipModule } from 'primeng/chip';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
+import { MenuModule } from 'primeng/menu';
+
 import LibroFormularioComponent from '../libro-formulario/libro-formulario';
 import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
 import { Router } from '@angular/router';
@@ -45,6 +47,7 @@ type CategoriaKey = 'Todas' | string;
     ChipModule,
     DialogModule,
     SelectModule,
+    MenuModule,
   ],
   templateUrl: './bibliotecario.html',
   styleUrls: ['./bibliotecario.css']
@@ -69,8 +72,41 @@ export default class BibliotecarioComponent implements OnInit {
 
   contadoresCategoria: { [key: string]: number } = {};
 
+  catalogMenuItems: MenuItem[] = [];
+
   ngOnInit(): void {
     this.loadInitialData();
+
+    this.catalogMenuItems = [
+      { 
+        label: 'Gestionar Catálogos', 
+        styleClass: 'menu-header'
+      },
+      { separator: true },
+      { label: 'Autores', icon: 'pi pi-user-edit',
+        command: () => this.router.navigate(['/admin/autores'])
+       },
+      { label: 'Categorías', icon: 'pi pi-tags',
+         command: () => this.router.navigate(['/admin/categorias'])
+
+      },
+      { label: 'Editoriales', icon: 'pi pi-building',
+        command: () => this.router.navigate(['/admin/editoriales'])
+       },
+      { label: 'Idiomas', icon: 'pi pi-globe', 
+        command: () => this.router.navigate(['/admin/idiomas'])
+       },
+      { label: 'Tipos de Libros', icon: 'pi pi-book',
+        command: () => this.router.navigate(['/admin/tipos'])
+       },
+      { separator: true },
+      { label: 'Estados de Ejemplar', icon: 'pi pi-check-circle',
+         command: () => this.router.navigate(['/admin/estados'])
+       },
+      { label: 'Condición Física', icon: 'pi pi-clipboard',
+          command: () => this.router.navigate(['/admin/condiciones'])
+      },
+    ];
   }
 
   loadInitialData(): void {
@@ -121,14 +157,11 @@ export default class BibliotecarioComponent implements OnInit {
         this.actualizarContadores();
         this.filtrarLibros();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos.' });
       }
     });
   }
-
-
-
 
   agregarLibro(): void {
     this.router.navigate(['/admin/libros/nuevo']);
@@ -136,6 +169,10 @@ export default class BibliotecarioComponent implements OnInit {
 
   UsuariosList(): void {
     this.router.navigate(['/admin/usuarios']);
+  }
+ 
+  PrestamosList(): void {
+    this.router.navigate(['/admin/prestamos']);
   }
 
   filtrarLibros(): void {
@@ -216,7 +253,6 @@ export default class BibliotecarioComponent implements OnInit {
     }, 0);
   }
 
-
   private actualizarContadores(): void {
     const contadores: { [key: string]: number } = {};
     this.categorias.forEach(cat => {
@@ -232,11 +268,9 @@ export default class BibliotecarioComponent implements OnInit {
   getDropdownText(): string { return this.categoriaSeleccionada === 'Todas' ? 'Todas las categorías' : this.categoriaSeleccionada; }
   esCategoriaActiva(categoria: CategoriaKey): boolean { return this.categoriaSeleccionada === categoria; }
 
-
   editarLibro(libro: Libro): void {
     this.router.navigate(['/admin/libros/editar', libro.uuid]);
   }
-
 
   verLibro(libro: Libro): void {
     this.dialogService.open(LibroDetalleComponent, {
@@ -285,7 +319,6 @@ export default class BibliotecarioComponent implements OnInit {
       rejectButtonStyleClass: 'btn-info text',
 
       accept: () => {
-
         this.loading = true;
         this.bookService.deleteLibro(libro.uuid).pipe(
           finalize(() => this.loading = false)
@@ -296,7 +329,7 @@ export default class BibliotecarioComponent implements OnInit {
             this.filtrarLibros();
             this.actualizarContadores();
           },
-          error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el libro.' })
+          error: (err: any) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el libro.' })
         });
       }
     });

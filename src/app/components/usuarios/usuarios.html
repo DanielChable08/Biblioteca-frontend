@@ -8,12 +8,33 @@
 </p-confirmDialog>
 
 
-  <div class="page-header">
-    <div class="header-left"> <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
+<div class="header-container">
+  <div class="form-header-container">
+    <div class="form-header page-header">
+      <div class="header-left">
+        <button
+          pButton
+          icon="pi pi-arrow-left back"
+          class="p-button-text back-button"
+          (click)="regresar()"
+          pTooltip="Regresar al Panel"
+          tooltipPosition="bottom">
+        </button>
         <h2><i class="pi pi-users user-icon"></i> Gestión de Usuarios</h2>
+      </div>
+
+      <div class="header-right">
+        <p-button
+          label="Agregar Usuario"
+          icon="pi pi-user-plus"
+          styleClass="p-button-wine"
+          (click)="agregarUsuario()">
+        </p-button>
+      </div>
     </div>
-    <p-button label="Agregar Usuario" icon="pi pi-user-plus" styleClass="p-button-wine" (click)="agregarUsuario()"></p-button>
   </div>
+</div>
+
 
 <div class="admin-page-container">
   <p-table #dtUsuarios [value]="usuarios" [loading]="loading" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"

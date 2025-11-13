@@ -1,7 +1,17 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Autor, Catalogo, TipoPersona, EstadoEjemplar } from '../models/biblioteca';
+import { 
+  Autor, 
+  Catalogo, 
+  TipoPersona, 
+  EstadoEjemplar,
+  Editorial,
+  Idioma,
+  TipoLibro,
+  CondicionFisica,
+  EstadoPrestamo 
+} from '../models/biblioteca';
 
 @Injectable({
   providedIn: 'root'
@@ -13,58 +23,190 @@ export class CatalogService {
   getAutores(): Observable<Autor[]> {
     return this.http.get<Autor[]>(`${this.apiUrl}/autores`);
   }
-  
-  createAutor(autorData: { nombre: string, apPaterno: string, apMaterno: string }): Observable<Autor> {
+
+  getAutorByUuid(uuid: string): Observable<Autor> {
+    return this.http.get<Autor>(`${this.apiUrl}/autores/${uuid}`);
+  }
+
+  createAutor(autorData: { nombre: string; apPaterno: string; apMaterno: string }): Observable<Autor> {
     return this.http.post<Autor>(`${this.apiUrl}/autores`, autorData);
   }
 
+  updateAutor(uuid: string, autorData: { nombre: string; apPaterno: string; apMaterno: string }): Observable<Autor> {
+    return this.http.put<Autor>(`${this.apiUrl}/autores/${uuid}`, autorData);
+  }
+
+  deleteAutor(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/autores/${uuid}`);
+  }
+
+  // ============ CATEGORÍAS ============
   getCategorias(): Observable<Catalogo[]> {
     return this.http.get<Catalogo[]>(`${this.apiUrl}/categorias`);
   }
 
+  getCategoriaByUuid(uuid: string): Observable<Catalogo> {
+    return this.http.get<Catalogo>(`${this.apiUrl}/categorias/${uuid}`);
+  }
+
+  createCategoria(data: { nombre: string }): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/categorias`, data);
+  }
+
+  updateCategoria(uuid: string, data: { nombre: string }): Observable<Catalogo> {
+    return this.http.put<Catalogo>(`${this.apiUrl}/categorias/${uuid}`, data);
+  }
+
+  deleteCategoria(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/categorias/${uuid}`);
+  }
+
+  // ============ EDITORIALES ============
   getEditoriales(): Observable<Catalogo[]> {
     return this.http.get<Catalogo[]>(`${this.apiUrl}/editoriales`);
   }
 
+  getEditorialByUuid(uuid: string): Observable<Catalogo> {
+    return this.http.get<Catalogo>(`${this.apiUrl}/editoriales/${uuid}`);
+  }
+
+  createEditorial(data: { nombre: string }): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/editoriales`, data);
+  }
+
+  updateEditorial(uuid: string, data: { nombre: string }): Observable<Catalogo> {
+    return this.http.put<Catalogo>(`${this.apiUrl}/editoriales/${uuid}`, data);
+  }
+
+  deleteEditorial(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/editoriales/${uuid}`);
+  }
+
+  // ============ IDIOMAS ============
   getIdiomas(): Observable<Catalogo[]> {
     return this.http.get<Catalogo[]>(`${this.apiUrl}/idiomas`);
   }
 
+  getIdiomaByUuid(uuid: string): Observable<Catalogo> {
+    return this.http.get<Catalogo>(`${this.apiUrl}/idiomas/${uuid}`);
+  }
+
+  createIdioma(data: { nombre: string }): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/idiomas`, data);
+  }
+
+  updateIdioma(uuid: string, data: { nombre: string }): Observable<Catalogo> {
+    return this.http.put<Catalogo>(`${this.apiUrl}/idiomas/${uuid}`, data);
+  }
+
+  deleteIdioma(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/idiomas/${uuid}`);
+  }
+
+  // ============ TIPOS DE LIBRO ============
   getTiposLibros(): Observable<Catalogo[]> {
     return this.http.get<Catalogo[]>(`${this.apiUrl}/tipos-libros`);
   }
 
-  getTiposPersonas(): Observable<TipoPersona[]> {
-    return this.http.get<TipoPersona[]>(`${this.apiUrl}/tipos-personas`);
+  getTipoLibroByUuid(uuid: string): Observable<Catalogo> {
+    return this.http.get<Catalogo>(`${this.apiUrl}/tipos-libros/${uuid}`);
   }
-  
+
+  createTipoLibro(data: { nombre: string }): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/tipos-libros`, data);
+  }
+
+  updateTipoLibro(uuid: string, data: { nombre: string }): Observable<Catalogo> {
+    return this.http.put<Catalogo>(`${this.apiUrl}/tipos-libros/${uuid}`, data);
+  }
+
+  deleteTipoLibro(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/tipos-libros/${uuid}`);
+  }
+
+  // ============ ESTADOS DE EJEMPLAR ============
   getEstadosEjemplares(): Observable<EstadoEjemplar[]> {
     return this.http.get<EstadoEjemplar[]>(`${this.apiUrl}/estados-ejemplares`);
   }
 
-  getCondicionesFisicas(): Observable<Catalogo[]> {
-    return this.http.get<Catalogo[]>(`${this.apiUrl}/condicion-fisica-ejemplar`);
-  }
-
-  createCondicionFisica(data: { nombre: string }): Observable<Catalogo> {
-    return this.http.post<Catalogo>(`${this.apiUrl}/condicion-fisica-ejemplar`, data);
+  getEstadoEjemplarByUuid(uuid: string): Observable<EstadoEjemplar> {
+    return this.http.get<EstadoEjemplar>(`${this.apiUrl}/estados-ejemplares/${uuid}`);
   }
 
   createEstadoEjemplar(data: { nombre: string }): Observable<EstadoEjemplar> {
     return this.http.post<EstadoEjemplar>(`${this.apiUrl}/estados-ejemplares`, data);
   }
 
-  createCategoria(data: { nombre: string }): Observable<Catalogo> {
-    return this.http.post<Catalogo>(`${this.apiUrl}/categorias`, data);
+  updateEstadoEjemplar(uuid: string, data: { nombre: string }): Observable<EstadoEjemplar> {
+    return this.http.put<EstadoEjemplar>(`${this.apiUrl}/estados-ejemplares/${uuid}`, data);
   }
-  createEditorial(data: { nombre: string }): Observable<Catalogo> {
-    return this.http.post<Catalogo>(`${this.apiUrl}/editoriales`, data);
+
+  deleteEstadoEjemplar(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/estados-ejemplares/${uuid}`);
   }
-  createIdioma(data: { nombre: string }): Observable<Catalogo> {
-    return this.http.post<Catalogo>(`${this.apiUrl}/idiomas`, data);
+
+
+  // ============ CONDICIONES FÍSICAS ============
+  getCondicionesFisicas(): Observable<Catalogo[]> {
+    return this.http.get<Catalogo[]>(`${this.apiUrl}/condicion-fisica-ejemplar`);
   }
-  createTipoLibro(data: { nombre: string }): Observable<Catalogo> {
-    return this.http.post<Catalogo>(`${this.apiUrl}/tipos-libros`, data);
+
+  getCondicionFisicaByUuid(uuid: string): Observable<Catalogo> {
+    return this.http.get<Catalogo>(`${this.apiUrl}/condicion-fisica-ejemplar/${uuid}`);
   }
-  
+
+  createCondicionFisica(data: { nombre: string }): Observable<Catalogo> {
+    return this.http.post<Catalogo>(`${this.apiUrl}/condicion-fisica-ejemplar`, data);
+  }
+
+  updateCondicionFisica(uuid: string, data: { nombre: string }): Observable<Catalogo> {
+    return this.http.put<Catalogo>(`${this.apiUrl}/condicion-fisica-ejemplar/${uuid}`, data);
+  }
+
+  deleteCondicionFisica(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/condicion-fisica-ejemplar/${uuid}`);
+  }
+
+  // ============ TIPOS DE PERSONA ============
+  getTiposPersonas(): Observable<TipoPersona[]> {
+    return this.http.get<TipoPersona[]>(`${this.apiUrl}/tipos-personas`);
+  }
+
+  getTipoPersonaByUuid(uuid: string): Observable<TipoPersona> {
+    return this.http.get<TipoPersona>(`${this.apiUrl}/tipos-personas/${uuid}`);
+  }
+
+  createTipoPersona(data: { nombre: string }): Observable<TipoPersona> {
+    return this.http.post<TipoPersona>(`${this.apiUrl}/tipos-personas`, data);
+  }
+
+  updateTipoPersona(uuid: string, data: { nombre: string }): Observable<TipoPersona> {
+    return this.http.put<TipoPersona>(`${this.apiUrl}/tipos-personas/${uuid}`, data);
+  }
+
+  deleteTipoPersona(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/tipos-personas/${uuid}`);
+  }
+
+    // ============ ESTADOS DE PRÉSTAMO ============
+  getEstadosPrestamos(): Observable<EstadoPrestamo[]> {
+    return this.http.get<EstadoPrestamo[]>(`${this.apiUrl}/estados-prestamos`);
+  }
+
+  getEstadoPrestamoByUuid(uuid: string): Observable<EstadoPrestamo> {
+    return this.http.get<EstadoPrestamo>(`${this.apiUrl}/estados-prestamos/${uuid}`);
+  }
+
+  createEstadoPrestamo(data: { nombre: string }): Observable<EstadoPrestamo> {
+    return this.http.post<EstadoPrestamo>(`${this.apiUrl}/estados-prestamos`, data);
+  }
+
+  updateEstadoPrestamo(uuid: string, data: { nombre: string }): Observable<EstadoPrestamo> {
+    return this.http.put<EstadoPrestamo>(`${this.apiUrl}/estados-prestamos/${uuid}`, data);
+  }
+
+  deleteEstadoPrestamo(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/estados-prestamos/${uuid}`);
+  }
+
 }
