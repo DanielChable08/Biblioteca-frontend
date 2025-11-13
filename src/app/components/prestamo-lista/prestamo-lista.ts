@@ -1,11 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common'; // Importa DatePipe
+import { CommonModule, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-// import { finalize, forkJoin, map, Observable } from 'rxjs'; // Para API real
-import { Observable } from 'rxjs'; // Importar solo Observable
+
+import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 
-// --- PRIMENG ---
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -14,13 +13,12 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
 
-// --- SERVICIOS Y MODELOS ---
-import { PrestamoService } from '../../services/prestamo.service'; // Asumiendo que crearás este servicio
-import { UsuarioService } from '../../services/usuario.service'; // Para obtener personas
-import { CatalogService } from '../../services/catalog.service'; // Para estados
-import { Usuario } from '../../models/usuario'; // Reutiliza modelo Usuario como Persona
-import { Prestamo } from '../../models/prestamo'; // Debes crear este modelo
-import { Catalogo } from '../../models/biblioteca'; // Reutiliza modelo Catalogo
+import { PrestamoService } from '../../services/prestamo.service';
+import { UsuarioService } from '../../services/usuario.service';
+import { CatalogService } from '../../services/catalog.service'; 
+import { Usuario } from '../../models/usuario';
+import { Prestamo } from '../../models/prestamo';
+import { Catalogo } from '../../models/biblioteca';
 
 @Component({
   selector: 'app-prestamo-lista',
@@ -34,29 +32,27 @@ import { Catalogo } from '../../models/biblioteca'; // Reutiliza modelo Catalogo
     ToastModule,
     ConfirmDialogModule,
     InputTextModule,
-    DatePipe // Añade DatePipe a los imports
+    DatePipe
   ],
   templateUrl: './prestamo-lista.html',
   styleUrls: ['./prestamo-lista.css']
 })
 export default class PrestamoListaComponent implements OnInit {
   
-  // --- Inyección de Servicios ---
-  // private prestamoService = inject(PrestamoService); // Descomentar para API real
-  private usuarioService = inject(UsuarioService); // Descomentar para API real
-  private catalogService = inject(CatalogService); // Descomentar para API real
+  private usuarioService = inject(UsuarioService);
+  private catalogService = inject(CatalogService);
   private router = inject(Router);
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
 
-  // --- Propiedades del Componente ---
+  
   prestamos: Prestamo[] = [];
   personasMap = new Map<number, string>();
   estadosMap = new Map<number, string>();
   loading = false;
   globalFilter: string = '';
 
-  // --- DATOS FICTICIOS ---
+
   mockPersonas: Usuario[] = [
     { id: 101, nombre: 'Juan', apPaterno: 'Pérez', telefono: '999111', email: 'j@p.com', uuid: 'uuid-juan', idTipoPersona: 1 },
     { id: 102, nombre: 'Ana', apPaterno: 'López', telefono: '999222', email: 'a@l.com', uuid: 'uuid-ana', idTipoPersona: 2 },
@@ -74,21 +70,18 @@ export default class PrestamoListaComponent implements OnInit {
     { id: 2, uuid: 'uuid-p2', fechaPrestamo: '2025-10-15T14:30:00Z', fechaDevolucion: '2025-10-22T14:30:00Z', idBibliotecario: 102, idLector: 101, idEstadoPrestamo: 2 },
     { id: 3, uuid: 'uuid-p3', fechaPrestamo: '2025-09-01T11:00:00Z', fechaDevolucion: '2025-09-08T11:00:00Z', idBibliotecario: 102, idLector: 201, idEstadoPrestamo: 3 },
   ];
-  // --- FIN DATOS FICTICIOS ---
+
 
   ngOnInit(): void {
-    this.loadMockData(); // Cargar datos ficticios
-    // this.loadData(); // Descomentar para API real
+    this.loadMockData();
   }
 
   loadMockData(): void {
     this.loading = true;
     
-    // Poblar mapas
     this.mockPersonas.forEach(p => this.personasMap.set(p.id, `${p.nombre} ${p.apPaterno}`));
     this.mockEstados.forEach(e => this.estadosMap.set(e.id, e.nombre));
 
-    // Mapear datos ficticios
     this.prestamos = this.mockPrestamos.map(p => ({
       ...p,
       lector: this.mockPersonas.find(lector => lector.id === p.idLector),
@@ -147,7 +140,6 @@ export default class PrestamoListaComponent implements OnInit {
   }
 
   verDetalles(prestamo: Prestamo): void {
-    // Lógica para abrir un modal con los detalles (libros) del préstamo
     console.log("Ver detalles de préstamo:", prestamo.uuid);
     // this.dialogService.open(PrestamoDetalleComponent, { data: { uuid: prestamo.uuid } });
   }
@@ -185,7 +177,6 @@ export default class PrestamoListaComponent implements OnInit {
     });
   }
 
-  // --- Métodos de la Tabla ---
   applyFilterGlobal(table: any, event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     table.filterGlobal(filterValue, 'contains');
@@ -196,7 +187,6 @@ export default class PrestamoListaComponent implements OnInit {
     table.clear();
   }
 
-  // Helper para obtener badge de estado
   getEstadoClass(estadoNombre: string = ''): string {
     switch (estadoNombre.toLowerCase()) {
       case 'activo': return 'status-activo';

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PrestamoFormulario } from './prestamo-formulario';
+import  PrestamoFormulario  from './prestamo-formulario';
 
 describe('PrestamoFormulario', () => {
   let component: PrestamoFormulario;
