@@ -10,27 +10,28 @@ import { ConfirmationService, MessageService, MenuItem } from 'primeng/api';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-
-import { BookService } from '../../services/book.service';
-import { CatalogService } from '../../services/catalog.service';
-import { EjemplarService } from '../../services/ejemplar.service';
-import { Libro, Catalogo, Autor, Ejemplar } from '../../models/biblioteca';
-import { finalize, forkJoin, map, switchMap, of } from 'rxjs';
 import { DividerModule } from 'primeng/divider';
 import { ChipModule } from 'primeng/chip';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { MenuModule } from 'primeng/menu';
+import { Router } from '@angular/router';
+import { finalize, forkJoin, map, switchMap, of } from 'rxjs';
+
+import { BookService } from '../../services/book.service';
+import { CatalogService } from '../../services/catalog.service';
+import { EjemplarService } from '../../services/ejemplar.service';
+import { AuthService } from '../../services/auth.service';
+import { Libro, Catalogo, Autor, Ejemplar } from '../../models/biblioteca';
 
 import LibroFormularioComponent from '../libro-formulario/libro-formulario';
 import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
-import { Router } from '@angular/router';
-
 import LibroDetalleComponent from '../libro-detalle/libro-detalle';
+
 type CategoriaKey = 'Todas' | string;
 
 @Component({
-  selector: 'app-librarian-dashboard',
+  selector: 'app-bibliotecario',
   standalone: true,
   imports: [
     CommonModule,
@@ -49,6 +50,7 @@ type CategoriaKey = 'Todas' | string;
     SelectModule,
     MenuModule,
   ],
+  providers: [DialogService, ConfirmationService, MessageService],
   templateUrl: './bibliotecario.html',
   styleUrls: ['./bibliotecario.css']
 })
@@ -60,6 +62,7 @@ export default class BibliotecarioComponent implements OnInit {
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   libros: Libro[] = [];
   allLibros: Libro[] = [];
@@ -71,42 +74,36 @@ export default class BibliotecarioComponent implements OnInit {
   dropdownOpen = false;
 
   contadoresCategoria: { [key: string]: number } = {};
-
   catalogMenuItems: MenuItem[] = [];
 
+  currentFullName: string = '';
+  currentUserRole: string = '';
+  currentUserInitials: string = '';
+
   ngOnInit(): void {
+    this.loadUserInfo();
     this.loadInitialData();
 
     this.catalogMenuItems = [
-      { 
-        label: 'Gestionar Catálogos', 
-        styleClass: 'menu-header'
-      },
+      { label: 'Gestionar Catálogos', styleClass: 'menu-header' },
       { separator: true },
-      { label: 'Autores', icon: 'pi pi-user-edit',
-        command: () => this.router.navigate(['/admin/autores'])
-       },
-      { label: 'Categorías', icon: 'pi pi-tags',
-         command: () => this.router.navigate(['/admin/categorias'])
-
-      },
-      { label: 'Editoriales', icon: 'pi pi-building',
-        command: () => this.router.navigate(['/admin/editoriales'])
-       },
-      { label: 'Idiomas', icon: 'pi pi-globe', 
-        command: () => this.router.navigate(['/admin/idiomas'])
-       },
-      { label: 'Tipos de Libros', icon: 'pi pi-book',
-        command: () => this.router.navigate(['/admin/tipos'])
-       },
+      { label: 'Autores', icon: 'pi pi-user-edit', command: () => this.router.navigate(['/admin/autores']) },
+      { label: 'Categorías', icon: 'pi pi-tags', command: () => this.router.navigate(['/admin/categorias']) },
+      { label: 'Editoriales', icon: 'pi pi-building', command: () => this.router.navigate(['/admin/editoriales']) },
+      { label: 'Idiomas', icon: 'pi pi-globe', command: () => this.router.navigate(['/admin/idiomas']) },
+      { label: 'Tipos de Libros', icon: 'pi pi-book', command: () => this.router.navigate(['/admin/tipos']) },
       { separator: true },
-      { label: 'Estados de Ejemplar', icon: 'pi pi-check-circle',
-         command: () => this.router.navigate(['/admin/estados'])
-       },
-      { label: 'Condición Física', icon: 'pi pi-clipboard',
-          command: () => this.router.navigate(['/admin/condiciones'])
-      },
+      { label: 'Estados de Ejemplar', icon: 'pi pi-check-circle', command: () => this.router.navigate(['/admin/estados']) },
+      { label: 'Condición Física', icon: 'pi pi-clipboard', command: () => this.router.navigate(['/admin/condiciones']) },
+      { separator: true },
+      { label: 'Cerrar Sesión', icon: 'pi pi-sign-out', styleClass: 'logout-menu-item', command: () => this.logout() },
     ];
+  }
+
+  loadUserInfo(): void {
+    this.currentFullName = this.authService.getFullName();
+    this.currentUserRole = this.authService.getRoleName();
+    this.currentUserInitials = this.authService.getUserInitials();
   }
 
   loadInitialData(): void {
@@ -158,11 +155,54 @@ export default class BibliotecarioComponent implements OnInit {
         this.filtrarLibros();
       },
       error: (err: any) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos.' });
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'No se pudieron cargar los datos.' 
+        });
       }
     });
   }
 
+  // ========== MÉTODOS DE CONTEO POR LIBRO ==========
+  getEjemplaresDisponibles(libro: Libro): number {
+    return libro.ejemplares?.filter(
+      e => e.estado?.nombre?.toLowerCase() === 'disponible'
+    ).length || 0;
+  }
+
+  getEjemplaresPrestados(libro: Libro): number {
+    return libro.ejemplares?.filter(
+      e => e.estado?.nombre?.toLowerCase() === 'prestado'
+    ).length || 0;
+  }
+
+  getEjemplaresReparacion(libro: Libro): number {
+    return libro.ejemplares?.filter(
+      e => e.estado?.nombre?.toLowerCase() === 'en reparación'
+    ).length || 0;
+  }
+
+  // ========== TOTALES GENERALES ==========
+  getTotalEjemplaresDisponibles(): number {
+    return this.allLibros.reduce((total, libro) => 
+      total + this.getEjemplaresDisponibles(libro), 0
+    );
+  }
+
+  getTotalEjemplaresPrestados(): number {
+    return this.allLibros.reduce((total, libro) => 
+      total + this.getEjemplaresPrestados(libro), 0
+    );
+  }
+
+  getTotalEjemplaresReparacion(): number {
+    return this.allLibros.reduce((total, libro) => 
+      total + this.getEjemplaresReparacion(libro), 0
+    );
+  }
+
+  // ========== NAVEGACIÓN ==========
   agregarLibro(): void {
     this.router.navigate(['/admin/libros/nuevo']);
   }
@@ -175,11 +215,18 @@ export default class BibliotecarioComponent implements OnInit {
     this.router.navigate(['/admin/prestamos']);
   }
 
+  logout(): void {
+    this.authService.logout();
+  }
+
+  // ========== FILTROS Y BÚSQUEDA ==========
   filtrarLibros(): void {
     let resultado = this.allLibros;
 
     if (this.categoriaSeleccionada !== 'Todas') {
-      resultado = resultado.filter(libro => libro.categoria?.nombre === this.categoriaSeleccionada);
+      resultado = resultado.filter(libro => 
+        libro.categoria?.nombre === this.categoriaSeleccionada
+      );
     }
 
     if (this.terminoBusqueda) {
@@ -193,6 +240,36 @@ export default class BibliotecarioComponent implements OnInit {
     this.libros = resultado;
   }
 
+  buscar(): void { 
+    this.filtrarLibros(); 
+  }
+
+  filtrarCategoria(categoria: CategoriaKey): void { 
+    this.categoriaSeleccionada = categoria; 
+    this.filtrarLibros(); 
+  }
+
+  toggleDropdown(): void { 
+    this.dropdownOpen = !this.dropdownOpen; 
+  }
+
+  selectCategoria(categoria: CategoriaKey): void { 
+    this.categoriaSeleccionada = categoria; 
+    this.dropdownOpen = false; 
+    this.filtrarLibros(); 
+  }
+
+  getDropdownText(): string { 
+    return this.categoriaSeleccionada === 'Todas' 
+      ? 'Todas las categorías' 
+      : this.categoriaSeleccionada; 
+  }
+
+  esCategoriaActiva(categoria: CategoriaKey): boolean { 
+    return this.categoriaSeleccionada === categoria; 
+  }
+
+  // ========== UTILIDADES ==========
   formatIsbn(isbn: string | undefined): string {
     if (!isbn || isbn.length !== 13) {
       return isbn || 'N/A';
@@ -213,61 +290,17 @@ export default class BibliotecarioComponent implements OnInit {
     return autores.map(a => `${a.nombre} ${a.apPaterno}`).join(', ');
   }
 
-  getStatusClass(estadoNombre?: string): string {
-    if (!estadoNombre) return 'unknown';
-    switch (estadoNombre.toLowerCase()) {
-      case 'disponible': return 'available';
-      case 'prestado': return 'borrowed';
-      case 'en reparación': return 'repair';
-      default: return 'unknown';
-    }
-  }
-
-  EjemplaresPrestados(): number {
-    if (!this.libros) return 0;
-    return this.libros.reduce((total, libro) => {
-      const prestados = libro.ejemplares?.filter(
-        (e: any) => e.estado?.nombre?.toLowerCase() === 'prestado'
-      ).length || 0;
-      return total + prestados;
-    }, 0);
-  }
-
-  EjemplaresDisponibles(): number {
-    if (!this.libros) return 0;
-    return this.libros.reduce((total, libro) => {
-      const disponibles = libro.ejemplares?.filter(
-        (e: any) => e.estado?.nombre?.toLowerCase() === 'disponible'
-      ).length || 0;
-      return total + disponibles;
-    }, 0);
-  }
-
-  EjemplaresReparacion(): number {
-    if (!this.libros) return 0;
-    return this.libros.reduce((total, libro) => {
-      const reparacion = libro.ejemplares?.filter(
-        (e: any) => e.estado?.nombre?.toLowerCase() === 'en reparación'
-      ).length || 0;
-      return total + reparacion;
-    }, 0);
-  }
-
   private actualizarContadores(): void {
     const contadores: { [key: string]: number } = {};
     this.categorias.forEach(cat => {
-      contadores[cat.nombre] = this.allLibros.filter(libro => libro.categoria?.id === cat.id).length;
+      contadores[cat.nombre] = this.allLibros.filter(
+        libro => libro.categoria?.id === cat.id
+      ).length;
     });
     this.contadoresCategoria = contadores;
   }
 
-  buscar(): void { this.filtrarLibros(); }
-  filtrarCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.filtrarLibros(); }
-  toggleDropdown(): void { this.dropdownOpen = !this.dropdownOpen; }
-  selectCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.dropdownOpen = false; this.filtrarLibros(); }
-  getDropdownText(): string { return this.categoriaSeleccionada === 'Todas' ? 'Todas las categorías' : this.categoriaSeleccionada; }
-  esCategoriaActiva(categoria: CategoriaKey): boolean { return this.categoriaSeleccionada === categoria; }
-
+  // ========== ACCIONES DE LIBROS ==========
   editarLibro(libro: Libro): void {
     this.router.navigate(['/admin/libros/editar', libro.uuid]);
   }
@@ -314,22 +347,28 @@ export default class BibliotecarioComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle text red',
       acceptLabel: 'Sí, eliminar',
       rejectLabel: 'No',
-
       acceptButtonStyleClass: 'btn-danger',
       rejectButtonStyleClass: 'btn-info text',
-
       accept: () => {
         this.loading = true;
         this.bookService.deleteLibro(libro.uuid).pipe(
           finalize(() => this.loading = false)
         ).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Libro eliminado.' });
+            this.messageService.add({ 
+              severity: 'success', 
+              summary: 'Éxito', 
+              detail: 'Libro eliminado.' 
+            });
             this.allLibros = this.allLibros.filter(l => l.id !== libro.id);
             this.filtrarLibros();
             this.actualizarContadores();
           },
-          error: (err: any) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el libro.' })
+          error: (err: any) => this.messageService.add({ 
+            severity: 'error', 
+            summary: 'Error', 
+            detail: 'No se pudo eliminar el libro.' 
+          })
         });
       }
     });

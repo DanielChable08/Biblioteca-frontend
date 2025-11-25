@@ -5,9 +5,6 @@
   color: var(--wine);
 }
 
-/* ============================================ */
-/* HEADER */
-/* ============================================ */
 .header-container {
   background-color: white;
   margin-bottom: 2rem;
@@ -59,9 +56,7 @@
   background-color: rgba(92, 43, 46, 0.1) !important;
 }
 
-/* ============================================ */
-/* FORM CONTAINER */
-/* ============================================ */
+
 .form-page-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -81,9 +76,7 @@
   box-shadow: 0 8px 25px rgba(92, 43, 46, 0.18);
 }
 
-/* ============================================ */
-/* FORM SECTIONS */
-/* ============================================ */
+
 .form-section {
   margin-bottom: 2.5rem;
   padding-bottom: 2rem;
@@ -118,9 +111,7 @@
   font-size: 1.5rem;
 }
 
-/* ============================================ */
-/* FORM FIELDS */
-/* ============================================ */
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -179,7 +170,7 @@
   align-items: center;
 }
 
-/* BOTONES DE CATÁLOGO (+ junto a selects) - WINE CON HOVER MÁS OSCURO */
+
 :host ::ng-deep .p-inputgroup .btn-add-catalog,
 :host ::ng-deep .p-button-wine.btn-add-catalog {
   margin-left: 5px;
@@ -195,7 +186,7 @@
   color: white !important;
 }
 
-/* BOTÓN AGREGAR EJEMPLAR - OUTLINED WINE CON HOVER MÁS OSCURO */
+
 :host ::ng-deep .btn-add-ejemplar.p-button-outlined {
   color: var(--wine) !important;
   border-color: var(--wine) !important;
@@ -208,7 +199,7 @@
   color: white !important;
 }
 
-/* BOTÓN PRIMARY (GUARDAR/ACTUALIZAR) - WINE CON HOVER MÁS OSCURO */
+
 :host ::ng-deep .btn-primary.p-button-wine,
 :host ::ng-deep .p-button-wine {
   background-color: var(--wine) !important;
@@ -223,7 +214,7 @@
   color: white !important;
 }
 
-/* BOTÓN CANCELAR - GRIS */
+
 :host ::ng-deep .p-button-text.p-button-secondary {
   color: #6b7280 !important;
 }
@@ -233,9 +224,100 @@
   color: #374151 !important;
 }
 
-/* ============================================ */
-/* EJEMPLARES LIST */
-/* ============================================ */
+
+.ejemplares-counter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f9f6f0 0%, #fff8e7 100%);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 2px 8px rgba(92, 43, 46, 0.08);
+  transition: all 0.3s ease;
+}
+
+.ejemplares-counter:hover {
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(92, 43, 46, 0.12);
+}
+
+.counter-text {
+  font-weight: 600;
+  color: var(--wine);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.counter-badge {
+  padding: 6px 14px;
+  background:var(--wine);
+  color: white;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(120, 26, 26, 0.3);
+  transition: all 0.3s ease;
+}
+
+.counter-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
+}
+
+.counter-badge.warning {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  color: #000;
+  box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4);
+}
+
+
+.alert-limit {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+  border: 2px solid #ffc107;
+  color: #856404;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+  animation: shake 0.5s ease-in-out;
+}
+
+.alert-limit i {
+  font-size: 1.5rem;
+  color: #ff9800;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
 .ejemplares-list {
   display: flex;
   flex-direction: column;
@@ -295,9 +377,7 @@
   color: #6b5e5f;
 }
 
-/* ============================================ */
-/* EMPTY STATE */
-/* ============================================ */
+
 .empty-state {
   text-align: center;
   padding: 3rem 2rem;
@@ -326,9 +406,7 @@
   opacity: 0.7;
 }
 
-/* ============================================ */
-/* MODAL EJEMPLARES */
-/* ============================================ */
+
 :host ::ng-deep .p-dialog {
   border-radius: 16px !important;
   overflow: hidden;
@@ -345,7 +423,6 @@
   border-top: 1px solid #e0d8c5;
 }
 
-/* BOTONES DEL MODAL - GRIS PARA AGREGAR */
 :host ::ng-deep .p-dialog .p-dialog-footer .p-button:not(.p-button-text) {
   background-color: var(--wine) !important;
   border-color: var(--wine) !important;
@@ -410,6 +487,17 @@
   box-shadow: 0 0 0 2px rgba(92, 43, 46, 0.1);
 }
 
+.ejemplar-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  background-color: #f5f5f5;
+}
+
+.ejemplar-item.disabled .ejemplar-checkbox {
+  pointer-events: none;
+}
+
 .ejemplar-checkbox {
   flex-shrink: 0;
 }
@@ -465,9 +553,6 @@
   gap: 0.25rem;
 }
 
-/* ============================================ */
-/* MODAL FORM */
-/* ============================================ */
 .modal-form {
   padding: 1rem 0;
 }
@@ -492,9 +577,6 @@
   border-top: 1px solid var(--slate-200);
 }
 
-/* ============================================ */
-/* FORM FOOTER */
-/* ============================================ */
 .form-footer {
   display: flex;
   justify-content: flex-end;
@@ -504,9 +586,6 @@
   border-top: 1px solid var(--slate-200);
 }
 
-/* ============================================ */
-/* TOAST */
-/* ============================================ */
 :host ::ng-deep .p-toast {
   top: 1.5rem;
   right: 1.5rem;
@@ -517,9 +596,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* ============================================ */
-/* UTILITIES */
-/* ============================================ */
+
 .w-full {
   width: 100%;
 }
@@ -536,9 +613,7 @@
   gap: 0.5rem;
 }
 
-/* ============================================ */
-/* RESPONSIVE */
-/* ============================================ */
+
 @media (max-width: 900px) {
   .form-container {
     padding: 1.5rem;
@@ -569,11 +644,15 @@
   .form-footer button {
     width: 100%;
   }
+
+  .ejemplares-counter {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
 }
 
-/* ============================================ */
-/* ANIMATIONS */
-/* ============================================ */
+
 @keyframes fadeIn {
   from {
     opacity: 0;

@@ -1,7 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Prestamo, DetallePrestamo, PrestamoPayload, DetallePrestamoPayload } from '../models/biblioteca';
+import { 
+  Prestamo, 
+  DetallePrestamo, 
+  PrestamoPayload, 
+  DetallePrestamoPayload,
+  Persona, 
+  EstadoEjemplar
+} from '../models/biblioteca';
 
 @Injectable({
   providedIn: 'root'
@@ -10,13 +17,16 @@ export class PrestamoService {
   private http = inject(HttpClient);
   private apiUrl = 'http://localhost:8080/sdt/v1';
 
-  // PRÉSTAMOS
   getPrestamos(): Observable<Prestamo[]> {
     return this.http.get<Prestamo[]>(`${this.apiUrl}/prestamos`);
   }
 
   getPrestamoByUuid(uuid: string): Observable<Prestamo> {
     return this.http.get<Prestamo>(`${this.apiUrl}/prestamos/${uuid}`);
+  }
+
+  getPersonas(): Observable<Persona[]> {
+    return this.http.get<Persona[]>(`${this.apiUrl}/personas`);
   }
 
   createPrestamo(prestamo: PrestamoPayload): Observable<Prestamo> {
@@ -31,10 +41,6 @@ export class PrestamoService {
     return this.http.delete<void>(`${this.apiUrl}/prestamos/${uuid}`);
   }
 
-  cargarEnMasiva(uuid: string, data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/prestamos/${uuid}/carga-masiva`, data);
-  }
-
   // DETALLES DE PRÉSTAMO
   getDetallesPrestamo(prestamoUuid: string): Observable<DetallePrestamo[]> {
     return this.http.get<DetallePrestamo[]>(`${this.apiUrl}/prestamos/${prestamoUuid}/detalles`);
@@ -44,10 +50,15 @@ export class PrestamoService {
     return this.http.post<DetallePrestamo>(`${this.apiUrl}/prestamos/${prestamoUuid}/detalles`, detalle);
   }
 
-  cargarDetallesEnMasiva(prestamoUuid: string, idEjemplares: number[]): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/prestamos/${prestamoUuid}/detalles/carga-masiva`, {
-      idEjemplares: idEjemplares
-    });
+  cargarDetallesEnMasiva(prestamoUuid: string, detalles: DetallePrestamoPayload[]): Observable<any> {
+    const url = `${this.apiUrl}/prestamos/${prestamoUuid}/detalles/carga-masiva`;
+    console.log(' POST a:', url);
+    console.log(' Payload:', JSON.stringify(detalles, null, 2));
+    return this.http.post<any>(url, detalles);
+  }
+
+  getEstadosEjemplares(): Observable<EstadoEjemplar[]> {
+    return this.http.get<EstadoEjemplar[]>(`${this.apiUrl}/estados-ejemplares`);
   }
 
   devolverEjemplares(prestamoUuid: string, payload: { idEjemplar: number; fechaDevolucion: string }): Observable<any> {

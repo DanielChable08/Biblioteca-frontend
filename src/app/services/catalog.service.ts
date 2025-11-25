@@ -129,6 +129,7 @@ export class CatalogService {
     return this.http.get<EstadoEjemplar[]>(`${this.apiUrl}/estados-ejemplares`);
   }
 
+
   getEstadoEjemplarByUuid(uuid: string): Observable<EstadoEjemplar> {
     return this.http.get<EstadoEjemplar>(`${this.apiUrl}/estados-ejemplares/${uuid}`);
   }
@@ -171,6 +172,11 @@ export class CatalogService {
   getTiposPersonas(): Observable<TipoPersona[]> {
     return this.http.get<TipoPersona[]>(`${this.apiUrl}/tipos-personas`);
   }
+
+  getTiposPersona(): Observable<TipoPersona[]> {
+  return this.http.get<TipoPersona[]>(`${this.apiUrl}/tipos-personas`);
+  }
+
 
   getTipoPersonaByUuid(uuid: string): Observable<TipoPersona> {
     return this.http.get<TipoPersona>(`${this.apiUrl}/tipos-personas/${uuid}`);

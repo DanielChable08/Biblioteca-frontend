@@ -5,25 +5,25 @@
     <div class="header-brand">
       <img src="assets/img/Logo-Dorado.png" class="brand-logo" alt="logo" />
       <div class="brand-info">
-        <span class="brand-title"
-          >Biblioteca Física
-          <span class="admin-badge"
-            ><p-chip label="Administrador" icon="pi pi-shield" class="chip-admin chip-compact"
-          /></span>
+        <span class="brand-title">
+          Biblioteca Física
+          <span class="admin-badge">
+            <p-chip [label]="currentUserRole" icon="pi pi-shield" class="chip-admin chip-compact" />
+          </span>
         </span>
         <div class="brand-subtitle">Panel de administración del catálogo físico</div>
       </div>
     </div>
     
     <div class="header-user-section" 
-         (click)="menu.toggle($event)"
-         pTooltip="Catálogos y Opciones" 
-         tooltipPosition="bottom">
+        (click)="menu.toggle($event)"
+        pTooltip="Catálogos y Opciones" 
+        tooltipPosition="bottom">
+      <div class="user-avatar">{{ currentUserInitials }}</div>
       <div class="user-text">
-        <span class="user-role">Bibliotecario(a)</span>
-        <span class="user-name">Bibliotecario</span>
+        <span class="user-name">{{ currentFullName }}</span>
+        <span class="user-role">{{ currentUserRole }}</span>
       </div>
-      <div class="user-avatar">B</div>
     </div>
   </div>
   
@@ -134,9 +134,7 @@
           <span class="stat-box-title">Disponibles</span>
           <i class="pi pi-check-square orange-icon"></i>
         </div>
-        <div class="stat-box-number">
-          {{ EjemplaresDisponibles() }}
-        </div>
+        <div class="stat-box-number">{{ getTotalEjemplaresDisponibles() }}</div>
         <div class="stat-box-subtitle">Listos para préstamo</div>
       </div>
       <div class="stat-box">
@@ -144,9 +142,7 @@
           <span class="stat-box-title">Prestados</span>
           <i class="pi pi-arrow-right-arrow-left gray-icon"></i>
         </div>
-        <div class="stat-box-number">
-          {{ EjemplaresPrestados() }}
-        </div>
+        <div class="stat-box-number">{{ getTotalEjemplaresPrestados() }}</div>
         <div class="stat-box-subtitle">Actualmente en préstamo</div>
       </div>
       <div class="stat-box">
@@ -154,9 +150,7 @@
           <span class="stat-box-title">En Reparación</span>
           <i class="pi pi-wrench red-icon"></i>
         </div>
-        <div class="stat-box-number">
-          {{ EjemplaresReparacion() }}
-        </div>
+        <div class="stat-box-number">{{ getTotalEjemplaresReparacion() }}</div>
         <div class="stat-box-subtitle">Requieren atención</div>
       </div>
     </div>
@@ -210,13 +204,29 @@
             alt="portada"
             class="book-img-compact"
           />
-          <span
-            *ngIf="libro.ejemplares && libro.ejemplares.length > 0"
-            class="status-badge"
-            [ngClass]="getStatusClass(libro.ejemplares[0].estado?.nombre)"
-          >
-            {{ libro.ejemplares[0].estado?.nombre || 'Desconocido' }}
-          </span>
+          
+          <!-- BADGES EN ESQUINA SUPERIOR DERECHA -->
+          <div class="book-status-badges">
+            <span *ngIf="getEjemplaresDisponibles(libro) > 0" class="status-badge available">
+              <i class="pi pi-check-circle"></i>
+              {{ getEjemplaresDisponibles(libro) }}
+            </span>
+            
+            <span *ngIf="getEjemplaresPrestados(libro) > 0" class="status-badge borrowed">
+              <i class="pi pi-arrow-right-arrow-left"></i>
+              {{ getEjemplaresPrestados(libro) }}
+            </span>
+            
+            <span *ngIf="getEjemplaresReparacion(libro) > 0" class="status-badge repair">
+              <i class="pi pi-wrench"></i>
+              {{ getEjemplaresReparacion(libro) }}
+            </span>
+            
+            <span *ngIf="!libro.ejemplares || libro.ejemplares.length === 0" class="status-badge unavailable">
+              <i class="pi pi-times-circle"></i>
+              0
+            </span>
+          </div>
         </div>
       </ng-template>
 
@@ -226,19 +236,22 @@
           {{ getAutoresAsString(libro.autores) }}
         </p>
         <span class="book-category-compact" [title]="libro.categoria?.nombre">
-          {{ libro.categoria?.nombre | slice : 0 : 22
-          }}{{ (libro.categoria?.nombre?.length || 0) > 22 ? '...' : '' }}
+          {{ libro.categoria?.nombre | slice : 0 : 22 }}{{ (libro.categoria?.nombre?.length || 0) > 22 ? '...' : '' }}
         </span>
 
         <div class="book-details-compact">
           <span class="detail-item-compact">
             <i class="pi pi-barcode"></i> {{ libro.ejemplares?.[0]?.codigo || 'Sin código' }}
           </span>
-          <span class="detail-item-compact"><i class="pi pi-tag"></i> {{ formatIsbn(libro.isbn) }}</span>
-          <span class="detail-item-compact"><i class="pi pi-calendar"></i> {{ libro.anho }}</span>
-          <span class="detail-item-compact"
-            ><i class="pi pi-file"></i> {{ libro.paginas }} páginas</span
-          >
+          <span class="detail-item-compact">
+            <i class="pi pi-tag"></i> {{ formatIsbn(libro.isbn) }}
+          </span>
+          <span class="detail-item-compact">
+            <i class="pi pi-calendar"></i> {{ libro.anho }}
+          </span>
+          <span class="detail-item-compact">
+            <i class="pi pi-file"></i> {{ libro.paginas }} páginas
+          </span>
         </div>
       </div>
 

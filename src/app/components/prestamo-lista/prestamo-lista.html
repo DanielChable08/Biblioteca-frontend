@@ -8,83 +8,209 @@
     </ng-template>
 </p-confirmDialog>
 
+<!-- MODAL DETALLES -->
+<p-dialog 
+    header="Detalles del Préstamo" 
+    [(visible)]="mostrarDetalle" 
+    [modal]="true" 
+    [style]="{width: '50vw', minWidth: '600px'}"
+    [closable]="true" 
+    (onHide)="cerrarModalDetalle()"
+    styleClass="detalle-prestamo-dialog"
+>
+    <ng-container *ngIf="prestamoActual">
+        <!-- Información del Préstamo -->
+        <div class="prestamo-info-section">
+            <div class="info-grid">
+                <div class="info-item">
+                    <i class="pi pi-user icon-lector"></i>
+                    <div class="info-content">
+                        <label>Lector</label>
+                        <span>{{ prestamoActual.lector?.nombre }} {{ prestamoActual.lector?.apPaterno }}</span>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <i class="pi pi-id-card icon-bibliotecario"></i>
+                    <div class="info-content">
+                        <label>Bibliotecario</label>
+                        <span>{{ prestamoActual.bibliotecario?.nombre }} {{ prestamoActual.bibliotecario?.apPaterno }}</span>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <i class="pi pi-calendar icon-fecha"></i>
+                    <div class="info-content">
+                        <label>Fecha Préstamo</label>
+                        <span>{{ prestamoActual.fechaPrestamo | date:'dd/MM/yyyy HH:mm' }}</span>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <i class="pi pi-calendar-times icon-limite"></i>
+                    <div class="info-content">
+                        <label>Fecha Límite</label>
+                        <span>{{ prestamoActual.fechaLimite | date:'dd/MM/yyyy HH:mm' }}</span>
+                    </div>
+                </div>
+                
+                <div class="info-item full-width">
+                    <i class="pi pi-info-circle icon-estado"></i>
+                    <div class="info-content">
+                        <label>Estado</label>
+                        <span class="estado-badge" [ngClass]="getEstadoClass(prestamoActual.estadoPrestamo?.nombre)">
+                            {{ prestamoActual.estadoPrestamo?.nombre }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <!-- Tabla de Ejemplares -->
+        <div class="ejemplares-section">
+            <h4 class="section-title">
+                <i class="pi pi-book"></i>
+                Ejemplares Prestados
+            </h4>
+            
+            <p-table [value]="detallesPrestamo" [loading]="loadingDetalles" styleClass="detalle-table">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Código</th>
+                        <th>Título</th>
+                        <th>Fecha Devolución</th>
+                        <th>Estado</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-detalle>
+                    <tr>
+                        <td>
+                            <span class="codigo-ejemplar">
+                                <i class="pi pi-bookmark"></i>
+                                {{ detalle.ejemplar?.codigo || 'N/A' }}
+                            </span>
+                        </td>
+                        <td>{{ detalle.ejemplar?.libro?.titulo || 'No disponible' }}</td>
+                        <td>
+                            <span *ngIf="detalle.fechaDevolucion" class="fecha-devolucion">
+                                {{ detalle.fechaDevolucion | date:'dd/MM/yyyy HH:mm' }}
+                            </span>
+                            <span *ngIf="!detalle.fechaDevolucion" class="pendiente-badge">
+                                Pendiente
+                            </span>
+                        </td>
+                        <td>
+                            <span class="estado-ejemplar-badge">
+                                {{ detalle.estadoEjemplar?.nombre || 'N/A' }}
+                            </span>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="4" class="text-center empty-message">
+                            No hay ejemplares registrados en el préstamo.
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </ng-container>
+</p-dialog>
+
 <div class="admin-page-container">
-  
-  <div class="header-container">
-    <div class="form-header-container">
-      <div class="form-header page-header-layout">
-        <div class="header-left">
-          <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
-          <h2><i class="pi pi-address-book user-icon"></i> Gestión de Préstamos</h2>
+
+    <div class="header-container">
+        <div class="form-header-container">
+            <div class="form-header page-header-layout">
+                <div class="header-left">
+                    <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
+                    <h2><i class="pi pi-address-book user-icon"></i> Gestión de Préstamos</h2>
+                </div>
+                <div class="header-right">
+                    <p-button label="Nuevo Préstamo" icon="pi pi-plus" styleClass="p-button-wine" (click)="agregarPrestamo()"></p-button>
+                </div>
+            </div>
         </div>
-        <div class="header-right">
-          <p-button label="Nuevo Préstamo" icon="pi pi-plus" styleClass="p-button-wine" (click)="agregarPrestamo()"></p-button>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <p-table #dtPrestamos [value]="prestamos" [loading]="loading" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
-           [globalFilterFields]="['lector.nombre', 'lector.apPaterno', 'bibliotecario.nombre', 'estadoPrestamo.nombre', 'fechaPrestamo']" 
-           styleClass="p-datatable-striped p-datatable-gridlines custom-table"
-           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} préstamos" [showCurrentPageReport]="true">
+    <p-table 
+        #dtPrestamos 
+        [value]="prestamos" 
+        [loading]="loading" 
+        [paginator]="true" 
+        [rows]="10" 
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [globalFilterFields]="['lector.nombre', 'lector.apPaterno', 'bibliotecario.nombre', 'estadoPrestamo.nombre', 'fechaPrestamo']" 
+        styleClass="p-datatable-striped p-datatable-gridlines custom-table"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} préstamos" 
+        [showCurrentPageReport]="true"
+    >
 
-    <ng-template pTemplate="caption">
-      <div class="table-header">
-        <span>Lista de Préstamos</span>
-        <div class="filter-container">
-           <span class="p-input-icon-left">
-              <i class="pi pi-search"></i>
-              <input pInputText type="text" [(ngModel)]="globalFilter" (input)="applyFilterGlobal(dtPrestamos, $event)" placeholder="Buscar..." class="table-search-input" />
-           </span>
-           <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtPrestamos)" pTooltip="Limpiar filtro"></p-button>
-        </div>
-      </div>
-    </ng-template>
+        <ng-template pTemplate="caption">
+            <div class="table-header">
+                <span>Lista de Préstamos</span>
+                <div class="filter-container">
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input 
+                            pInputText 
+                            type="text" 
+                            [(ngModel)]="globalFilter" 
+                            (input)="applyFilterGlobal(dtPrestamos, $event)" 
+                            placeholder="Buscar..." 
+                            class="table-search-input" 
+                        />
+                    </span>
+                    <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtPrestamos)" pTooltip="Limpiar filtro"></p-button>
+                </div>
+            </div>
+        </ng-template>
 
-    <ng-template pTemplate="header">
-      <tr>
-        <th pSortableColumn="lector.nombre">Lector <p-sortIcon field="lector.nombre"></p-sortIcon></th>
-        <th pSortableColumn="bibliotecario.nombre">Bibliotecario <p-sortIcon field="bibliotecario.nombre"></p-sortIcon></th>
-        <th pSortableColumn="fechaPrestamo">Fecha Préstamo <p-sortIcon field="fechaPrestamo"></p-sortIcon></th>
-        <th pSortableColumn="fechaDevolucion">Fecha Devolución <p-sortIcon field="fechaDevolucion"></p-sortIcon></th>
-        <th pSortableColumn="estadoPrestamo.nombre">Estado <p-sortIcon field="estadoPrestamo.nombre"></p-sortIcon></th>
-        <th style="width: 10rem;">Acciones</th>
-      </tr>
-    </ng-template>
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="lector.nombre">Lector <p-sortIcon field="lector.nombre"></p-sortIcon></th>
+                <th pSortableColumn="bibliotecario.nombre">Bibliotecario <p-sortIcon field="bibliotecario.nombre"></p-sortIcon></th>
+                <th pSortableColumn="fechaPrestamo">Fecha Préstamo <p-sortIcon field="fechaPrestamo"></p-sortIcon></th>
+                <th pSortableColumn="fechaLimite">Fecha Lí­mite <p-sortIcon field="fechaLimite"></p-sortIcon></th>
+                <th pSortableColumn="estadoPrestamo.nombre">Estado <p-sortIcon field="estadoPrestamo.nombre"></p-sortIcon></th>
+                <th style="width: 10rem;">Acciones</th>
+            </tr>
+        </ng-template>
 
-    <ng-template pTemplate="body" let-prestamo>
-      <tr>
-        <td>{{ prestamo.lector?.nombre }} {{ prestamo.lector?.apPaterno }}</td>
-        <td>{{ prestamo.bibliotecario?.nombre }} {{ prestamo.bibliotecario?.apPaterno }}</td>
-        <td>{{ prestamo.fechaPrestamo | date:'dd/MM/yyyy' }}</td>
-        <td>{{ prestamo.fechaDevolucion | date:'dd/MM/yyyy' }}</td>
-        <td>
-          <span class="user-role-badge" [ngClass]="getEstadoClass(prestamo.estadoPrestamo?.nombre)">
-            {{ prestamo.estadoPrestamo?.nombre || 'N/A' }}
-          </span>
-        </td>
-        <td>
-          <div class="table-actions">
-            <button pButton icon="pi pi-eye" class="action-btn-compact view-btn" pTooltip="Ver Detalles" (click)="verDetalles(prestamo)"></button>
-            <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" pTooltip="Editar" (click)="editarPrestamo(prestamo)"></button>
-            <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" pTooltip="Anular" (click)="eliminarPrestamo(prestamo)"></button>
-          </div>
-        </td>
-      </tr>
-    </ng-template>
+        <ng-template pTemplate="body" let-prestamo>
+            <tr>
+                <td>{{ prestamo.lector?.nombre }} {{ prestamo.lector?.apPaterno }}</td>
+                <td>{{ prestamo.bibliotecario?.nombre }} {{ prestamo.bibliotecario?.apPaterno }}</td>
+                <td>{{ prestamo.fechaPrestamo | date:'dd/MM/yyyy' }}</td>
+                <td>{{ prestamo.fechaLimite | date:'dd/MM/yyyy' }}</td>
+                <td>
+                    <span class="user-role-badge" [ngClass]="getEstadoClass(prestamo.estadoPrestamo?.nombre)">
+                        {{ prestamo.estadoPrestamo?.nombre || 'N/A' }}
+                    </span>
+                </td>
+                <td>
+                    <div class="table-actions">
+                        <button pButton icon="pi pi-eye" class="action-btn-compact view-btn" pTooltip="Ver Detalles" (click)="verDetalles(prestamo)"></button>
+                        <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" pTooltip="Editar" (click)="editarPrestamo(prestamo)"></button>
+                        <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" pTooltip="Anular" (click)="eliminarPrestamo(prestamo)"></button>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
 
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="6" class="text-center empty-message">No se encontraron préstamos.</td>
-      </tr>
-    </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="6" class="text-center empty-message">No se encontraron préstamos.</td>
+            </tr>
+        </ng-template>
 
-     <ng-template pTemplate="loadingbody">
-        <tr>
-            <td colspan="6" class="text-center loading-message">Cargando préstamos...</td>
-        </tr>
-    </ng-template>
-
-  </p-table>
+        <ng-template pTemplate="loadingbody">
+            <tr>
+                <td colspan="6" class="text-center loading-message">Cargando préstamos...</td>
+            </tr>
+        </ng-template>
+    </p-table>
 </div>

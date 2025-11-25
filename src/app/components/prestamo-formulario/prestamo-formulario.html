@@ -23,7 +23,7 @@
 
 <div class="form-page-container">
   <form [formGroup]="prestamoForm" (ngSubmit)="onSubmit()" class="form-container">
-    
+
     <!-- INFORMACIÓN DEL PRÉSTAMO -->
     <div class="form-section">
       <h3 class="section-title">
@@ -45,13 +45,13 @@
             appendTo="body"
             [showTime]="true"
             hourFormat="24"
+            [minDate]="minFechaPrestamo"
             styleClass="w-full">
           </p-datePicker>
           <small class="p-error" *ngIf="prestamoForm.get('fechaPrestamo')?.invalid && prestamoForm.get('fechaPrestamo')?.touched">
             La fecha de préstamo es requerida
           </small>
         </div>
-
         <div class="form-field">
           <label for="fechaLimite">
             <i class="pi pi-calendar"></i> Fecha Límite <span class="required">*</span>
@@ -75,43 +75,6 @@
       </div>
 
       <div class="form-row">
-        <div class="form-field">
-          <label for="bibliotecario">
-            <i class="pi pi-user"></i> Bibliotecario <span class="required">*</span>
-          </label>
-          <div class="p-inputgroup">
-            <p-select
-              id="bibliotecario"
-              [options]="bibliotecarios"
-              formControlName="idBibliotecario"
-              optionLabel="nombreCompleto"
-              optionValue="id"
-              placeholder="Selecciona un bibliotecario"
-              [filter]="true"
-              filterBy="nombreCompleto"
-              appendTo="body"
-              styleClass="w-full">
-              <ng-template let-persona pTemplate="item">
-                <div class="flex align-items-center gap-2">
-                  <i class="pi pi-user"></i>
-                  <span>{{ persona.nombre }} {{ persona.apPaterno }} {{ persona.apMaterno }}</span>
-                </div>
-              </ng-template>
-            </p-select>
-            <button
-              type="button"
-              pButton
-              icon="pi pi-plus"
-              class="p-button-wine btn-add-catalog"
-              pTooltip="Agregar bibliotecario"
-              (click)="abrirModalAgregar('bibliotecario')">
-            </button>
-          </div>
-          <small class="p-error" *ngIf="prestamoForm.get('idBibliotecario')?.invalid && prestamoForm.get('idBibliotecario')?.touched">
-            El bibliotecario es requerido
-          </small>
-        </div>
-
         <div class="form-field">
           <label for="lector">
             <i class="pi pi-users"></i> Lector <span class="required">*</span>
@@ -148,10 +111,8 @@
             El lector es requerido
           </small>
         </div>
-      </div>
 
-      <div class="form-row">
-        <div class="form-field">
+        <div class="form-field" *ngIf="isEditMode">
           <label for="estadoPrestamo">
             <i class="pi pi-info-circle"></i> Estado del Préstamo <span class="required">*</span>
           </label>
@@ -197,6 +158,17 @@
           class="p-button-outlined btn-add-ejemplar"
           (click)="abrirModalEjemplar()">
         </button>
+      </div>
+
+      <!-- Contador de ejemplares seleccionados -->
+      <div class="ejemplares-counter" *ngIf="ejemplaresSeleccionados.length > 0">
+        <span class="counter-text">
+          {{ ejemplaresSeleccionados.length }} de {{ MAX_EJEMPLARES }} libros seleccionados
+        </span>
+        <span class="counter-badge"
+              [class.warning]="ejemplaresSeleccionados.length >= MAX_EJEMPLARES">
+          {{ ejemplaresSeleccionados.length }}/{{ MAX_EJEMPLARES }}
+        </span>
       </div>
 
       <div class="ejemplares-list" *ngIf="ejemplaresSeleccionados.length > 0">
@@ -262,7 +234,7 @@
   [style]="{ width: '500px' }"
   [draggable]="false"
   [dismissableMask]="false">
-  
+
   <form [formGroup]="catalogoForm" (ngSubmit)="guardarCatalogo()" class="modal-form">
     <div class="field">
       <label for="nombreCatalogo">
@@ -301,14 +273,19 @@
 
 <!-- MODAL PARA SELECCIONAR EJEMPLARES -->
 <p-dialog
-  header="Seleccionar Ejemplares"
+  [header]="'Seleccionar Ejemplares (' + ejemplaresSeleccionados.length + '/' + MAX_EJEMPLARES + ')'"
   [(visible)]="displayEjemplarModal"
   [modal]="true"
   [style]="{ width: '900px', maxHeight: '80vh' }"
   [draggable]="false"
   [dismissableMask]="false">
-  
+
   <div class="ejemplar-modal-content">
+    <div class="alert-limit" *ngIf="!canAddMoreEjemplares()">
+      <i class="pi pi-exclamation-triangle"></i>
+      Has alcanzado el límite máximo de {{ MAX_EJEMPLARES }} libros por préstamo.
+    </div>
+
     <div class="search-container">
       <span class="p-input-icon-left w-full">
         <i class="pi pi-search"></i>
@@ -317,7 +294,7 @@
           type="text"
           [(ngModel)]="ejemplarFilter"
           (input)="filtrarEjemplares()"
-          placeholder="Buscar por código o título..."
+          placeholder="Buscar por código, título o autor..."
           class="w-full"
         />
       </span>
@@ -328,12 +305,14 @@
         class="ejemplar-item"
         *ngFor="let ejemplar of ejemplaresFiltrados"
         [class.selected]="isEjemplarSeleccionado(ejemplar)"
+        [class.disabled]="!isEjemplarSeleccionado(ejemplar) && !canAddMoreEjemplares()"
         (click)="toggleEjemplar(ejemplar)">
         <div class="ejemplar-checkbox">
           <p-checkbox
             [binary]="true"
             [ngModel]="isEjemplarSeleccionado(ejemplar)"
-            (ngModelChange)="toggleEjemplar(ejemplar)">
+            [disabled]="!isEjemplarSeleccionado(ejemplar) && !canAddMoreEjemplares()"
+            [inputId]="'ejemplar-' + ejemplar.id">
           </p-checkbox>
         </div>
         <div class="ejemplar-content">
@@ -376,7 +355,7 @@
     <button
       type="button"
       pButton
-      [label]="'Agregar (' + ejemplaresSeleccionados.length + ')'"
+      [label]="'Confirmar (' + ejemplaresSeleccionados.length + ')'"
       icon="pi pi-check"
       class="p-button-wine"
       (click)="confirmarEjemplares()"

@@ -117,33 +117,33 @@ export interface PersonaPayload {
 
 // Agregar estas interfaces al archivo existente
 
+// ============ PRÉSTAMO ============
+export interface EstadoPrestamo extends Catalogo {}
+
 export interface Prestamo {
-  id: number;
-  uuid: string;
+  id?: number;
+  uuid?: string;
   fechaPrestamo: string;
   fechaLimite: string;
-  fechaDevolucion: string | null;
   idBibliotecario: number;
   idLector: number;
   idEstadoPrestamo: number;
-  estadoPrestamo?: EstadoPrestamo;
-  bibliotecario?: Persona;
-  lector?: Persona;
   detalles?: DetallePrestamo[];
+  lector?: Persona;
+  bibliotecario?: Persona;
+  estadoPrestamo?: EstadoPrestamo;
 }
 
 export interface DetallePrestamo {
-  id: number;
-  uuid: string;
-  idPrestamo: number;
+  id?: number;
+  uuid?: string;
+  idPrestamo?: number;
   idEjemplar: number;
-  fechaDevolucion: string | null;
-  idEstadoEjemplar: number;
+  fechaDevolucion?: string | null;
+  idEstadoPrestamo: number;
   ejemplar?: Ejemplar;
   estadoEjemplar?: EstadoEjemplar;
 }
-
-export interface EstadoPrestamo extends Catalogo {}
 
 export interface PrestamoPayload {
   fechaPrestamo: string;
@@ -155,6 +155,6 @@ export interface PrestamoPayload {
 
 export interface DetallePrestamoPayload {
   idEjemplar: number;
-  idEstadoEjemplar: number;
+  fechaDevolucion?: string | null;
+  idEstadoPrestamo: number;
 }
-

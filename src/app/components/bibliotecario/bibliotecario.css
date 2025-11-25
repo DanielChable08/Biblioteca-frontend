@@ -29,6 +29,7 @@
   margin-left: 10px;
   margin-right: 10px;
 }
+
 .logo-capilla {
   width: 100px;
   height: 57px;
@@ -60,45 +61,50 @@
 .header-user-section {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 12px;
+  padding: 8px 16px;
   cursor: pointer;
-  padding: 0.5rem;
   border-radius: 8px;
   transition: background-color 0.2s;
 }
 
 .header-user-section:hover {
-  background-color: var(--beige);
-}
-
-.user-text {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-}
-
-.user-role {
-  font-size: 0.9rem;
-  color: var(--wine);
-  font-weight: 600;
-}
-
-.user-name {
-  font-size: 0.85rem;
-  color: var(--gray);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .user-avatar {
-  background: var(--wine);
-  color: var(--white);
   width: 40px;
   height: 40px;
   border-radius: 50%;
+  background: var(--wine);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1.2rem;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.user-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--wine);
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 12px;
+  color: var(--dark-gray);
+  opacity: 0.8;
+  line-height: 1.2;
 }
 
 .search-and-stats-wrapper {
@@ -305,12 +311,15 @@
 .gold-icon {
   color: var(--gold);
 }
+
 .orange-icon {
   color: #f59e0b;
 }
+
 .gray-icon {
   color: var(--gray);
 }
+
 .red-icon {
   color: #ef4444;
 }
@@ -428,34 +437,68 @@
   border-radius: 12px 12px 0 0;
 }
 
-.status-badge {
+/* ================================================ */
+/* BADGES DE ESTADO EN ESQUINA SUPERIOR DERECHA */
+/* ================================================ */
+
+.book-status-badges {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  z-index: 10;
 }
 
-.available {
-  background: #dbffe5;
-  color: #1e5527;
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 14px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
 }
 
-.borrowed {
-  background: #efd8cf;
-  color: #7e2222;
+.status-badge i {
+  font-size: 0.75rem;
 }
 
-.repair {
-  background: #fbdedf;
-  color: #881e1e;
+.status-badge.available {
+  background-color: rgba(209, 250, 229, 0.95);
+  color: #065f46;
+  border: 1px solid #6ee7b7;
 }
+
+.status-badge.borrowed {
+  background-color: rgba(254, 243, 199, 0.95);
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.status-badge.repair {
+  background-color: rgba(254, 226, 226, 0.95);
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.status-badge.unavailable {
+  background-color: rgba(243, 244, 246, 0.95);
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+/* ================================================ */
 
 .book-info-compact {
   padding: 10px;
-  height: 210px;
+  min-height: 180px;
 }
 
 .book-title-compact {
@@ -655,6 +698,17 @@
   .custom-filter-dropdown-container {
     min-width: auto;
   }
+  
+  .book-status-badges {
+    top: 6px;
+    right: 6px;
+    gap: 0.3rem;
+  }
+  
+  .status-badge {
+    font-size: 0.65rem;
+    padding: 0.3rem 0.5rem;
+  }
 }
 
 /* ========================================= */
@@ -662,51 +716,51 @@
 /* ========================================= */
 
 :host ::ng-deep .p-menu.p-component {
-    background: var(--white);
-    border: 1px solid var(--gray);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(92, 43, 46, 0.15);
-    padding: 0.5rem 0;
-    margin-top: 0.5rem;
+  background: var(--white);
+  border: 1px solid var(--gray);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(92, 43, 46, 0.15);
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
 }
 
 :host ::ng-deep .p-menu .p-menuitem {
-    margin: 0;
+  margin: 0;
 }
 
 :host ::ng-deep .p-menu .p-menuitem-link {
-    color: var(--wine);
-    padding: 0.75rem 1.25rem;
-    transition: background-color 0.2s;
+  color: var(--wine);
+  padding: 0.75rem 1.25rem;
+  transition: background-color 0.2s;
 }
 
 :host ::ng-deep .p-menu .p-menuitem-link:hover {
-    background-color: var(--beige);
+  background-color: var(--beige);
 }
 
 :host ::ng-deep .p-menu .p-menuitem-icon {
-    color: var(--wine);
-    margin-right: 0.75rem;
+  color: var(--wine);
+  margin-right: 0.75rem;
 }
 
 :host ::ng-deep .p-menu .p-menuitem-text {
-    font-weight: 500;
+  font-weight: 500;
 }
 
 :host ::ng-deep .p-menu .p-menuitem.menu-header .p-menuitem-text {
-    color: var(--gold);
-    font-weight: 700;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    padding: 0.5rem 1.25rem 0.25rem 1.25rem;
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  padding: 0.5rem 1.25rem 0.25rem 1.25rem;
 }
 
 :host ::ng-deep .p-menu .p-menuitem.menu-header .p-menuitem-link:hover {
-    background-color: transparent !important;
-    cursor: default;
+  background-color: transparent !important;
+  cursor: default;
 }
 
 :host ::ng-deep .p-menu .p-menu-separator {
-    border-top: 1px solid var(--beige);
-    margin: 0.5rem 0;
+  border-top: 1px solid var(--beige);
+  margin: 0.5rem 0;
 }

@@ -1,11 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-
-import { Observable } from 'rxjs';
+import { forkJoin } from 'rxjs';
+import { map, finalize, switchMap } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 
 import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
@@ -14,11 +15,9 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
 
 import { PrestamoService } from '../../services/prestamo.service';
-import { UsuarioService } from '../../services/usuario.service';
-import { CatalogService } from '../../services/catalog.service'; 
-import { Usuario } from '../../models/usuario';
-import { Prestamo } from '../../models/prestamo';
-import { Catalogo } from '../../models/biblioteca';
+import { CatalogService } from '../../services/catalog.service';
+import { BookService } from '../../services/book.service';
+import { Prestamo, DetallePrestamo } from '../../models/biblioteca';
 
 @Component({
   selector: 'app-prestamo-lista',
@@ -27,6 +26,7 @@ import { Catalogo } from '../../models/biblioteca';
     CommonModule,
     FormsModule,
     TableModule,
+    DialogModule,
     ButtonModule,
     TooltipModule,
     ToastModule,
@@ -34,79 +34,43 @@ import { Catalogo } from '../../models/biblioteca';
     InputTextModule,
     DatePipe
   ],
+  providers: [ConfirmationService, MessageService],
   templateUrl: './prestamo-lista.html',
   styleUrls: ['./prestamo-lista.css']
 })
 export default class PrestamoListaComponent implements OnInit {
-  
-  private usuarioService = inject(UsuarioService);
+  private prestamoService = inject(PrestamoService);
   private catalogService = inject(CatalogService);
+  private bookService = inject(BookService);
   private router = inject(Router);
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
 
-  
   prestamos: Prestamo[] = [];
   personasMap = new Map<number, string>();
   estadosMap = new Map<number, string>();
+  detallesPrestamo: DetallePrestamo[] = [];
+  prestamoActual: Prestamo | null = null;
+  mostrarDetalle = false;
   loading = false;
   globalFilter: string = '';
-
-
-  mockPersonas: Usuario[] = [
-    { id: 101, nombre: 'Juan', apPaterno: 'Pérez', telefono: '999111', email: 'j@p.com', uuid: 'uuid-juan', idTipoPersona: 1 },
-    { id: 102, nombre: 'Ana', apPaterno: 'López', telefono: '999222', email: 'a@l.com', uuid: 'uuid-ana', idTipoPersona: 2 },
-    { id: 201, nombre: 'Carlos', apPaterno: 'Sánchez', telefono: '999333', email: 'c@s.com', uuid: 'uuid-carlos', idTipoPersona: 3 },
-  ];
-  
-  mockEstados: Catalogo[] = [
-    { id: 1, nombre: 'Activo', uuid: 'uuid-activo' },
-    { id: 2, nombre: 'Devuelto', uuid: 'uuid-devuelto' },
-    { id: 3, nombre: 'Atrasado', uuid: 'uuid-atrasado' },
-  ];
-
-  mockPrestamos: Prestamo[] = [
-    { id: 1, uuid: 'uuid-p1', fechaPrestamo: '2025-10-20T10:00:00Z', fechaDevolucion: '2025-10-27T10:00:00Z', idBibliotecario: 102, idLector: 201, idEstadoPrestamo: 1 },
-    { id: 2, uuid: 'uuid-p2', fechaPrestamo: '2025-10-15T14:30:00Z', fechaDevolucion: '2025-10-22T14:30:00Z', idBibliotecario: 102, idLector: 101, idEstadoPrestamo: 2 },
-    { id: 3, uuid: 'uuid-p3', fechaPrestamo: '2025-09-01T11:00:00Z', fechaDevolucion: '2025-09-08T11:00:00Z', idBibliotecario: 102, idLector: 201, idEstadoPrestamo: 3 },
-  ];
-
+  loadingDetalles = false;
 
   ngOnInit(): void {
-    this.loadMockData();
+    this.loadData();
   }
 
-  loadMockData(): void {
-    this.loading = true;
-    
-    this.mockPersonas.forEach(p => this.personasMap.set(p.id, `${p.nombre} ${p.apPaterno}`));
-    this.mockEstados.forEach(e => this.estadosMap.set(e.id, e.nombre));
-
-    this.prestamos = this.mockPrestamos.map(p => ({
-      ...p,
-      lector: this.mockPersonas.find(lector => lector.id === p.idLector),
-      bibliotecario: this.mockPersonas.find(bib => bib.id === p.idBibliotecario),
-      estadoPrestamo: this.mockEstados.find(e => e.id === p.idEstadoPrestamo)
-    }));
-    
-    setTimeout(() => { this.loading = false; }, 200);
-  }
-
-  /*
-  // --- CÓDIGO REAL COMENTADO ---
   loadData(): void {
     this.loading = true;
     forkJoin({
       prestamos: this.prestamoService.getPrestamos(),
-      personas: this.usuarioService.getUsuarios(), // Asume que esto trae todas las personas
-      estados: this.catalogService.getEstadosPrestamos() // Asume que existe este método
+      personas: this.prestamoService.getPersonas(),
+      estados: this.catalogService.getEstadosPrestamos()
     }).pipe(
       map(({ prestamos, personas, estados }) => {
-        // Crear mapas para búsqueda rápida
-        personas.forEach(p => this.personasMap.set(p.id, `${p.nombre} ${p.apPaterno}`));
+        personas.forEach(p => this.personasMap.set(p.id, `${p.nombre} ${p.apPaterno} ${p.apMaterno || ''}`.trim()));
         estados.forEach(e => this.estadosMap.set(e.id, e.nombre));
 
-        // Mapear los datos reales
         return prestamos.map(p => ({
           ...p,
           lector: personas.find(lector => lector.id === p.idLector),
@@ -120,12 +84,111 @@ export default class PrestamoListaComponent implements OnInit {
         this.prestamos = prestamosMapeados;
       },
       error: (err: any) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los préstamos.' });
-        console.error(err);
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'No se pudieron cargar los préstamos.' 
+        });
+        console.error('Error al cargar préstamos:', err);
       }
     });
   }
-  */
+
+verDetalles(prestamo: Prestamo): void {
+  this.prestamoActual = prestamo;
+  this.detallesPrestamo = [];
+  this.mostrarDetalle = true;
+  this.loadingDetalles = true;
+
+  console.log('🔍 Iniciando carga de detalles para préstamo:', prestamo.uuid);
+
+  // Cargar detalles del préstamo junto con ejemplares, libros y estados
+  forkJoin({
+    detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
+    ejemplares: this.bookService.getEjemplares(),
+    libros: this.bookService.getLibros(),
+    estadosEjemplares: this.catalogService.getEstadosEjemplares()
+  }).pipe(
+    switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
+      console.log('📋 Detalles recibidos:', detalles);
+      console.log('📚 Ejemplares:', ejemplares);
+      console.log('📖 Libros:', libros);
+      console.log('📊 Estados ejemplares:', estadosEjemplares);
+
+      // Obtener autores de todos los libros
+      const libroIds = [...new Set(ejemplares.map(e => e.idLibro))];
+      const autorRequests = libroIds.map(idLibro => {
+        const libro = libros.find(l => l.id === idLibro);
+        if (libro?.uuid) {
+          return this.bookService.getAutoresForLibro(libro.uuid);
+        }
+        return [];
+      });
+
+      return forkJoin(autorRequests.length > 0 ? autorRequests : [[]]).pipe(
+        map(autoresArray => {
+          // Mapear libros con sus autores
+          const librosCompletos = libros.map((libro, index) => ({
+            ...libro,
+            autores: autoresArray[index] || []
+          }));
+
+          // Mapear ejemplares con sus libros completos
+          const ejemplaresCompletos = ejemplares.map(ejemplar => {
+            const libroDelEjemplar = librosCompletos.find(l => l.id === ejemplar.idLibro);
+            return {
+              ...ejemplar,
+              libro: libroDelEjemplar
+            };
+          });
+
+          // Mapear detalles con ejemplares y estados
+          const detallesMapeados = detalles.map(detalle => {
+            const ejemplarEncontrado = ejemplaresCompletos.find(e => e.id === detalle.idEjemplar);
+            const estadoEncontrado = estadosEjemplares.find(e => e.id === detalle.idEstadoPrestamo);
+            
+            console.log('🔍 Mapeando detalle:', {
+              detalle,
+              idEstadoEjemplar: detalle.idEstadoPrestamo,
+              estadoEncontrado,
+              ejemplarEncontrado
+            });
+
+            return {
+              ...detalle,
+              ejemplar: ejemplarEncontrado,
+              estadoEjemplar: estadoEncontrado
+            };
+          });
+
+          console.log('✅ Detalles mapeados finales:', detallesMapeados);
+          return detallesMapeados;
+        })
+      );
+    }),
+    finalize(() => this.loadingDetalles = false)
+  ).subscribe({
+    next: (detallesMapeados) => {
+      this.detallesPrestamo = detallesMapeados;
+      console.log('✅ Detalles asignados a la tabla:', this.detallesPrestamo);
+    },
+    error: (err: any) => {
+      console.error('❌ Error al cargar detalles:', err);
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Error', 
+        detail: 'No se pudieron cargar los detalles.' 
+      });
+    }
+  });
+}
+
+
+  cerrarModalDetalle(): void {
+    this.mostrarDetalle = false;
+    this.prestamoActual = null;
+    this.detallesPrestamo = [];
+  }
 
   regresar(): void {
     this.router.navigate(['/admin']);
@@ -139,14 +202,9 @@ export default class PrestamoListaComponent implements OnInit {
     this.router.navigate(['/admin/prestamos/editar', prestamo.uuid]);
   }
 
-  verDetalles(prestamo: Prestamo): void {
-    console.log("Ver detalles de préstamo:", prestamo.uuid);
-    // this.dialogService.open(PrestamoDetalleComponent, { data: { uuid: prestamo.uuid } });
-  }
-
   eliminarPrestamo(prestamo: Prestamo): void {
     this.confirmationService.confirm({
-      message: `¿Estás seguro de anular el préstamo #${prestamo.id}? Esta acción no se puede deshacer.`,
+      message: `¿Estás seguro de anular el préstamo? Esta acción no se puede deshacer.`,
       header: 'Confirmar anulación',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, anular',
@@ -154,25 +212,27 @@ export default class PrestamoListaComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger custom-accept-button',
       rejectButtonStyleClass: 'p-button-text custom-reject-button',
       accept: () => {
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Préstamo anulado (simulado).' });
-        this.prestamos = this.prestamos.filter(p => p.id !== prestamo.id);
-
-        /*
-        // --- CÓDIGO REAL COMENTADO ---
         this.loading = true;
-        this.prestamoService.deletePrestamo(prestamo.uuid).pipe(
+        this.prestamoService.deletePrestamo(prestamo.uuid!).pipe(
           finalize(() => this.loading = false)
         ).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Préstamo anulado.' });
-            this.prestamos = this.prestamos.filter(p => p.id !== prestamo.id);
+            this.messageService.add({ 
+              severity: 'success', 
+              summary: 'Éxito', 
+              detail: 'Préstamo anulado correctamente.' 
+            });
+            this.prestamos = this.prestamos.filter(p => p.uuid !== prestamo.uuid);
           },
           error: (err: any) => {
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo anular el préstamo.' });
-            console.error(err);
+            this.messageService.add({ 
+              severity: 'error', 
+              summary: 'Error', 
+              detail: 'No se pudo anular el préstamo.' 
+            });
+            console.error('Error al eliminar préstamo:', err);
           }
         });
-        */
       }
     });
   }
@@ -190,9 +250,23 @@ export default class PrestamoListaComponent implements OnInit {
   getEstadoClass(estadoNombre: string = ''): string {
     switch (estadoNombre.toLowerCase()) {
       case 'activo': return 'status-activo';
-      case 'devuelto': return 'status-devuelto';
-      case 'atrasado': return 'status-atrasado';
+      case 'devuelto': 
+      case 'devuelto a tiempo': return 'status-devuelto';
+      case 'atrasado':
+      case 'devuelto tarde': return 'status-atrasado';
+      case 'parcialmente devuelto': return 'status-parcial';
+      case 'completado a tiempo':
+      case 'completado con retardo': return 'status-completado';
       default: return 'status-desconocido';
     }
+  }
+
+  getAutoresNombres(detalle: DetallePrestamo): string {
+    if (!detalle?.ejemplar?.libro?.autores || detalle.ejemplar.libro.autores.length === 0) {
+      return 'Sin autor';
+    }
+    return detalle.ejemplar.libro.autores
+      .map(a => `${a.nombre} ${a.apPaterno}`)
+      .join(', ');
   }
 }

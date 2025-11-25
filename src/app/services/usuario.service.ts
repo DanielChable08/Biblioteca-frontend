@@ -1,8 +1,7 @@
-// src/app/services/usuario.service.ts
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Usuario, UsuarioPayload} from '../models/usuario';
+import { Usuario, UsuarioPayload } from '../models/usuario';
 import { Persona } from '../models/biblioteca';
 
 @Injectable({
@@ -10,20 +9,19 @@ import { Persona } from '../models/biblioteca';
 })
 export class UsuarioService {
   private http = inject(HttpClient);
+  private apiUrl = 'http://localhost:8080/sdt/v1';
 
-  private apiUrl = 'http://localhost:8080/sdt/v1/usuarios'; 
-
+  // ========== USUARIOS ==========
   getUsuarios(): Observable<Usuario[]> {
-    return this.http.get<Usuario[]>(this.apiUrl);
+    return this.http.get<Usuario[]>(`${this.apiUrl}/users`);
   }
 
-
-  getUsuarioByUuid(uuid: string): Observable<Usuario> { 
-    return this.http.get<Usuario>(`${this.apiUrl}/${uuid}`);
+  getUsuarioByUuid(uuid: string): Observable<Usuario> {
+    return this.http.get<Usuario>(`${this.apiUrl}/users/${uuid}`);
   }
 
   createUsuario(usuarioData: UsuarioPayload): Observable<Usuario> {
-    return this.http.post<Usuario>(this.apiUrl, usuarioData);
+    return this.http.post<Usuario>(`${this.apiUrl}/auth`, usuarioData);
   }
 
   updateUsuario(uuid: string, usuarioData: Partial<UsuarioPayload>): Observable<Usuario> {
@@ -31,14 +29,15 @@ export class UsuarioService {
     if (!payload.password) {
       delete payload.password;
     }
-    return this.http.put<Usuario>(`${this.apiUrl}/${uuid}`, payload);
+    return this.http.put<Usuario>(`${this.apiUrl}/users/${uuid}`, payload);
   }
 
-  deleteUsuario(uuid: string): Observable<void> { 
-    return this.http.delete<void>(`${this.apiUrl}/${uuid}`);
+  deleteUsuario(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/users/${uuid}`);
   }
 
-   getPersonas(): Observable<Persona[]> {
+  // ========== PERSONAS ==========
+  getPersonas(): Observable<Persona[]> {
     return this.http.get<Persona[]>(`${this.apiUrl}/personas`);
   }
 
@@ -47,10 +46,10 @@ export class UsuarioService {
   }
 
   getBibliotecarios(): Observable<Persona[]> {
-    return this.http.get<Persona[]>(`${this.apiUrl}/personas?idTipoPersona=1`);
+    return this.http.get<Persona[]>(`${this.apiUrl}/personas?idTipoPersona=2`);
   }
 
   getLectores(): Observable<Persona[]> {
-    return this.http.get<Persona[]>(`${this.apiUrl}/personas?idTipoPersona=2`);
+    return this.http.get<Persona[]>(`${this.apiUrl}/personas?idTipoPersona=1`);
   }
 }

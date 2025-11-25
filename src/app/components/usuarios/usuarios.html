@@ -67,9 +67,10 @@
         <td>{{ usuario.email }}</td>
         <td>{{ usuario.telefono }}</td>
         <td>
-          <span class="user-role-badge">
-            {{ usuario.tipoPersona?.nombre || 'N/A' }}
-          </span>
+            <span class="user-role-badge" [ngClass]="getRolClass(usuario.tipoPersona?.nombre)">
+              {{ usuario.tipoPersona?.nombre || 'N/A' }}
+            </span>
+
         </td>
         <td>
           <div class="table-actions">
