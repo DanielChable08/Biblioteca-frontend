@@ -1,0 +1,132 @@
+<p-toast></p-toast>
+
+<div class="admin-page-container">
+    <div class="header-container">
+        <div class="form-header-container">
+            <div class="form-header page-header-layout">
+                <div class="header-left">
+                    <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar a Multas" tooltipPosition="bottom"></button>
+                    <h2><i class="pi pi-money-bill user-icon"></i> Registrar Pago de Multas</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de Pago -->
+    <div class="pago-resumen">
+        <div class="resumen-card">
+            <div class="resumen-item">
+                <label>Total a Pagar:</label>
+                <span class="monto-total">${{ totalSeleccionado | number:'1.2-2' }}</span>
+            </div>
+            <div class="resumen-item">
+                <label>Monto Recibido:</label>
+                <p-inputNumber 
+                    [(ngModel)]="montoRecibido" 
+                    mode="currency" 
+                    currency="USD" 
+                    locale="en-US"
+                    (ngModelChange)="calcularCambio()"
+                    [min]="0"
+                    styleClass="monto-input">
+                </p-inputNumber>
+            </div>
+            <div class="resumen-item">
+                <label>Cambio:</label>
+                <span class="cambio" [class.cambio-positivo]="cambio >= 0" [class.cambio-negativo]="cambio < 0">
+                    ${{ cambio | number:'1.2-2' }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Multas -->
+    <p-table 
+        #dtMultas 
+        [value]="multas" 
+        [loading]="loading" 
+        [paginator]="true" 
+        [rows]="10" 
+        [globalFilterFields]="['motivoMulta.nombre', 'monto']" 
+        styleClass="p-datatable-striped p-datatable-gridlines custom-table"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} multas" 
+        [showCurrentPageReport]="true"
+    >
+        <ng-template pTemplate="caption">
+            <div class="table-header">
+                <span>Selecciona las multas a pagar</span>
+                <div class="filter-container">
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input 
+                            pInputText 
+                            type="text" 
+                            [(ngModel)]="globalFilter" 
+                            (input)="applyFilterGlobal(dtMultas, $event)" 
+                            placeholder="Buscar..." 
+                            class="table-search-input" 
+                        />
+                    </span>
+                    <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtMultas)" pTooltip="Limpiar filtro"></p-button>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width: 50px;">
+                    <p-checkbox 
+                        [ngModel]="todosSeleccionados()" 
+                        [binary]="true"
+                        (onChange)="toggleSeleccionTodos($event)">
+                    </p-checkbox>
+                </th>
+                <th>ID</th>
+                <th>Motivo</th>
+                <th>Monto</th>
+                <th>Fecha Emisión</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-multa>
+            <tr [class.selected-row]="multa.seleccionada">
+                <td>
+                    <p-checkbox 
+                        [(ngModel)]="multa.seleccionada" 
+                        [binary]="true"
+                        (ngModelChange)="actualizarTotal()">
+                    </p-checkbox>
+                </td>
+                <td>{{ multa.id }}</td>
+                <td>{{ multa.motivoMulta?.nombre || 'N/A' }}</td>
+                <td>${{ multa.monto | number:'1.2-2' }}</td>
+                <td>{{ multa.fechaEmision | date:'dd/MM/yyyy' }}</td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="5" class="text-center empty-message">No hay multas pendientes de pago.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <!-- Botones de Acción -->
+    <div class="pago-footer">
+        <p-button 
+            label="Cancelar" 
+            icon="pi pi-times" 
+            styleClass="p-button-text p-button-secondary" 
+            (onClick)="regresar()"
+            [disabled]="procesando">
+        </p-button>
+        <p-button 
+            label="Registrar Pago" 
+            icon="pi pi-check" 
+            styleClass="p-button-wine" 
+            (onClick)="procesarPago()"
+            [loading]="procesando"
+            [disabled]="multasSeleccionadas.length === 0 || montoRecibido < totalSeleccionado">
+        </p-button>
+    </div>
+</div>

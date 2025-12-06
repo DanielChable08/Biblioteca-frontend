@@ -131,7 +131,7 @@
       </div>
       <div class="stat-box">
         <div class="stat-box-header">
-          <span class="stat-box-title">Disponibles</span>
+          <span class="stat-box-title">Ejemplares Disponibles</span>
           <i class="pi pi-check-square orange-icon"></i>
         </div>
         <div class="stat-box-number">{{ getTotalEjemplaresDisponibles() }}</div>
@@ -205,26 +205,16 @@
             class="book-img-compact"
           />
           
-          <!-- BADGES EN ESQUINA SUPERIOR DERECHA -->
           <div class="book-status-badges">
-            <span *ngIf="getEjemplaresDisponibles(libro) > 0" class="status-badge available">
-              <i class="pi pi-check-circle"></i>
-              {{ getEjemplaresDisponibles(libro) }}
-            </span>
-            
-            <span *ngIf="getEjemplaresPrestados(libro) > 0" class="status-badge borrowed">
-              <i class="pi pi-arrow-right-arrow-left"></i>
-              {{ getEjemplaresPrestados(libro) }}
-            </span>
-            
-            <span *ngIf="getEjemplaresReparacion(libro) > 0" class="status-badge repair">
-              <i class="pi pi-wrench"></i>
-              {{ getEjemplaresReparacion(libro) }}
-            </span>
-            
-            <span *ngIf="!libro.ejemplares || libro.ejemplares.length === 0" class="status-badge unavailable">
-              <i class="pi pi-times-circle"></i>
-              0
+            <span 
+              [class]="'status-badge ' + getEstadoPrincipal(libro).clase"
+              [pTooltip]="getTooltipEstados(libro)"
+              [escape]="false"
+              tooltipPosition="bottom"
+              [showDelay]="200"
+            >
+              <i [class]="'pi ' + getEstadoPrincipal(libro).icono"></i>
+              {{ getEstadoPrincipal(libro).cantidad }}
             </span>
           </div>
         </div>

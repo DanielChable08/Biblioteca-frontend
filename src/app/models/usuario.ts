@@ -2,25 +2,40 @@
 import { TipoPersona } from './biblioteca'; // Reutiliza si es aplicable
 
 export interface Usuario {
-  id: number; // o string si usas UUID
-  nombre: string;
-  apPaterno: string;
-  apMaterno?: string;
-  telefono: string;
-  email: string; // Asumiendo que el email es el username
-  uuid: string; // Si tu backend usa UUIDs
-  idTipoPersona: number; // o roleId, etc.
-  tipoPersona?: TipoPersona; // Para mostrar el nombre del rol
-  // Añade otros campos que devuelva tu API (fechaCreacion, activo, etc.)
+  id: number;
+  uuid: string;
+  email: string;
+  idPersona: number;
+  roles?: number[];
 }
 
-// Interfaz opcional para el payload de creación/actualización si difiere
-export interface UsuarioPayload {
+// ✅ Usuario completo (con datos de persona)
+export interface UsuarioCompleto extends Usuario {
   nombre: string;
   apPaterno: string;
   apMaterno?: string;
   telefono: string;
-  email: string;
-  password?: string; // Incluye password solo al crear o cambiar
   idTipoPersona: number;
+}
+
+// ✅ Payload para crear usuario
+export interface UsuarioPayload {
+  email: string;
+  password: string;
+  nombre: string;
+  apPaterno: string;
+  apMaterno?: string;
+  telefono: string;
+  idTipoPersona: number;
+}
+
+// ✅ Payload para actualizar usuario
+export interface UsuarioUpdatePayload {
+  email?: string;
+  password?: string;
+  nombre?: string;
+  apPaterno?: string;
+  apMaterno?: string;
+  telefono?: string;
+  idTipoPersona?: number;
 }

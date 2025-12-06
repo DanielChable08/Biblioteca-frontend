@@ -17,9 +17,11 @@
   <div class="form-page-container">
     <form [formGroup]="usuarioForm" (ngSubmit)="onSubmit()" class="form-container">
       <div class="form-grid">
+        <!-- ========== COLUMNA IZQUIERDA ========== -->
         <div class="form-column">
+          <!-- Nombre -->
           <div class="field">
-            <label for="nombre">Nombre(s) <label class="text red">*</label></label>
+            <label for="nombre">Nombre(s) <span class="text red">*</span></label>
             <input
               id="nombre"
               class="form-comp"
@@ -27,16 +29,17 @@
               formControlName="nombre"
               placeholder="Ej: Juan"
             />
-            <div
-              class="error-msg text red"
+            <small 
+              class="error-msg text red" 
               *ngIf="isFieldInvalid('nombre')"
             >
-              <small>El nombre es requerido.</small>
-            </div>
+              El nombre es requerido.
+            </small>
           </div>
 
+          <!-- Apellido Paterno -->
           <div class="field">
-            <label for="apPaterno">Apellido Paterno <label class="text red">*</label></label>
+            <label for="apPaterno">Apellido Paterno <span class="text red">*</span></label>
             <input
               id="apPaterno"
               class="form-comp"
@@ -44,14 +47,15 @@
               formControlName="apPaterno"
               placeholder="Ej: López"
             />
-            <div
-              class="error-msg text red"
+            <small 
+              class="error-msg text red" 
               *ngIf="isFieldInvalid('apPaterno')"
             >
-              <small>El apellido paterno es requerido.</small>
-            </div>
+              El apellido paterno es requerido.
+            </small>
           </div>
 
+          <!-- Apellido Materno -->
           <div class="field">
             <label for="apMaterno">Apellido Materno</label>
             <input
@@ -59,12 +63,13 @@
               class="form-comp"
               pInputText
               formControlName="apMaterno"
-              placeholder="Ej: Ramírez"
+              placeholder="Ej: Ramírez (opcional)"
             />
           </div>
 
+          <!-- Teléfono -->
           <div class="field">
-            <label for="telefono">Teléfono <label class="text red">*</label></label>
+            <label for="telefono">Teléfono <span class="text red">*</span></label>
             <div class="p-inputgroup">
               <span class="p-inputgroup-addon pr-2"><i class="pi pi-phone"></i></span>
               <input
@@ -74,21 +79,23 @@
                 formControlName="telefono"
                 placeholder="Ej: 9991234567"
                 maxlength="10"
+                (input)="soloNumeros($event)"
               />
             </div>
-            <div
-              class="error-msg text red"
+            <small 
+              class="error-msg text red" 
               *ngIf="isFieldInvalid('telefono')"
             >
-              <small>Ingresa un teléfono válido de 10 dígitos.</small>
-            </div>
+              Ingresa un teléfono válido de 10 dígitos.
+            </small>
           </div>
         </div>
 
-
+        <!-- ========== COLUMNA DERECHA ========== -->
         <div class="form-column">
+          <!-- Email -->
           <div class="field">
-            <label for="email">Correo Electrónico <label class="text red">*</label></label>
+            <label for="email">Correo Electrónico <span class="text red">*</span></label>
             <div class="p-inputgroup">
               <span class="p-inputgroup-addon pr-2"><i class="pi pi-envelope"></i></span>
               <input
@@ -100,35 +107,45 @@
                 placeholder="usuario@ejemplo.com"
               />
             </div>
-            <div class="error-msg text red" *ngIf="isFieldInvalid('email')">
-              <small>Ingresa un correo válido.</small>
-            </div>
+            <small 
+              class="error-msg text red" 
+              *ngIf="isFieldInvalid('email')"
+            >
+              Ingresa un correo electrónico válido.
+            </small>
           </div>
 
+          <!-- Contraseña -->
           <div class="field">
-            <label for="password">Contraseña <label class="text red">*</label></label>
-            <span *ngIf="isEditMode">(Dejar en blanco para no cambiar)</span>
+            <label for="password">
+              Contraseña 
+              <span class="text red" *ngIf="!isEditMode">*</span>
+              <span class="text-muted" *ngIf="isEditMode">(Dejar en blanco para no cambiar)</span>
+            </label>
             <p-password
               inputId="password"
               formControlName="password"
-              placeholder="{{ isEditMode ? 'Nueva contraseña (opcional)' : 'Mínimo 6 caracteres' }}"
+              [placeholder]="isEditMode ? 'Nueva contraseña (opcional)' : 'Mínimo 6 caracteres'"
               [feedback]="false"
               [toggleMask]="true"
               styleClass="w-full"
             ></p-password>
-            <div class="error-msg text red" *ngIf="isFieldInvalid('password')">
-              <small>{{
-                isEditMode
-                  ? 'La contraseña debe tener al menos 6 caracteres.'
-                  : 'La contraseña es requerida (mín. 6 caracteres).'
-              }}</small>
-            </div>
+            <small 
+              class="error-msg text red" 
+              *ngIf="isFieldInvalid('password')"
+            >
+              {{ isEditMode 
+                ? 'La contraseña debe tener al menos 6 caracteres.' 
+                : 'La contraseña es requerida (mínimo 6 caracteres).' 
+              }}
+            </small>
           </div>
 
+          <!-- Tipo de Persona / Rol -->
           <div class="field">
-            <label for="tipoPersona">Rol / Tipo de Usuario <label class="text red">*</label></label>
+            <label for="tipoPersona">Rol / Tipo de Usuario <span class="text red">*</span></label>
             <p-select
-              id="tipoPersona"
+              inputId="tipoPersona"
               [options]="tiposPersona"
               class="form-comp full-w"
               formControlName="idTipoPersona"
@@ -136,19 +153,24 @@
               optionValue="id"
               placeholder="Selecciona un rol"
             ></p-select>
-            <div class="error-msg text red" *ngIf="isFieldInvalid('idTipoPersona')">
-              <small>Debes seleccionar un rol.</small>
-            </div>
+            <small 
+              class="error-msg text red" 
+              *ngIf="isFieldInvalid('idTipoPersona')"
+            >
+              Debes seleccionar un rol.
+            </small>
           </div>
         </div>
       </div>
 
+      <!-- ========== BOTONES ========== -->
       <div class="form-footer">
         <p-button
           label="Cancelar"
           styleClass="btn-info text"
           icon="pi pi-times-circle"
           (click)="cancelar()"
+          type="button"
         ></p-button>
         <p-button
           [label]="isEditMode ? 'Actualizar Usuario' : 'Guardar Usuario'"

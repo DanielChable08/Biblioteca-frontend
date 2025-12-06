@@ -1,0 +1,128 @@
+<p-toast></p-toast>
+<p-confirmDialog>
+    <ng-template pTemplate="message" let-message>
+        <div class="flex flex-column align-items-center text-center gap-3">
+            <i [class]="message.icon" class="dialog-icon"></i>
+            <p class="dialog-message">{{ message.message }}</p>
+        </div>
+    </ng-template>
+</p-confirmDialog>
+
+<div class="admin-page-container">
+    <div class="header-container">
+        <div class="form-header-container">
+            <div class="form-header page-header-layout">
+                <div class="header-left">
+                    <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar" tooltipPosition="bottom"></button>
+                    <h2><i class="pi pi-dollar user-icon"></i> Gestión de Multas</h2>
+                </div>
+                <div class="header-right">
+                    <p-button label="Ver Pagos" icon="pi pi-money-bill" styleClass="p-button-wine" [routerLink]="['/admin/pagos']"></p-button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p-table 
+        #dtMultas 
+        [value]="multas" 
+        [loading]="loading" 
+        [paginator]="true" 
+        [rows]="10" 
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [globalFilterFields]="['lectorNombre', 'motivoMulta.nombre', 'estadoMulta.nombre', 'monto', 'fechaEmision', 'diasRetraso']" 
+        styleClass="p-datatable-striped p-datatable-gridlines custom-table"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} multas" 
+        [showCurrentPageReport]="true"
+    >
+        <ng-template pTemplate="caption">
+            <div class="table-header">
+                <span>Lista de Multas</span>
+                <div class="filter-container">
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input 
+                            pInputText 
+                            type="text" 
+                            [(ngModel)]="globalFilter" 
+                            (input)="applyFilterGlobal(dtMultas, $event)" 
+                            placeholder="Buscar..." 
+                            class="table-search-input" 
+                        />
+                    </span>
+                    <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtMultas)" pTooltip="Limpiar filtro"></p-button>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+                <th pSortableColumn="lectorNombre">Lector <p-sortIcon field="lectorNombre"></p-sortIcon></th>
+                <th pSortableColumn="motivoMulta.nombre">Motivo <p-sortIcon field="motivoMulta.nombre"></p-sortIcon></th>
+                <th pSortableColumn="diasRetraso">Días Atraso <p-sortIcon field="diasRetraso"></p-sortIcon></th>
+                <th pSortableColumn="monto">Monto <p-sortIcon field="monto"></p-sortIcon></th>
+                <th pSortableColumn="fechaEmision">Fecha Emisión <p-sortIcon field="fechaEmision"></p-sortIcon></th>
+                <th pSortableColumn="estadoMulta.nombre">Estado <p-sortIcon field="estadoMulta.nombre"></p-sortIcon></th>
+                <th style="width: 10rem;">Acciones</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-multa>
+            <tr>
+                <td>{{ multa.id }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="pi pi-user" style="color: var(--gold);"></i>
+                        <span>{{ multa.lectorNombre }}</span>
+                    </div>
+                </td>
+                <td>{{ multa.motivoMulta?.nombre || 'N/A' }}</td>
+                <td>
+                    <span class="dias-badge" [ngClass]="getDiasRetrasoClass(multa.diasRetraso)">
+                        <i class="pi pi-calendar"></i> {{ multa.diasRetraso }} días
+                    </span>
+                </td>
+                <td style="font-weight: 600; color: var(--wine);">${{ multa.monto | number:'1.2-2' }}</td>
+                <td>{{ multa.fechaEmision | date:'dd/MM/yyyy' }}</td>
+                <td>
+                    <span class="user-role-badge" [ngClass]="getEstadoClass(multa.estadoMulta?.nombre)">
+                        {{ multa.estadoMulta?.nombre || 'N/A' }}
+                    </span>
+                </td>
+                <td>
+                    <div class="table-actions">
+                        <button 
+                            pButton 
+                            icon="pi pi-money-bill" 
+                            class="action-btn-compact pay-btn" 
+                            pTooltip="Registrar Pago" 
+                            (click)="registrarPago(multa)"
+                            [disabled]="multa.estadoMulta?.nombre === 'Pagada' || multa.estadoMulta?.nombre === 'Condonada'">
+                        </button>
+                        <button 
+                            pButton 
+                            icon="pi pi-check" 
+                            class="action-btn-compact condonar-btn" 
+                            pTooltip="Condonar" 
+                            (click)="condonarMulta(multa)"
+                            [disabled]="multa.estadoMulta?.nombre === 'Pagada' || multa.estadoMulta?.nombre === 'Condonada'">
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="8" class="text-center empty-message">No se encontraron multas.</td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="loadingbody">
+            <tr>
+                <td colspan="8" class="text-center loading-message">Cargando multas...</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

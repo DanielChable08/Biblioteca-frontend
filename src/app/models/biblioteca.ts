@@ -24,7 +24,11 @@ export interface CondicionFisica extends Catalogo {}
 
 export interface EstadoEjemplar extends Catalogo {}
 
+export interface EstadoPrestamo extends Catalogo {}
 
+export interface MotivoMulta extends Catalogo {}
+
+export interface EstadoMulta extends Catalogo {}
 
 // ============ EJEMPLAR ============
 export interface Ejemplar {
@@ -37,25 +41,24 @@ export interface Ejemplar {
   idEstadoEjemplar: number;
   estado?: EstadoEjemplar;
   condicionFisica?: CondicionFisica;
-  libro?: Libro;    
+  libro?: Libro;
 }
 
 // ============ PERSONA ============
-export interface TipoPersona {
-  id: number;
-  uuid?: string;
-  nombre: string; // "Bibliotecario", "Lector", etc.
-}
-
 export interface Persona {
   id: number;
   uuid: string;
   nombre: string;
   apPaterno: string;
-  apMaterno: string;
-  telefono?: string;
+  apMaterno?: string;
+  telefono: string;
   idTipoPersona: number;
-  tipoPersona?: TipoPersona; // Relación opcional
+}
+
+export interface TipoPersona {
+  id: number;
+  uuid: string;
+  nombre: string;
 }
 
 // ============ LIBRO ============
@@ -74,7 +77,6 @@ export interface Libro {
   idIdioma: number;
   uuid: string;
 
-  // Propiedades opcionales para datos relacionados
   autores?: Autor[];
   categoria?: Catalogo;
   editorial?: Editorial;
@@ -83,7 +85,6 @@ export interface Libro {
   imagen?: string;
   ejemplares?: Ejemplar[];
 }
-
 
 export interface LibroPayload {
   titulo: string;
@@ -115,11 +116,7 @@ export interface PersonaPayload {
   idTipoPersona: number;
 }
 
-// Agregar estas interfaces al archivo existente
-
 // ============ PRÉSTAMO ============
-export interface EstadoPrestamo extends Catalogo {}
-
 export interface Prestamo {
   id?: number;
   uuid?: string;
@@ -157,4 +154,61 @@ export interface DetallePrestamoPayload {
   idEjemplar: number;
   fechaDevolucion?: string | null;
   idEstadoPrestamo: number;
+}
+
+// ============ MULTAS ============
+export interface PoliticaMulta {
+  id: number;
+  uuid: string;
+  diasGracia: number;
+  multaDiaria: number;
+  multaMaxima: number;
+  vigente: boolean;
+}
+
+export interface Multa {
+  id: number;
+  monto: number;
+  fechaEmision: string;
+  idPrestamoDetalle: number;
+  idMotivoMulta: number;
+  idEstadoMulta: number;
+  idPersona?: number; 
+  diasRetraso?: number;
+  motivoMulta?: MotivoMulta;
+  estadoMulta?: EstadoMulta;
+  prestamoDetalle?: DetallePrestamo;
+  lector?: Persona;
+}
+
+export interface MultaPayload {
+  monto: number;
+  idPrestamoDetalle: number;
+  idMotivoMulta: number;
+  idEstadoMulta: number;
+}
+
+// ============ PAGOS ============
+export interface PagoMulta {
+  id: number;
+  montoRecibido: number;
+  fechaPago: string;
+  cajero: number;
+  multas?: Multa[];
+  cajeroPersona?: Persona;
+}
+
+export interface PagoMultaPayload {
+  montoRecibido: number;
+  cajero: number;
+  idsMultas: number[];
+}
+
+// ============ VISTA COMPLETA (para consultas JOIN) ============
+export interface MultaCompleta extends Multa {
+  nombreLector: string;
+  apellidoLector: string;
+  libroTitulo: string;
+  codigoEjemplar: string;
+  diasAtraso: number; 
 }

@@ -1,0 +1,245 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { map, finalize } from 'rxjs/operators';
+import { FormsModule } from '@angular/forms';
+
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { InputTextModule } from 'primeng/inputtext';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+
+import { BookService } from '../../services/book.service';
+import { CatalogService } from '../../services/catalog.service';
+import { Ejemplar } from '../../models/biblioteca';
+import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
+import LibroDetalleComponent from '../libro-detalle/libro-detalle'; // ✅ Importar el modal
+
+@Component({
+  selector: 'app-ejemplar-lista',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    TableModule,
+    DialogModule,
+    ButtonModule,
+    TooltipModule,
+    ToastModule,
+    ConfirmDialogModule,
+    InputTextModule
+  ],
+  providers: [ConfirmationService, MessageService, DialogService],
+  templateUrl: './ejemplar-lista.html',
+  styleUrls: ['./ejemplar-lista.css']
+})
+export default class EjemplarListaComponent implements OnInit {
+  private bookService = inject(BookService);
+  private catalogService = inject(CatalogService);
+  private router = inject(Router);
+  private confirmationService = inject(ConfirmationService);
+  private messageService = inject(MessageService);
+  private dialogService = inject(DialogService);
+
+  ejemplares: any[] = [];
+  loading = false;
+  globalFilter: string = '';
+  private dialogRef?: DynamicDialogRef;
+
+  ngOnInit(): void {
+    this.loadData();
+  }
+
+  loadData(): void {
+    this.loading = true;
+    forkJoin({
+      ejemplares: this.bookService.getEjemplares(),
+      libros: this.bookService.getLibros(),
+      estadosEjemplares: this.catalogService.getEstadosEjemplares(),
+      condicionesFisicas: this.catalogService.getCondicionesFisicas()
+    }).pipe(
+      map(({ ejemplares, libros, estadosEjemplares, condicionesFisicas }) => {
+        return ejemplares.map((ejemplar: any) => {
+          const libro = libros.find((l: any) => l.id === ejemplar.idLibro);
+          const estadoEjemplar = estadosEjemplares.find((e: any) => e.id === ejemplar.idEstadoEjemplar);
+          const condicionFisica = condicionesFisicas.find((c: any) => c.id === ejemplar.idCondicionFisicaEjemplar);
+
+          return {
+            ...ejemplar,
+            libro: libro,
+            estadoEjemplar: estadoEjemplar,
+            condicionFisica: condicionFisica
+          };
+        });
+      }),
+      finalize(() => this.loading = false)
+    ).subscribe({
+      next: (ejemplaresMapeados) => {
+        this.ejemplares = ejemplaresMapeados;
+      },
+      error: (err: any) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los ejemplares.'
+        });
+        console.error('Error al cargar ejemplares:', err);
+      }
+    });
+  }
+
+  agregarEjemplar(): void {
+    this.dialogRef = this.dialogService.open(EjemplarFormularioComponent, {
+      header: 'Agregar Ejemplar',
+      width: '50vw',
+      contentStyle: { overflow: 'auto' },
+      baseZIndex: 10000,
+      data: {
+        messageService: this.messageService
+      }
+    });
+
+    this.dialogRef.onClose.subscribe((resultado) => {
+      if (resultado) {
+        this.loadData();
+      }
+    });
+  }
+
+  editarEjemplar(ejemplar: Ejemplar): void {
+    this.dialogRef = this.dialogService.open(EjemplarFormularioComponent, {
+      header: 'Editar Ejemplar',
+      width: '50vw',
+      contentStyle: { overflow: 'auto' },
+      baseZIndex: 10000,
+      data: {
+        ejemplarUuid: ejemplar.uuid,
+        messageService: this.messageService
+      }
+    });
+
+    this.dialogRef.onClose.subscribe((resultado) => {
+      if (resultado) {
+        this.loadData();
+      }
+    });
+  }
+
+  // ✅ MÉTODO ACTUALIZADO: Abrir modal en lugar de navegar
+  verLibro(ejemplar: any): void {
+    if (!ejemplar.libro?.uuid) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'No se puede ver el libro asociado.'
+      });
+      return;
+    }
+
+    // ✅ Abrir el modal de detalles del libro
+    this.dialogRef = this.dialogService.open(LibroDetalleComponent, {
+      header: `Detalles de ${ejemplar.libro.titulo}`,
+      width: '75%',
+      contentStyle: { 
+        'max-height': '90vh', 
+        'overflow': 'auto' 
+      },
+      baseZIndex: 10000,
+      data: {
+        uuid: ejemplar.libro.uuid,
+        imagenUrl: ejemplar.libro.imagen
+      },
+      modal: true,
+      closable: true
+    });
+  }
+
+  eliminarEjemplar(ejemplar: Ejemplar): void {
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de eliminar el ejemplar con código "${ejemplar.codigo}"? Esta acción no se puede deshacer.`,
+      header: 'Confirmar Eliminación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'No',
+      acceptButtonStyleClass: 'p-button-danger custom-accept-button',
+      rejectButtonStyleClass: 'p-button-text custom-reject-button',
+      accept: () => {
+        this.loading = true;
+        this.bookService.deleteEjemplar(ejemplar.uuid).pipe(
+          finalize(() => this.loading = false)
+        ).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Ejemplar eliminado correctamente.'
+            });
+            this.loadData();
+          },
+          error: (err: any) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'No se pudo eliminar el ejemplar.'
+            });
+            console.error('Error al eliminar ejemplar:', err);
+          }
+        });
+      }
+    });
+  }
+
+  regresar(): void {
+    this.router.navigate(['/admin']);
+  }
+
+  applyFilterGlobal(table: any, event: Event): void {
+    const filterValue = (event.target as HTMLInputElement).value;
+    table.filterGlobal(filterValue, 'contains');
+  }
+
+  clearFilter(table: any): void {
+    this.globalFilter = '';
+    table.clear();
+  }
+
+  getEstadoClass(estadoNombre: string = ''): string {
+    switch (estadoNombre.toLowerCase()) {
+      case 'disponible': return 'status-disponible';
+      case 'prestado': return 'status-prestado';
+      case 'reservado': return 'status-reservado';
+      case 'en reparación':
+      case 'en reparacion': return 'status-reparacion';
+      case 'extraviado': return 'status-extraviado';
+      case 'dado de baja': return 'status-baja';
+      default: return 'status-desconocido';
+    }
+  }
+
+  getCondicionClass(condicionNombre: string = ''): string {
+    switch (condicionNombre.toLowerCase()) {
+      case 'excelente':
+      case 'nuevo': return 'condicion-excelente';
+      case 'bueno':
+      case 'buena': return 'condicion-buena';
+      case 'regular': return 'condicion-regular';
+      case 'malo':
+      case 'mala':
+      case 'deteriorado': return 'condicion-mala';
+      default: return 'condicion-desconocida';
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.dialogRef) {
+      this.dialogRef.close();
+    }
+  }
+}

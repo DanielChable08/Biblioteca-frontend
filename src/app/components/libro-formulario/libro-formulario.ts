@@ -7,7 +7,6 @@ import { finalize, map, switchMap, forkJoin } from 'rxjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { trigger, transition, style, animate } from '@angular/animations';
 
-
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -17,7 +16,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
-
 
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
@@ -85,11 +83,11 @@ export default class LibroFormularioComponent implements OnInit {
     this.libroForm = this.fb.group({
       titulo: ['', Validators.required],
       idAutores: [[], Validators.required],
-      resumen: ['', Validators.required],
+      resumen: [''], // ✅ Ya NO es requerido
       isbn: ['', [Validators.required, Validators.pattern(/^\d{13}$/)]],
       isbnDisplay: ['', Validators.required],
       anho: [new Date().getFullYear(), [Validators.required, Validators.pattern('^[0-9]{4}$')]],
-      paginas: [null, [Validators.required, Validators.min(1)]],
+      paginas: [null, Validators.min(1)], // ✅ Ya NO es requerido, solo validación de mínimo
       edicion: [''],
       idCategoria: [null, Validators.required],
       idEditorial: [null, Validators.required],
@@ -101,7 +99,7 @@ export default class LibroFormularioComponent implements OnInit {
 
     this.catalogoForm = this.fb.group({
       nombre: ['', Validators.required],
-      apPaterno: [''],
+      apPaterno: [''], // ✅ Ya NO es requerido por defecto
       apMaterno: ['']
     });
 
@@ -119,7 +117,6 @@ export default class LibroFormularioComponent implements OnInit {
   }
 
   private loadCatalogsAndData(): void {
-
     forkJoin({
       autores: this.catalogService.getAutores(),
       categorias: this.catalogService.getCategorias(),
@@ -133,13 +130,13 @@ export default class LibroFormularioComponent implements OnInit {
       this.idiomas = catalogs.idiomas;
       this.tiposLibro = catalogs.tiposLibro;
 
-
       if (this.isEditMode && this.libroUuid) {
         this.loadBookData(this.libroUuid);
       }
+      
       this.autores = this.autores.map(a => ({
         ...a,
-        displayName: `${a.nombre} ${a.apPaterno} ${a.apMaterno ? ' ' + a.apMaterno : ''}`
+        displayName: `${a.nombre} ${a.apPaterno || ''} ${a.apMaterno || ''}`.trim()
       }));
     });
   }
@@ -149,38 +146,33 @@ export default class LibroFormularioComponent implements OnInit {
       libro: this.bookService.getLibroByUuid(uuid),
       autores: this.bookService.getAutoresForLibro(uuid)
     }).subscribe(({ libro, autores }) => {
-
       console.log('Libro recibido:', libro);
       console.log('¿Tiene imagen?', libro.imagen);
 
-
       if (!libro.imagen || libro.imagen === '') {
-        console.log(' Imagen no encontrada, buscando en lista completa...');
+        console.log('⚠️ Imagen no encontrada, buscando en lista completa...');
 
         this.bookService.getLibros().subscribe(libros => {
           const libroConImagen = libros.find(l => l.uuid === uuid);
 
           if (libroConImagen?.imagen) {
-            console.log(' Imagen encontrada en lista:', libroConImagen.imagen);
+            console.log('✅ Imagen encontrada en lista:', libroConImagen.imagen);
             libro.imagen = libroConImagen.imagen;
           } else {
-            console.log(' Imagen no encontrada en lista tampoco');
+            console.log('❌ Imagen no encontrada en lista tampoco');
           }
 
           this.fillForm(libro, autores);
         });
       } else {
-
-        console.log(' Imagen encontrada directamente:', libro.imagen);
+        console.log('✅ Imagen encontrada directamente:', libro.imagen);
         this.fillForm(libro, autores);
       }
     });
   }
 
-
   private fillForm(libro: any, autores: any[]): void {
     const autoresIds = autores.map(a => a.id);
-
 
     const idCategoria = libro.categoria?.id || null;
     const idEditorial = libro.editorial?.id || null;
@@ -197,14 +189,13 @@ export default class LibroFormularioComponent implements OnInit {
       imagenUrl
     });
 
-
     this.libroForm.patchValue({
       titulo: libro.titulo,
-      resumen: libro.resumen,
+      resumen: libro.resumen || '', // ✅ Puede ser vacío
       isbn: libro.isbn,
       isbnDisplay: libro.isbn,
       anho: parseInt(libro.anho, 10),
-      paginas: libro.paginas,
+      paginas: libro.paginas || null, // ✅ Puede ser null
       edicion: libro.edicion || '',
       pasta: libro.pasta || '',
       imagen: imagenUrl,
@@ -215,7 +206,7 @@ export default class LibroFormularioComponent implements OnInit {
       idAutores: autoresIds
     });
 
-    console.log(' Formulario completado. Valor de imagen:', this.libroForm.get('imagen')?.value);
+    console.log('✅ Formulario completado. Valor de imagen:', this.libroForm.get('imagen')?.value);
 
     this.cdr.detectChanges();
   }
@@ -248,11 +239,8 @@ export default class LibroFormularioComponent implements OnInit {
     this.catalogoSiendoAgregado = tipo;
     this.catalogoForm.reset();
 
-    if (tipo === 'autor') {
-      this.catalogoForm.get('apPaterno')?.setValidators(Validators.required);
-    } else {
-      this.catalogoForm.get('apPaterno')?.clearValidators();
-    }
+    // ✅ Ya NO se requiere apPaterno para autores
+    this.catalogoForm.get('apPaterno')?.clearValidators();
     this.catalogoForm.get('apPaterno')?.updateValueAndValidity();
 
     this.displayCatalogoDialog = true;
@@ -297,7 +285,6 @@ export default class LibroFormularioComponent implements OnInit {
         detail: `${tipo.charAt(0).toUpperCase() + tipo.slice(1)} agregado.`
       });
       this.displayCatalogoDialog = false;
-
 
       switch (tipo) {
         case 'autor':
@@ -345,11 +332,11 @@ export default class LibroFormularioComponent implements OnInit {
       titulo: formValues.titulo,
       isbn: formValues.isbn,
       anho: formValues.anho.toString(),
-      resumen: formValues.resumen,
+      resumen: formValues.resumen || '', // ✅ Puede ser vacío
       edicion: formValues.edicion || '',
       pasta: formValues.pasta || '',
       imagen: formValues.imagen || '',
-      paginas: formValues.paginas,
+      paginas: formValues.paginas || 0, // ✅ Enviar 0 si está vacío
       idTipoLibro: formValues.idTipoLibro,
       idCategoria: formValues.idCategoria,
       idEditorial: formValues.idEditorial,

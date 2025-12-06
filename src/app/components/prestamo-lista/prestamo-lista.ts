@@ -13,6 +13,7 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
+import { CheckboxModule } from 'primeng/checkbox';
 
 import { PrestamoService } from '../../services/prestamo.service';
 import { CatalogService } from '../../services/catalog.service';
@@ -32,6 +33,7 @@ import { Prestamo, DetallePrestamo } from '../../models/biblioteca';
     ToastModule,
     ConfirmDialogModule,
     InputTextModule,
+    CheckboxModule,
     DatePipe
   ],
   providers: [ConfirmationService, MessageService],
@@ -55,6 +57,12 @@ export default class PrestamoListaComponent implements OnInit {
   loading = false;
   globalFilter: string = '';
   loadingDetalles = false;
+
+  mostrarModalDevolucion = false;
+  detallesDevolucion: any[] = [];
+  prestamoDevolucion: Prestamo | null = null;
+  loadingDevolucion = false;
+  procesandoDevolucion = false;
 
   ngOnInit(): void {
     this.loadData();
@@ -94,100 +102,199 @@ export default class PrestamoListaComponent implements OnInit {
     });
   }
 
-verDetalles(prestamo: Prestamo): void {
-  this.prestamoActual = prestamo;
-  this.detallesPrestamo = [];
-  this.mostrarDetalle = true;
-  this.loadingDetalles = true;
+  verDetalles(prestamo: Prestamo): void {
+    this.prestamoActual = prestamo;
+    this.detallesPrestamo = [];
+    this.mostrarDetalle = true;
+    this.loadingDetalles = true;
 
-  console.log('🔍 Iniciando carga de detalles para préstamo:', prestamo.uuid);
+    forkJoin({
+      detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
+      ejemplares: this.bookService.getEjemplares(),
+      libros: this.bookService.getLibros(),
+      estadosEjemplares: this.catalogService.getEstadosEjemplares()
+    }).pipe(
+      switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
+        const libroIds = [...new Set(ejemplares.map(e => e.idLibro))];
+        const autorRequests = libroIds.map(idLibro => {
+          const libro = libros.find(l => l.id === idLibro);
+          if (libro?.uuid) {
+            return this.bookService.getAutoresForLibro(libro.uuid);
+          }
+          return [];
+        });
 
-  // Cargar detalles del préstamo junto con ejemplares, libros y estados
-  forkJoin({
-    detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
-    ejemplares: this.bookService.getEjemplares(),
-    libros: this.bookService.getLibros(),
-    estadosEjemplares: this.catalogService.getEstadosEjemplares()
-  }).pipe(
-    switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
-      console.log('📋 Detalles recibidos:', detalles);
-      console.log('📚 Ejemplares:', ejemplares);
-      console.log('📖 Libros:', libros);
-      console.log('📊 Estados ejemplares:', estadosEjemplares);
+        return forkJoin(autorRequests.length > 0 ? autorRequests : [[]]).pipe(
+          map(autoresArray => {
+            const librosCompletos = libros.map((libro, index) => ({
+              ...libro,
+              autores: autoresArray[index] || []
+            }));
 
-      // Obtener autores de todos los libros
-      const libroIds = [...new Set(ejemplares.map(e => e.idLibro))];
-      const autorRequests = libroIds.map(idLibro => {
-        const libro = libros.find(l => l.id === idLibro);
-        if (libro?.uuid) {
-          return this.bookService.getAutoresForLibro(libro.uuid);
-        }
-        return [];
-      });
-
-      return forkJoin(autorRequests.length > 0 ? autorRequests : [[]]).pipe(
-        map(autoresArray => {
-          // Mapear libros con sus autores
-          const librosCompletos = libros.map((libro, index) => ({
-            ...libro,
-            autores: autoresArray[index] || []
-          }));
-
-          // Mapear ejemplares con sus libros completos
-          const ejemplaresCompletos = ejemplares.map(ejemplar => {
-            const libroDelEjemplar = librosCompletos.find(l => l.id === ejemplar.idLibro);
-            return {
-              ...ejemplar,
-              libro: libroDelEjemplar
-            };
-          });
-
-          // Mapear detalles con ejemplares y estados
-          const detallesMapeados = detalles.map(detalle => {
-            const ejemplarEncontrado = ejemplaresCompletos.find(e => e.id === detalle.idEjemplar);
-            const estadoEncontrado = estadosEjemplares.find(e => e.id === detalle.idEstadoPrestamo);
-            
-            console.log('🔍 Mapeando detalle:', {
-              detalle,
-              idEstadoEjemplar: detalle.idEstadoPrestamo,
-              estadoEncontrado,
-              ejemplarEncontrado
+            const ejemplaresCompletos = ejemplares.map(ejemplar => {
+              const libroDelEjemplar = librosCompletos.find(l => l.id === ejemplar.idLibro);
+              const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplar.idEstadoEjemplar);
+              return {
+                ...ejemplar,
+                libro: libroDelEjemplar,
+                estadoEjemplar: estadoEjemplar
+              };
             });
 
-            return {
-              ...detalle,
-              ejemplar: ejemplarEncontrado,
-              estadoEjemplar: estadoEncontrado
-            };
-          });
+            const detallesMapeados = detalles.map(detalle => {
+              const ejemplarEncontrado = ejemplaresCompletos.find(e => e.id === detalle.idEjemplar);
 
-          console.log('✅ Detalles mapeados finales:', detallesMapeados);
-          return detallesMapeados;
-        })
-      );
-    }),
-    finalize(() => this.loadingDetalles = false)
-  ).subscribe({
-    next: (detallesMapeados) => {
-      this.detallesPrestamo = detallesMapeados;
-      console.log('✅ Detalles asignados a la tabla:', this.detallesPrestamo);
-    },
-    error: (err: any) => {
-      console.error('❌ Error al cargar detalles:', err);
-      this.messageService.add({ 
-        severity: 'error', 
-        summary: 'Error', 
-        detail: 'No se pudieron cargar los detalles.' 
+              return {
+                ...detalle,
+                ejemplar: ejemplarEncontrado,
+                estadoEjemplar: ejemplarEncontrado?.estadoEjemplar
+              };
+            });
+
+            return detallesMapeados;
+          })
+        );
+      }),
+      finalize(() => this.loadingDetalles = false)
+    ).subscribe({
+      next: (detallesMapeados) => {
+        this.detallesPrestamo = detallesMapeados;
+      },
+      error: (err: any) => {
+        console.error('❌ Error al cargar detalles:', err);
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'No se pudieron cargar los detalles.' 
+        });
+      }
+    });
+  }
+
+  abrirModalDevolucion(prestamo: Prestamo): void {
+    this.prestamoDevolucion = prestamo;
+    this.detallesDevolucion = [];
+    this.mostrarModalDevolucion = true;
+    this.loadingDevolucion = true;
+
+    forkJoin({
+      detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
+      ejemplares: this.bookService.getEjemplares(),
+      libros: this.bookService.getLibros(),
+      estadosEjemplares: this.catalogService.getEstadosEjemplares()
+    }).pipe(
+      switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
+        const libroIds = [...new Set(ejemplares.map(e => e.idLibro))];
+        const autorRequests = libroIds.map(idLibro => {
+          const libro = libros.find(l => l.id === idLibro);
+          if (libro?.uuid) {
+            return this.bookService.getAutoresForLibro(libro.uuid);
+          }
+          return [];
+        });
+
+        return forkJoin(autorRequests.length > 0 ? autorRequests : [[]]).pipe(
+          map(autoresArray => {
+            const librosCompletos = libros.map((libro, index) => ({
+              ...libro,
+              autores: autoresArray[index] || []
+            }));
+
+            const ejemplaresCompletos = ejemplares.map(ejemplar => {
+              const libroDelEjemplar = librosCompletos.find(l => l.id === ejemplar.idLibro);
+              const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplar.idEstadoEjemplar);
+              return {
+                ...ejemplar,
+                libro: libroDelEjemplar,
+                estadoEjemplar: estadoEjemplar
+              };
+            });
+
+            const detallesMapeados = detalles
+              .filter(detalle => !detalle.fechaDevolucion)
+              .map(detalle => {
+                const ejemplarEncontrado = ejemplaresCompletos.find(e => e.id === detalle.idEjemplar);
+
+                return {
+                  ...detalle,
+                  ejemplar: ejemplarEncontrado,
+                  estadoEjemplar: ejemplarEncontrado?.estadoEjemplar,
+                  seleccionado: false
+                };
+              });
+
+            return detallesMapeados;
+          })
+        );
+      }),
+      finalize(() => this.loadingDevolucion = false)
+    ).subscribe({
+      next: (detallesMapeados) => {
+        this.detallesDevolucion = detallesMapeados;
+      },
+      error: (err: any) => {
+        console.error('❌ Error al cargar detalles:', err);
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Error', 
+          detail: 'No se pudieron cargar los detalles para devolución.' 
+        });
+      }
+    });
+  }
+
+  procesarDevolucion(): void {
+    const detallesSeleccionados = this.detallesDevolucion.filter(d => d.seleccionado);
+
+    if (detallesSeleccionados.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Debes seleccionar al menos un ejemplar para devolver.'
       });
+      return;
     }
-  });
-}
 
+    this.procesandoDevolucion = true;
+
+    const detallesIds = detallesSeleccionados.map(detalle => detalle.id);
+
+    this.prestamoService.devolverEjemplares(
+      this.prestamoDevolucion!.uuid!, 
+      detallesIds
+    ).pipe(
+      finalize(() => this.procesandoDevolucion = false)
+    ).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: `${detallesSeleccionados.length} ejemplar(es) devuelto(s) correctamente.`
+        });
+        this.cerrarModalDevolucion();
+        this.loadData();
+      },
+      error: (err) => {
+        console.error('Error al devolver ejemplares:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron devolver los ejemplares.'
+        });
+      }
+    });
+  }
 
   cerrarModalDetalle(): void {
     this.mostrarDetalle = false;
     this.prestamoActual = null;
     this.detallesPrestamo = [];
+  }
+
+  cerrarModalDevolucion(): void {
+    this.mostrarModalDevolucion = false;
+    this.prestamoDevolucion = null;
+    this.detallesDevolucion = [];
   }
 
   regresar(): void {
@@ -196,6 +303,10 @@ verDetalles(prestamo: Prestamo): void {
 
   agregarPrestamo(): void {
     this.router.navigate(['admin/prestamos/nuevo']);
+  }
+
+  multas(): void {
+    this.router.navigate(['admin/multas'], { queryParams: { from: 'prestamos' } });
   }
 
   editarPrestamo(prestamo: Prestamo): void {
@@ -237,12 +348,12 @@ verDetalles(prestamo: Prestamo): void {
     });
   }
 
-  applyFilterGlobal(table: any, event: Event) {
+  applyFilterGlobal(table: any, event: Event): void {
     const filterValue = (event.target as HTMLInputElement).value;
     table.filterGlobal(filterValue, 'contains');
   }
 
-  clearFilter(table: any) {
+  clearFilter(table: any): void {
     this.globalFilter = '';
     table.clear();
   }
@@ -261,12 +372,30 @@ verDetalles(prestamo: Prestamo): void {
     }
   }
 
-  getAutoresNombres(detalle: DetallePrestamo): string {
+  getAutoresNombres(detalle: any): string {
     if (!detalle?.ejemplar?.libro?.autores || detalle.ejemplar.libro.autores.length === 0) {
       return 'Sin autor';
     }
     return detalle.ejemplar.libro.autores
-      .map(a => `${a.nombre} ${a.apPaterno}`)
+      .map((a: any) => `${a.nombre} ${a.apPaterno}`)
       .join(', ');
+  }
+
+  getCantidadSeleccionados(): number {
+    return this.detallesDevolucion.filter(d => d.seleccionado).length;
+  }
+
+  toggleSeleccionTodos(event: any): void {
+    const checked = event.checked;
+    this.detallesDevolucion.forEach(detalle => detalle.seleccionado = checked);
+  }
+
+  todosSeleccionados(): boolean {
+    return this.detallesDevolucion.length > 0 && 
+           this.detallesDevolucion.every(d => d.seleccionado);
+  }
+
+  algunoSeleccionado(): boolean {
+    return this.detallesDevolucion.some(d => d.seleccionado);
   }
 }

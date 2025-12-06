@@ -16,12 +16,13 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
       tap((response: any) => {
         if (response && response.token) {
-          // Guardar el token
-          localStorage.setItem('authToken', response.token);
+          // Guardar el token (usando 'token' en lugar de 'authToken')
+          localStorage.setItem('token', response.token);
           
-          // Guardar los datos del usuario
+          // Guardar los datos del usuario incluyendo idPersona
           const userData = {
             id: response.id,
+            idPersona: response.idPersona || response.id, // Agregar idPersona
             nombre: response.nombre,
             apPaterno: response.apPaterno,
             apMaterno: response.apMaterno,
@@ -115,11 +116,15 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem('authToken');
+    return localStorage.getItem('token');
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.getToken();
   }
 
   logout(): void {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
     localStorage.removeItem('userData');
     this.router.navigate(['/login']);
   }

@@ -1,10 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
+import { PopoverModule } from 'primeng/popover';
 import { DialogService, DynamicDialogModule } from 'primeng/dynamicdialog';
 import { ConfirmationService, MessageService, MenuItem } from 'primeng/api';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
@@ -15,13 +16,14 @@ import { ChipModule } from 'primeng/chip';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { MenuModule } from 'primeng/menu';
-import { Router } from '@angular/router';
-import { finalize, forkJoin, map, switchMap, of } from 'rxjs';
+import { Router, NavigationEnd } from '@angular/router';
+import { finalize, forkJoin, map, switchMap, of, Subscription, filter } from 'rxjs';
 
 import { BookService } from '../../services/book.service';
 import { CatalogService } from '../../services/catalog.service';
 import { EjemplarService } from '../../services/ejemplar.service';
 import { AuthService } from '../../services/auth.service';
+import { SharedDataService } from '../../services/shared-data.service';
 import { Libro, Catalogo, Autor, Ejemplar } from '../../models/biblioteca';
 
 import LibroFormularioComponent from '../libro-formulario/libro-formulario';
@@ -40,6 +42,7 @@ type CategoriaKey = 'Todas' | string;
     ButtonModule,
     InputTextModule,
     TooltipModule,
+    PopoverModule,
     ToastModule,
     ConfirmPopupModule,
     ConfirmDialogModule,
@@ -54,7 +57,7 @@ type CategoriaKey = 'Todas' | string;
   templateUrl: './bibliotecario.html',
   styleUrls: ['./bibliotecario.css']
 })
-export default class BibliotecarioComponent implements OnInit {
+export default class BibliotecarioComponent implements OnInit, OnDestroy {
   private bookService = inject(BookService);
   private catalogService = inject(CatalogService);
   private ejemplarService = inject(EjemplarService);
@@ -63,6 +66,7 @@ export default class BibliotecarioComponent implements OnInit {
   private messageService = inject(MessageService);
   private router = inject(Router);
   private authService = inject(AuthService);
+  private sharedDataService = inject(SharedDataService);
 
   libros: Libro[] = [];
   allLibros: Libro[] = [];
@@ -80,10 +84,41 @@ export default class BibliotecarioComponent implements OnInit {
   currentUserRole: string = '';
   currentUserInitials: string = '';
 
+  private ejemplaresSubscription?: Subscription;
+  private routerSubscription?: Subscription;
+
   ngOnInit(): void {
     this.loadUserInfo();
     this.loadInitialData();
+    this.setupCatalogMenu();
+    
+    this.ejemplaresSubscription = this.sharedDataService.ejemplaresActualizados$.subscribe(
+      (actualizado) => {
+        if (actualizado) {
+          this.loadInitialData();
+        }
+      }
+    );
 
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        if (event.url === '/admin' || event.url.includes('/admin') && !event.url.includes('/admin/')) {
+          this.loadInitialData();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    if (this.ejemplaresSubscription) {
+      this.ejemplaresSubscription.unsubscribe();
+    }
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  setupCatalogMenu(): void {
     this.catalogMenuItems = [
       { label: 'Gestionar Catálogos', styleClass: 'menu-header' },
       { separator: true },
@@ -93,10 +128,14 @@ export default class BibliotecarioComponent implements OnInit {
       { label: 'Idiomas', icon: 'pi pi-globe', command: () => this.router.navigate(['/admin/idiomas']) },
       { label: 'Tipos de Libros', icon: 'pi pi-book', command: () => this.router.navigate(['/admin/tipos']) },
       { separator: true },
+      { label: 'Ejemplares', icon: 'pi pi-inbox', command: () => this.router.navigate(['/admin/ejemplares']) },
       { label: 'Estados de Ejemplar', icon: 'pi pi-check-circle', command: () => this.router.navigate(['/admin/estados']) },
       { label: 'Condición Física', icon: 'pi pi-clipboard', command: () => this.router.navigate(['/admin/condiciones']) },
       { separator: true },
+      { label: 'Multas', icon: 'pi pi-receipt', command: () => this.router.navigate(['/admin/multas']) },     
+      { separator: true },
       { label: 'Cerrar Sesión', icon: 'pi pi-sign-out', styleClass: 'logout-menu-item', command: () => this.logout() },
+      
     ];
   }
 
@@ -164,7 +203,6 @@ export default class BibliotecarioComponent implements OnInit {
     });
   }
 
-  // ========== MÉTODOS DE CONTEO POR LIBRO ==========
   getEjemplaresDisponibles(libro: Libro): number {
     return libro.ejemplares?.filter(
       e => e.estado?.nombre?.toLowerCase() === 'disponible'
@@ -183,7 +221,72 @@ export default class BibliotecarioComponent implements OnInit {
     ).length || 0;
   }
 
-  // ========== TOTALES GENERALES ==========
+  getEstadoPrincipal(libro: Libro): { estado: string; cantidad: number; clase: string; icono: string } {
+    const disponibles = this.getEjemplaresDisponibles(libro);
+    const prestados = this.getEjemplaresPrestados(libro);
+    const reparacion = this.getEjemplaresReparacion(libro);
+    const total = libro.ejemplares?.length || 0;
+
+    if (total === 0) {
+      return { estado: 'Sin ejemplares', cantidad: 0, clase: 'unavailable', icono: 'pi-times-circle' };
+    }
+
+    if (disponibles > 0) {
+      return { estado: 'Disponible', cantidad: disponibles, clase: 'available', icono: 'pi-check-circle' };
+    }
+
+    if (prestados > 0) {
+      return { estado: 'No disponible', cantidad: prestados, clase: 'unavailable', icono: 'pi-times-circle' };
+    }
+
+    if (reparacion > 0) {
+      return { estado: 'En reparación', cantidad: reparacion, clase: 'repair', icono: 'pi-wrench' };
+    }
+
+    return { estado: 'No disponible', cantidad: 0, clase: 'unavailable', icono: 'pi-times-circle' };
+  }
+
+  getDetalleEstados(libro: Libro): { estado: string; cantidad: number; clase: string; icono: string }[] {
+    const detalles = [];
+    
+    const disponibles = this.getEjemplaresDisponibles(libro);
+    const prestados = this.getEjemplaresPrestados(libro);
+    const reparacion = this.getEjemplaresReparacion(libro);
+
+    if (disponibles > 0) {
+      detalles.push({ 
+        estado: 'Disponibles', 
+        cantidad: disponibles, 
+        clase: 'available', 
+        icono: 'pi-check-circle' 
+      });
+    }
+
+    if (prestados > 0) {
+      detalles.push({ 
+        estado: 'Prestados', 
+        cantidad: prestados, 
+        clase: 'borrowed', 
+        icono: 'pi-arrow-right-arrow-left' 
+      });
+    }
+
+    if (reparacion > 0) {
+      detalles.push({ 
+        estado: 'En reparación', 
+        cantidad: reparacion, 
+        clase: 'repair', 
+        icono: 'pi-wrench' 
+      });
+    }
+
+    return detalles;
+  }
+
+  tieneDetallesEstados(libro: Libro): boolean {
+    return this.getDetalleEstados(libro).length > 1;
+  }
+
   getTotalEjemplaresDisponibles(): number {
     return this.allLibros.reduce((total, libro) => 
       total + this.getEjemplaresDisponibles(libro), 0
@@ -202,7 +305,6 @@ export default class BibliotecarioComponent implements OnInit {
     );
   }
 
-  // ========== NAVEGACIÓN ==========
   agregarLibro(): void {
     this.router.navigate(['/admin/libros/nuevo']);
   }
@@ -219,7 +321,6 @@ export default class BibliotecarioComponent implements OnInit {
     this.authService.logout();
   }
 
-  // ========== FILTROS Y BÚSQUEDA ==========
   filtrarLibros(): void {
     let resultado = this.allLibros;
 
@@ -269,7 +370,6 @@ export default class BibliotecarioComponent implements OnInit {
     return this.categoriaSeleccionada === categoria; 
   }
 
-  // ========== UTILIDADES ==========
   formatIsbn(isbn: string | undefined): string {
     if (!isbn || isbn.length !== 13) {
       return isbn || 'N/A';
@@ -290,6 +390,65 @@ export default class BibliotecarioComponent implements OnInit {
     return autores.map(a => `${a.nombre} ${a.apPaterno}`).join(', ');
   }
 
+
+  getTooltipEstados(libro: Libro): string {
+    const disponibles = this.getEjemplaresDisponibles(libro);
+    const prestados = this.getEjemplaresPrestados(libro);
+    const reparacion = this.getEjemplaresReparacion(libro);
+    const total = libro.ejemplares?.length || 0;
+
+    if (total === 0) {
+      return 'Sin ejemplares';
+    }
+
+    let html = '<div style="text-align: left; font-size: 13px;">';
+    html += '<strong style="display: block; margin-bottom: 8px; color: #D4AF37;">Desglose de ejemplares</strong>';
+    
+    if (disponibles > 0) {
+      html += `
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+          <i class="pi pi-check-circle" style="color: #27ae60; font-size: 14px;"></i>
+          <span style="flex: 1;">Disponibles:</span>
+          <strong>${disponibles}</strong>
+        </div>
+      `;
+    }
+
+    if (prestados > 0) {
+      html += `
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+          <i class="pi pi-arrow-right-arrow-left" style="color: #95a5a6; font-size: 14px;"></i>
+          <span style="flex: 1;">Prestados:</span>
+          <strong>${prestados}</strong>
+        </div>
+      `;
+    }
+
+    if (disponibles === 0 && prestados > 0) {
+      html += `
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 4px; padding-top: 8px;">
+          <i class="pi pi-times-circle" style="color: #e67e22; font-size: 14px;"></i>
+          <span style="flex: 1; color: #e67e22;">No disponible</span>
+        </div>
+      `;
+    }
+
+    if (reparacion > 0) {
+      html += `
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+          <i class="pi pi-wrench" style="color: #e74c3c; font-size: 14px;"></i>
+          <span style="flex: 1;">En reparación:</span>
+          <strong>${reparacion}</strong>
+        </div>
+      `;
+    }
+    
+    html += '</div>';
+    return html;
+  }
+
+
+
   private actualizarContadores(): void {
     const contadores: { [key: string]: number } = {};
     this.categorias.forEach(cat => {
@@ -300,7 +459,6 @@ export default class BibliotecarioComponent implements OnInit {
     this.contadoresCategoria = contadores;
   }
 
-  // ========== ACCIONES DE LIBROS ==========
   editarLibro(libro: Libro): void {
     this.router.navigate(['/admin/libros/editar', libro.uuid]);
   }

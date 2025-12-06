@@ -18,7 +18,9 @@ import { PrestamoService } from '../../services/prestamo.service';
 import { CatalogService } from '../../services/catalog.service';
 import { UsuarioService } from '../../services/usuario.service';
 import { BookService } from '../../services/book.service';
+import { EjemplarService } from '../../services/ejemplar.service';
 import { AuthService } from '../../services/auth.service';
+import { SharedDataService } from '../../services/shared-data.service';
 import {
   Prestamo,
   Persona,
@@ -52,7 +54,9 @@ export default class PrestamoFormularioComponent implements OnInit {
   private catalogService = inject(CatalogService);
   private usuarioService = inject(UsuarioService);
   private bookService = inject(BookService);
+  private ejemplarService = inject(EjemplarService);
   private authService = inject(AuthService);
+  private sharedDataService = inject(SharedDataService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private messageService = inject(MessageService);
@@ -132,7 +136,6 @@ export default class PrestamoFormularioComponent implements OnInit {
   }
 
   loadCatalogos(): void {
-    // Cargar todas las personas y filtrar SOLO lectores
     this.prestamoService.getPersonas().subscribe({
       next: (data) => {
         this.lectores = data
@@ -151,7 +154,6 @@ export default class PrestamoFormularioComponent implements OnInit {
       }
     });
 
-    // Cargar estados de préstamo
     this.catalogService.getEstadosPrestamos().subscribe({
       next: (data) => {
         this.estadosPrestamo = data;
@@ -171,31 +173,41 @@ export default class PrestamoFormularioComponent implements OnInit {
       }
     });
 
-    // Cargar ejemplares con libros y autores
     forkJoin({
-      ejemplares: this.bookService.getEjemplaresDisponibles(),
-      libros: this.bookService.getLibros()
+      ejemplares: this.ejemplarService.getEjemplares(),
+      libros: this.bookService.getLibros(),
+      estados: this.catalogService.getEstadosEjemplares()
     }).pipe(
-      switchMap(({ ejemplares, libros }) => {
+      switchMap(({ ejemplares, libros, estados }) => {
         if (libros.length === 0) {
           return of({ ejemplares: [], libros: [] });
         }
+
+        const estadoDisponible = estados.find(e => e.nombre.toLowerCase() === 'disponible');
+        
+        const ejemplaresSoloDisponibles = ejemplares.filter(ejemplar => 
+          ejemplar.idEstadoEjemplar === estadoDisponible?.id
+        );
+
         const autorRequests = libros.map(libro =>
           this.bookService.getAutoresForLibro(libro.uuid)
         );
+        
         return forkJoin(autorRequests).pipe(
           map(autoresArray => {
             const librosCompletos = libros.map((libro, index) => ({
               ...libro,
               autores: autoresArray[index]
             }));
-            const ejemplaresCompletos = ejemplares.map(ejemplar => {
+            
+            const ejemplaresCompletos = ejemplaresSoloDisponibles.map(ejemplar => {
               const libroDelEjemplar = librosCompletos.find(l => l.id === ejemplar.idLibro);
               return {
                 ...ejemplar,
                 libro: libroDelEjemplar
               };
             });
+            
             return { ejemplares: ejemplaresCompletos, libros: librosCompletos };
           })
         );
@@ -204,6 +216,7 @@ export default class PrestamoFormularioComponent implements OnInit {
       next: ({ ejemplares }) => {
         this.ejemplaresDisponibles = ejemplares;
         this.ejemplaresFiltrados = ejemplares;
+        console.log('📚 Ejemplares disponibles cargados:', ejemplares.length);
       },
       error: (err: any) => {
         this.messageService.add({
@@ -211,6 +224,7 @@ export default class PrestamoFormularioComponent implements OnInit {
           summary: 'Error',
           detail: 'No se pudieron cargar los ejemplares.'
         });
+        console.error('Error cargando ejemplares:', err);
       }
     });
   }
@@ -322,7 +336,6 @@ export default class PrestamoFormularioComponent implements OnInit {
       idEstadoPrestamo: formData.idEstadoPrestamo || this.prestamoForm.get('idEstadoPrestamo')!.value
     };
 
-    // CREA EL PRÉSTAMO PRINCIPAL
     if (this.isEditMode && this.prestamoUuid) {
       this.updatePrestamo(payload);
     } else {
@@ -332,10 +345,7 @@ export default class PrestamoFormularioComponent implements OnInit {
         next: (prestamo) => {
           console.log('✅ Préstamo creado:', prestamo);
           console.log('🔍 UUID recibido:', prestamo.uuid);
-          console.log('🔍 Tipo de UUID:', typeof prestamo.uuid);
-          console.log('🔍 ¿UUID existe?:', !!prestamo.uuid);
           
-          // Verificar si el UUID existe
           if (!prestamo.uuid) {
             console.error('❌ ERROR: El préstamo no tiene UUID');
             this.messageService.add({
@@ -346,7 +356,6 @@ export default class PrestamoFormularioComponent implements OnInit {
             return;
           }
           
-          // CREA DETALLES DE PRÉSTAMO EN MASIVO
           const detalles = this.ejemplaresSeleccionados.map(e => ({
             idEjemplar: e.id,
             fechaDevolucion: null,
@@ -354,12 +363,14 @@ export default class PrestamoFormularioComponent implements OnInit {
           }));
           
           console.log('📦 Detalles a enviar:', detalles);
-          console.log('📦 Cantidad de detalles:', detalles.length);
           console.log('🌐 Llamando a cargarDetallesEnMasiva con UUID:', prestamo.uuid);
           
           this.prestamoService.cargarDetallesEnMasiva(prestamo.uuid, detalles).subscribe({
             next: () => {
               console.log('✅ Detalles creados correctamente');
+              
+              this.sharedDataService.notificarActualizacionEjemplares();
+              
               this.messageService.add({
                 severity: 'success',
                 summary: 'Éxito',
@@ -371,7 +382,6 @@ export default class PrestamoFormularioComponent implements OnInit {
               console.error('❌ Error al crear detalles:', err);
               console.error('❌ Status:', err.status);
               console.error('❌ Error completo:', err.error);
-              console.error('❌ Mensaje:', err.message);
               this.messageService.add({
                 severity: 'error',
                 summary: 'Error',
@@ -399,6 +409,8 @@ export default class PrestamoFormularioComponent implements OnInit {
       finalize(() => this.isSubmitting = false)
     ).subscribe({
       next: () => {
+        this.sharedDataService.notificarActualizacionEjemplares();
+        
         this.messageService.add({
           severity: 'success',
           summary: 'Éxito',

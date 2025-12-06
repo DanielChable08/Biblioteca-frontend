@@ -83,7 +83,7 @@
             </div>
           </div>
           <div class="field">
-            <label for="resumen">Resumen <label class="text red">*</label></label>
+            <label for="resumen">Resumen</label>
             <textarea
               id="resumen"
               class="form-comp pb-3"
@@ -93,18 +93,6 @@
               [autoResize]="true"
               placeholder="Ej: 'En la historia del siglo XX es complicado encontrar autores más influyentes que Hermann Hesse. Sus libros han actuado como estímulo espiritual para diversas oleadas de jóvenes hartos de estar sujetos a unos patrones de vida demasiado estrechos. El legado de Hesse es una extensa, profunda y riquísima obra...'"
             ></textarea>
-            <div
-              class="error-msg text red"
-              [@dropIn]
-              *ngIf="
-                (libroForm.get('resumen')?.dirty || isSubmitting) &&
-                libroForm.get('resumen')?.invalid
-              "
-            >
-              <small *ngIf="libroForm.get('resumen')?.errors?.['required']">
-                Escribir el resumen es obligatorio.
-              </small>
-            </div>
           </div>
           <div class="field">
             <label for="imagen">URL de la Portada</label>
@@ -159,7 +147,7 @@
                 />
               </div>
               <div class="">
-                <label for="paginas">Páginas <label class="text red">*</label></label>
+                <label for="paginas">Páginas</label>
                 <input
                   id="paginas"
                   class="form-comp full-w"
@@ -342,7 +330,7 @@
         ><input id="nombreAutor" class="form-comp" pInputText formControlName="nombre" />
       </div>
       <div class="field">
-        <label for="apPaterno" class="m-0">Apellido Paterno <label class="text red">*</label></label
+        <label for="apPaterno" class="m-0">Apellido Paterno</label
         ><input id="apPaterno" class="form-comp" pInputText formControlName="apPaterno" />
       </div>
       <div class="field">

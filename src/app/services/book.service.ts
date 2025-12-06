@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Libro, LibroPayload, Autor, Ejemplar } from '../models/biblioteca';
+import { Libro, LibroPayload, Autor, Ejemplar, EjemplarPayload } from '../models/biblioteca';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +10,8 @@ export class BookService {
   private http = inject(HttpClient);
   private apiUrl = 'http://localhost:8080/sdt/v1/libros';
   private ejemplaresUrl = 'http://localhost:8080/sdt/v1/ejemplares';
+
+  // ==================== LIBROS ====================
 
   getLibros(params?: any): Observable<Libro[]> {
     let httpParams = new HttpParams();
@@ -31,14 +33,6 @@ export class BookService {
     return this.http.post<Libro>(this.apiUrl, libro);
   }
 
-  addAutoresToLibro(uuid: string, autoresPayload: { idAutor: number }[]): Observable<any> {
-    return this.http.post(`${this.apiUrl}/${uuid}/autores/carga-masiva`, autoresPayload);
-  }
-
-  getAutoresForLibro(uuid: string): Observable<Autor[]> {
-    return this.http.get<Autor[]>(`${this.apiUrl}/${uuid}/autores`);
-  }
-
   updateLibro(uuid: string, libro: Partial<LibroPayload>): Observable<Libro> {
     return this.http.put<Libro>(`${this.apiUrl}/${uuid}`, libro);
   }
@@ -47,9 +41,24 @@ export class BookService {
     return this.http.delete<void>(`${this.apiUrl}/${uuid}`);
   }
 
-  // ============ MÉTODOS DE EJEMPLARES (AGREGAR ESTOS) ============
+  // ==================== AUTORES ====================
+
+  addAutoresToLibro(uuid: string, autoresPayload: { idAutor: number }[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${uuid}/autores/carga-masiva`, autoresPayload);
+  }
+
+  getAutoresForLibro(uuid: string): Observable<Autor[]> {
+    return this.http.get<Autor[]>(`${this.apiUrl}/${uuid}/autores`);
+  }
+
+  // ==================== EJEMPLARES ====================
+
   getEjemplares(): Observable<Ejemplar[]> {
     return this.http.get<Ejemplar[]>(this.ejemplaresUrl);
+  }
+
+  getEjemplarByUuid(uuid: string): Observable<Ejemplar> {
+    return this.http.get<Ejemplar>(`${this.ejemplaresUrl}/${uuid}`);
   }
 
   getEjemplaresByLibro(libroId: number): Observable<Ejemplar[]> {
@@ -62,5 +71,17 @@ export class BookService {
     // Ajusta este número según tu base de datos
     let httpParams = new HttpParams().set('idEstadoEjemplar', '1');
     return this.http.get<Ejemplar[]>(this.ejemplaresUrl, { params: httpParams });
+  }
+
+  createEjemplar(ejemplar: EjemplarPayload): Observable<Ejemplar> {
+    return this.http.post<Ejemplar>(this.ejemplaresUrl, ejemplar);
+  }
+
+  updateEjemplar(uuid: string, ejemplar: EjemplarPayload): Observable<Ejemplar> {
+    return this.http.put<Ejemplar>(`${this.ejemplaresUrl}/${uuid}`, ejemplar);
+  }
+
+  deleteEjemplar(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.ejemplaresUrl}/${uuid}`);
   }
 }

@@ -1,12 +1,49 @@
+<p-toast></p-toast>
+
+<!-- Selector de Libro (solo si no viene idLibro) -->
+<form [formGroup]="ejemplarForm" (ngSubmit)="onSubmit()" class="form-container" *ngIf="mostrarSelectorLibro">
+  <div class="field">
+    <label for="libro">
+      <i class="pi pi-book"></i> Libro
+      <label class="text red">*</label>
+    </label>
+    <p-select
+      id="libro"
+      formControlName="idLibro"
+      [options]="libros"
+      optionLabel="titulo"
+      optionValue="id"
+      placeholder="Selecciona un libro"
+      [filter]="true"
+      filterBy="titulo"
+      [showClear]="true"
+      class="form-comp"
+    ></p-select>
+    <small class="p-error" *ngIf="ejemplarForm.get('idLibro')?.invalid && ejemplarForm.get('idLibro')?.touched">
+      Debes seleccionar un libro.
+    </small>
+  </div>
+</form>
+
 <form [formGroup]="ejemplarForm" (ngSubmit)="onSubmit()" class="form-container">
   <div class="field">
-    <label for="ubicacion"><i class="pi pi-map-marker"></i> Ubicación</label>
-    <input id="ubicacion" pInputText class="form-comp" formControlName="ubicacion" placeholder="Ej: Estante A-3" />
+    <label for="ubicacion">
+      <i class="pi pi-map-marker"></i> Ubicación
+    </label>
+    <input 
+      id="ubicacion" 
+      pInputText 
+      class="form-comp" 
+      formControlName="ubicacion" 
+      placeholder="Ej: Estante A-3, Nivel 2" 
+    />
   </div>
+
   <div class="field">
-    <label for="condicion"
-      ><i class="pi pi-book"></i> Condición Física <label class="text red">*</label></label
-    >
+    <label for="condicion">
+      <i class="pi pi-check-circle"></i> Condición Física
+      <label class="text red">*</label>
+    </label>
     <div class="p-inputgroup">
       <p-select
         id="condicion"
@@ -23,13 +60,19 @@
         icon="pi pi-plus"
         class="btn-primary"
         (click)="abrirModalAgregar('condicion')"
+        pTooltip="Agregar nueva condición"
       ></button>
     </div>
+    <small class="p-error" *ngIf="ejemplarForm.get('idCondicionFisicaEjemplar')?.invalid && ejemplarForm.get('idCondicionFisicaEjemplar')?.touched">
+      La condición física es obligatoria.
+    </small>
   </div>
+
   <div class="field">
-    <label for="estado"
-      ><i class="pi pi-address-book"></i> Estado Inicial <label class="text red">*</label></label
-    >
+    <label for="estado">
+      <i class="pi pi-info-circle"></i> Estado Inicial
+      <label class="text red">*</label>
+    </label>
     <div class="p-inputgroup">
       <p-select
         id="estado"
@@ -46,19 +89,39 @@
         icon="pi pi-plus"
         class="btn-primary"
         (click)="abrirModalAgregar('estado')"
+        pTooltip="Agregar nuevo estado"
       ></button>
     </div>
+    <small class="p-error" *ngIf="ejemplarForm.get('idEstadoEjemplar')?.invalid && ejemplarForm.get('idEstadoEjemplar')?.touched">
+      El estado del ejemplar es obligatorio.
+    </small>
   </div>
+
   <div class="form-footer">
-    <button type="button" pButton class="btn-info text" (click)="cancelar()">Cancelar</button>
-    <button type="submit" pButton icon="pi pi-check" class="btn-primary" [loading]="isSubmitting">
-      Guardar
+    <button 
+      type="button" 
+      pButton 
+      class="btn-info text" 
+      (click)="cancelar()"
+      [disabled]="isSubmitting"
+    >
+      Cancelar
+    </button>
+    <button 
+      type="submit" 
+      pButton 
+      icon="pi pi-check" 
+      class="btn-primary" 
+      [loading]="isSubmitting"
+    >
+      {{ isEditMode ? 'Actualizar' : 'Guardar' }}
     </button>
   </div>
 </form>
 
+<!-- Modal para agregar nuevo catálogo -->
 <p-dialog
-  header="Agregar {{ catalogoSiendoAgregado === 'condicion' ? 'Nueva Condición' : 'Nuevo Estado' }}"
+  [header]="catalogoSiendoAgregado === 'condicion' ? 'Agregar Nueva Condición' : 'Agregar Nuevo Estado'"
   [(visible)]="displayCatalogoDialog"
   draggable="false"
   [modal]="true"
@@ -68,14 +131,36 @@
 >
   <form [formGroup]="catalogoForm" (ngSubmit)="guardarNuevoCatalogo()" class="form-container">
     <div class="field">
-      <label for="nuevoNombre"> Nombre</label>
-      <input id="nuevoNombre" pInputText formControlName="nombre" autofocus />
+      <label for="nuevoNombre">Nombre</label>
+      <input 
+        id="nuevoNombre" 
+        pInputText 
+        formControlName="nombre" 
+        autofocus 
+        placeholder="Ingresa el nombre"
+      />
+      <small class="p-error" *ngIf="catalogoForm.get('nombre')?.invalid && catalogoForm.get('nombre')?.touched">
+        El nombre es obligatorio.
+      </small>
     </div>
     <div class="form-footer">
-      <button type="button" pButton class="btn-info text" (click)="displayCatalogoDialog = false">
+      <button 
+        type="button" 
+        pButton 
+        class="btn-info text" 
+        (click)="displayCatalogoDialog = false"
+      >
         Cancelar
       </button>
-      <button type="submit" pButton icon="pi pi-check" class="btn-primary">Guardar</button>
+      <button 
+        type="submit" 
+        pButton 
+        icon="pi pi-check" 
+        class="btn-primary"
+        [disabled]="catalogoForm.invalid"
+      >
+        Guardar
+      </button>
     </div>
   </form>
 </p-dialog>

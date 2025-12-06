@@ -1,0 +1,123 @@
+
+<p-confirmDialog>
+    <ng-template pTemplate="message" let-message>
+        <div class="flex flex-column align-items-center text-center gap-3">
+            <i [class]="message.icon" class="dialog-icon"></i>
+            <p class="dialog-message">{{ message.message }}</p>
+        </div>
+    </ng-template>
+</p-confirmDialog>
+
+<div class="admin-page-container">
+    <div class="header-container">
+        <div class="form-header-container">
+            <div class="form-header page-header-layout">
+                <div class="header-left">
+                    <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
+                    <h2><i class="pi pi-inbox user-icon"></i> Gestión de Ejemplares</h2>
+                </div>
+                <div class="header-right">
+                    <p-button label="Nuevo Ejemplar" icon="pi pi-plus" styleClass="p-button-wine" (click)="agregarEjemplar()"></p-button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p-table 
+        #dtEjemplares 
+        [value]="ejemplares" 
+        [loading]="loading" 
+        [paginator]="true" 
+        [rows]="10" 
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [globalFilterFields]="['codigo', 'libro.titulo', 'libro.isbn', 'ubicacion', 'estadoEjemplar.nombre', 'condicionFisica.nombre']" 
+        styleClass="p-datatable-striped p-datatable-gridlines custom-table"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ejemplares" 
+        [showCurrentPageReport]="true"
+    >
+        <ng-template pTemplate="caption">
+            <div class="table-header">
+                <span>Lista de Ejemplares</span>
+                <div class="filter-container">
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input 
+                            pInputText 
+                            type="text" 
+                            [(ngModel)]="globalFilter" 
+                            (input)="applyFilterGlobal(dtEjemplares, $event)" 
+                            placeholder="Buscar..." 
+                            class="table-search-input" 
+                        />
+                    </span>
+                    <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtEjemplares)" pTooltip="Limpiar filtro"></p-button>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="codigo">Código <p-sortIcon field="codigo"></p-sortIcon></th>
+                <th pSortableColumn="libro.titulo">Libro <p-sortIcon field="libro.titulo"></p-sortIcon></th>
+                <th pSortableColumn="libro.isbn">ISBN <p-sortIcon field="libro.isbn"></p-sortIcon></th>
+                <th pSortableColumn="ubicacion">Ubicación <p-sortIcon field="ubicacion"></p-sortIcon></th>
+                <th pSortableColumn="condicionFisica.nombre">Condición <p-sortIcon field="condicionFisica.nombre"></p-sortIcon></th>
+                <th pSortableColumn="estadoEjemplar.nombre">Estado <p-sortIcon field="estadoEjemplar.nombre"></p-sortIcon></th>
+                <th style="width: 12rem;">Acciones</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-ejemplar>
+            <tr>
+                <td>
+                    <span class="codigo-ejemplar-badge">
+                        <i class="pi pi-bookmark"></i>
+                        {{ ejemplar.codigo }}
+                    </span>
+                </td>
+                <td>
+                    <div class="libro-info">
+                        <strong>{{ ejemplar.libro?.titulo || 'Sin libro' }}</strong>
+                    </div>
+                </td>
+                <td>{{ ejemplar.libro?.isbn || 'N/A' }}</td>
+                <td>
+                    <span *ngIf="ejemplar.ubicacion" class="ubicacion-badge">
+                        <i class="pi pi-map-marker"></i>
+                        {{ ejemplar.ubicacion }}
+                    </span>
+                    <span *ngIf="!ejemplar.ubicacion" style="color: #999;">Sin ubicación</span>
+                </td>
+                <td>
+                    <span class="condicion-badge" [ngClass]="getCondicionClass(ejemplar.condicionFisica?.nombre)">
+                        {{ ejemplar.condicionFisica?.nombre || 'N/A' }}
+                    </span>
+                </td>
+                <td>
+                    <span class="user-role-badge" [ngClass]="getEstadoClass(ejemplar.estadoEjemplar?.nombre)">
+                        {{ ejemplar.estadoEjemplar?.nombre || 'N/A' }}
+                    </span>
+                </td>
+                <td>
+                    <div class="table-actions">
+                        <button pButton icon="pi pi-book" class="action-btn-compact view-btn" pTooltip="Ver Libro" (click)="verLibro(ejemplar)"></button>
+                        <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" pTooltip="Editar" (click)="editarEjemplar(ejemplar)"></button>
+                        <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" pTooltip="Eliminar" (click)="eliminarEjemplar(ejemplar)"></button>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="7" class="text-center empty-message">No se encontraron ejemplares.</td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="loadingbody">
+            <tr>
+                <td colspan="7" class="text-center loading-message">Cargando ejemplares...</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

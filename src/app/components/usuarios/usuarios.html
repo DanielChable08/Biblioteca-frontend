@@ -1,12 +1,13 @@
 <p-toast></p-toast>
-<p-confirmDialog> <ng-template pTemplate="message" let-message>
-        <div class="flex flex-column align-items-center text-center gap-3">
-            <i [class]="message.icon" class="dialog-icon"></i>
-            <p class="dialog-message">{{ message.message }}</p>
-        </div>
-    </ng-template>
-</p-confirmDialog>
 
+<p-confirmDialog>
+  <ng-template pTemplate="message" let-message>
+    <div class="flex flex-column align-items-center text-center gap-3">
+      <i [class]="message.icon" class="dialog-icon"></i>
+      <p class="dialog-message">{{ message.message }}</p>
+    </div>
+  </ng-template>
+</p-confirmDialog>
 
 <div class="header-container">
   <div class="form-header-container">
@@ -35,62 +36,111 @@
   </div>
 </div>
 
-
 <div class="admin-page-container">
-  <p-table #dtUsuarios [value]="usuarios" [loading]="loading" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
-           [globalFilterFields]="['nombre','apPaterno','apMaterno','email','tipoPersona.nombre']" styleClass="p-datatable-striped p-datatable-gridlines custom-table"
-           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios" [showCurrentPageReport]="true">
+  <p-table 
+    #dtUsuarios 
+    [value]="usuarios" 
+    [loading]="loading" 
+    [paginator]="true" 
+    [rows]="10" 
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [globalFilterFields]="['nombre','apPaterno','apMaterno','email','rolNombre']" 
+    styleClass="p-datatable-striped p-datatable-gridlines custom-table"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios" 
+    [showCurrentPageReport]="true">
 
     <ng-template pTemplate="caption">
       <div class="table-header">
         <span>Lista de Usuarios</span>
         <div class="filter-container">
-           <span class="p-input-icon-left">
-              <i class="pi pi-search"></i>
-              <input pInputText type="text" [(ngModel)]="globalFilter" (input)="applyFilterGlobal(dtUsuarios, $event)" placeholder="Buscar..." class="table-search-input" /> </span>
-           <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtUsuarios)" pTooltip="Limpiar filtro"></p-button> </div>
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              type="text" 
+              [(ngModel)]="globalFilter" 
+              (input)="applyFilterGlobal(dtUsuarios, $event)" 
+              placeholder="Buscar..." 
+              class="table-search-input" 
+            />
+          </span>
+          <p-button 
+            icon="pi pi-filter-slash" 
+            styleClass="p-button-outlined clear-filter-button" 
+            (click)="clearFilter(dtUsuarios)" 
+            pTooltip="Limpiar filtro">
+          </p-button>
+        </div>
       </div>
     </ng-template>
 
     <ng-template pTemplate="header">
       <tr>
-        <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre"></p-sortIcon></th>
-        <th pSortableColumn="email">Email <p-sortIcon field="email"></p-sortIcon></th>
-        <th pSortableColumn="telefono">Teléfono <p-sortIcon field="telefono"></p-sortIcon></th>
-        <th pSortableColumn="tipoPersona.nombre">Rol <p-sortIcon field="tipoPersona.nombre"></p-sortIcon></th>
-        <th style="width: 10rem;">Acciones</th> </tr>
+        <th pSortableColumn="nombre">
+          Nombre <p-sortIcon field="nombre"></p-sortIcon>
+        </th>
+        <th pSortableColumn="email">
+          Email <p-sortIcon field="email"></p-sortIcon>
+        </th>
+        <th pSortableColumn="telefono">
+          Teléfono <p-sortIcon field="telefono"></p-sortIcon>
+        </th>
+        <th pSortableColumn="rolNombre">
+          Rol <p-sortIcon field="rolNombre"></p-sortIcon>
+        </th>
+        <th style="width: 10rem;">Acciones</th>
+      </tr>
     </ng-template>
 
     <ng-template pTemplate="body" let-usuario>
       <tr>
-        <td>{{ usuario.nombre }} {{ usuario.apPaterno }} {{ usuario.apMaterno || '' }}</td>
+        <td>
+          {{ usuario.nombre }} {{ usuario.apPaterno }} {{ usuario.apMaterno || '' }}
+        </td>
         <td>{{ usuario.email }}</td>
         <td>{{ usuario.telefono }}</td>
         <td>
-            <span class="user-role-badge" [ngClass]="getRolClass(usuario.tipoPersona?.nombre)">
-              {{ usuario.tipoPersona?.nombre || 'N/A' }}
-            </span>
-
+          <span 
+            class="user-role-badge" 
+            [ngClass]="getRolClass(usuario.rolNombre)">
+            {{ usuario.rolNombre || 'Sin rol' }}
+          </span>
         </td>
         <td>
           <div class="table-actions">
-            <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" pTooltip="Editar" (click)="editarUsuario(usuario)"></button>
-            <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" pTooltip="Eliminar" (click)="eliminarUsuario(usuario)"></button>
-            </div>
+            <button 
+              pButton 
+              icon="pi pi-pencil" 
+              class="action-btn-compact edit-btn" 
+              pTooltip="Editar" 
+              (click)="editarUsuario(usuario)">
+            </button>
+            <button 
+              pButton 
+              icon="pi pi-trash" 
+              class="action-btn-compact delete-btn" 
+              pTooltip="Eliminar" 
+              (click)="eliminarUsuario(usuario)">
+            </button>
+          </div>
         </td>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="5" class="text-center empty-message">No se encontraron usuarios.</td>
+        <td colspan="5" class="text-center empty-message">
+          No se encontraron usuarios.
+        </td>
       </tr>
     </ng-template>
 
-     <ng-template pTemplate="loadingbody">
-        <tr>
-            <td colspan="5" class="text-center loading-message">Cargando usuarios...</td>
-        </tr>
+    <ng-template pTemplate="loadingbody">
+      <tr>
+        <td colspan="5" class="text-center loading-message">
+          Cargando usuarios...
+        </td>
+      </tr>
     </ng-template>
 
   </p-table>

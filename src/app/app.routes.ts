@@ -14,12 +14,10 @@ export const routes: Routes = [
     path: 'dashboard',
     loadComponent: () => import('./components/dashboard/dashboard').then(m => m.DashboardComponent)
   },
-
   {
     path: 'admin',
     loadComponent: () => import('./components/bibliotecario/bibliotecario').then(m => m.default)
   },
- 
   { 
     path: 'admin/libros/nuevo', 
     loadComponent: () => import('./components/libro-formulario/libro-formulario').then(m => m.default)
@@ -28,8 +26,6 @@ export const routes: Routes = [
     path: 'admin/libros/editar/:uuid', 
     loadComponent: () => import('./components/libro-formulario/libro-formulario').then(m => m.default)
   },
-  
-
   { 
     path: 'admin/usuarios', 
     loadComponent: () => import('./components/usuarios/usuarios').then(m => m.default)
@@ -38,15 +34,27 @@ export const routes: Routes = [
     path: 'admin/usuarios/nuevo', 
     loadComponent: () => import('./components/usuario-formulario/usuario-formulario').then(m => m.default)
   },
-  { 
-    path: 'admin/usuarios/editar/:uuid', 
-    loadComponent: () => import('./components/usuario-formulario/usuario-formulario').then(m => m.default)
+  {
+    path: 'admin/usuarios/editar/:id', // ✅ Cambia :uuid por :id
+    loadComponent: () => import('./components/usuario-formulario/usuario-formulario')
   },
   { 
     path: 'admin/prestamos', 
     loadComponent: () => import('./components/prestamo-lista/prestamo-lista').then(m => m.default)
   },
-    { 
+  {
+    path: 'admin/prestamos/nuevo', 
+    loadComponent: () => import('./components/prestamo-formulario/prestamo-formulario').then(m => m.default)
+  },
+  { 
+    path: 'admin/multas', 
+    loadComponent: () => import('./components/multa-lista/multa-lista').then(m => m.MultaListaComponent)
+  },
+  { 
+    path: 'admin/pagos', 
+    loadComponent: () => import('./components/multa-pago/multa-pago').then(m => m.MultaPagoComponent)
+  },
+  { 
     path: 'admin/autores', 
     loadComponent: () => import('./components/autores/autores').then(m => m.default)
   },
@@ -75,8 +83,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/condiciones/condiciones').then(m => m.default)
   },
   {
-  path: 'admin/prestamos/nuevo', 
-  loadComponent: () => import('./components/prestamo-formulario/prestamo-formulario').then(m => m.default)
+    path: 'admin/ejemplares', 
+    loadComponent: () => import('./components/ejemplar-lista/ejemplar-lista').then(m => m.default)
   },
-  { path: '**', redirectTo: '/login' }
+  { 
+    path: '**', 
+    redirectTo: '/login' 
+  }
 ];

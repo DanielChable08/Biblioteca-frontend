@@ -764,3 +764,21 @@
   border-top: 1px solid var(--beige);
   margin: 0.5rem 0;
 }
+
+::ng-deep .p-tooltip .p-tooltip-text {
+  padding: 14px;
+  background: #2c3e50;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  max-width: 250px;
+}
+
+.status-badge {
+  cursor: help;
+  transition: all 0.3s ease;
+}
+
+.status-badge:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}

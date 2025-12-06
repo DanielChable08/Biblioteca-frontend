@@ -19,7 +19,6 @@
     styleClass="detalle-prestamo-dialog"
 >
     <ng-container *ngIf="prestamoActual">
-        <!-- Información del Préstamo -->
         <div class="prestamo-info-section">
             <div class="info-grid">
                 <div class="info-item">
@@ -68,7 +67,6 @@
         
         <div class="divider"></div>
         
-        <!-- Tabla de Ejemplares -->
         <div class="ejemplares-section">
             <h4 class="section-title">
                 <i class="pi pi-book"></i>
@@ -120,8 +118,123 @@
     </ng-container>
 </p-dialog>
 
-<div class="admin-page-container">
+<!-- MODAL DEVOLUCIÓN -->
+<p-dialog 
+    [(visible)]="mostrarModalDevolucion" 
+    [modal]="true" 
+    [style]="{width: '60vw', minWidth: '700px'}"
+    [closable]="true" 
+    (onHide)="cerrarModalDevolucion()"
+    styleClass="devolucion-dialog"
+>
+    <ng-template pTemplate="header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="pi pi-arrow-right-arrow-left" style="color: var(--gold); font-size: 1.3rem;"></i>
+            <span style="font-size: 1.3rem; font-weight: 600; color: var(--wine);">Devolver Ejemplares</span>
+        </div>
+    </ng-template>
 
+    <ng-container *ngIf="prestamoDevolucion">
+        <div class="devolucion-header">
+            <div class="devolucion-info">
+                <div class="info-row">
+                    <i class="pi pi-user"></i>
+                    <span><strong>Lector:</strong> {{ prestamoDevolucion.lector?.nombre }} {{ prestamoDevolucion.lector?.apPaterno }}</span>
+                </div>
+                <div class="info-row">
+                    <i class="pi pi-calendar"></i>
+                    <span><strong>Fecha Préstamo:</strong> {{ prestamoDevolucion.fechaPrestamo | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div class="info-row">
+                    <i class="pi pi-calendar-times"></i>
+                    <span><strong>Fecha Límite:</strong> {{ prestamoDevolucion.fechaLimite | date:'dd/MM/yyyy' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="devolucion-body">
+            <h4 class="section-title">
+                <i class="pi pi-check-circle"></i>
+                Selecciona los ejemplares a devolver
+            </h4>
+
+            <p-table [value]="detallesDevolucion" [loading]="loadingDevolucion" styleClass="devolucion-table">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 50px;">
+                            <p-checkbox 
+                                [ngModel]="todosSeleccionados()" 
+                                [binary]="true"
+                                (onChange)="toggleSeleccionTodos($event)"
+                            ></p-checkbox>
+                        </th>
+                        <th>Código</th>
+                        <th>Título del Libro</th>
+                        <th>Autor(es)</th>
+                        <th>Estado Actual</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-detalle>
+                    <tr [class.selected-row]="detalle.seleccionado">
+                        <td>
+                            <p-checkbox 
+                                [(ngModel)]="detalle.seleccionado" 
+                                [binary]="true"
+                            ></p-checkbox>
+                        </td>
+                        <td>
+                            <span class="codigo-ejemplar">
+                                <i class="pi pi-bookmark"></i>
+                                {{ detalle.ejemplar?.codigo || 'N/A' }}
+                            </span>
+                        </td>
+                        <td>
+                            <strong>{{ detalle.ejemplar?.libro?.titulo || 'No disponible' }}</strong>
+                        </td>
+                        <td>{{ getAutoresNombres(detalle) }}</td>
+                        <td>
+                            <span class="estado-ejemplar-badge">
+                                {{ detalle.estadoEjemplar?.nombre || 'N/A' }}
+                            </span>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="5" class="text-center empty-message">
+                            <i class="pi pi-info-circle"></i>
+                            <p>No hay ejemplares pendientes de devolución.</p>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </ng-container>
+
+    <ng-template pTemplate="footer">
+        <div class="devolucion-footer">
+            <p-button 
+                label="Cancelar" 
+                icon="pi pi-times" 
+                styleClass="p-button-text p-button-secondary" 
+                (onClick)="cerrarModalDevolucion()"
+                [disabled]="procesandoDevolucion"
+            ></p-button>
+            <p-button 
+                [label]="getCantidadSeleccionados() > 0 ? 'Devolver ' + getCantidadSeleccionados() + ' ejemplar(es)' : 'Devolver Seleccionados'" 
+                icon="pi pi-check" 
+                styleClass="p-button-wine" 
+                (onClick)="procesarDevolucion()"
+                [loading]="procesandoDevolucion"
+                [disabled]="!algunoSeleccionado()"
+            ></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<div class="admin-page-container">
     <div class="header-container">
         <div class="form-header-container">
             <div class="form-header page-header-layout">
@@ -132,6 +245,7 @@
                 <div class="header-right">
                     <p-button label="Nuevo Préstamo" icon="pi pi-plus" styleClass="p-button-wine" (click)="agregarPrestamo()"></p-button>
                 </div>
+                <p-button label="Multas" icon="pi pi-dollar" styleClass="p-button-wine" (click)="multas()"></p-button>
             </div>
         </div>
     </div>
@@ -148,7 +262,6 @@
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} préstamos" 
         [showCurrentPageReport]="true"
     >
-
         <ng-template pTemplate="caption">
             <div class="table-header">
                 <span>Lista de Préstamos</span>
@@ -174,9 +287,9 @@
                 <th pSortableColumn="lector.nombre">Lector <p-sortIcon field="lector.nombre"></p-sortIcon></th>
                 <th pSortableColumn="bibliotecario.nombre">Bibliotecario <p-sortIcon field="bibliotecario.nombre"></p-sortIcon></th>
                 <th pSortableColumn="fechaPrestamo">Fecha Préstamo <p-sortIcon field="fechaPrestamo"></p-sortIcon></th>
-                <th pSortableColumn="fechaLimite">Fecha Lí­mite <p-sortIcon field="fechaLimite"></p-sortIcon></th>
+                <th pSortableColumn="fechaLimite">Fecha Límite <p-sortIcon field="fechaLimite"></p-sortIcon></th>
                 <th pSortableColumn="estadoPrestamo.nombre">Estado <p-sortIcon field="estadoPrestamo.nombre"></p-sortIcon></th>
-                <th style="width: 10rem;">Acciones</th>
+                <th style="width: 12rem;">Acciones</th>
             </tr>
         </ng-template>
 
@@ -194,8 +307,8 @@
                 <td>
                     <div class="table-actions">
                         <button pButton icon="pi pi-eye" class="action-btn-compact view-btn" pTooltip="Ver Detalles" (click)="verDetalles(prestamo)"></button>
+                        <button pButton icon="pi pi-arrow-right-arrow-left" class="action-btn-compact return-btn" pTooltip="Devolver" (click)="abrirModalDevolucion(prestamo)"></button>
                         <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" pTooltip="Editar" (click)="editarPrestamo(prestamo)"></button>
-                        <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" pTooltip="Anular" (click)="eliminarPrestamo(prestamo)"></button>
                     </div>
                 </td>
             </tr>
