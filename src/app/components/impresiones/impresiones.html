@@ -1,0 +1,204 @@
+<p-toast></p-toast>
+
+<div class="header-container">
+  <div class="form-header-container">
+    <div class="form-header">
+      <div class="header-left">
+        <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar"></button>
+        <h2><i class="pi pi-print"></i> Impresión de Etiquetas</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="form-page-container">
+  
+  <div class="form-section">
+    <h3 class="section-title"><i class="pi pi-cog"></i> Configuración de Impresión</h3>
+    <hr>
+    <div class="form-row modo-selector-row">
+       <div class="w-full">
+           <label class="mb-2 block font-bold text-wine">Tipo de Etiqueta</label>
+           <p-selectButton 
+                [options]="opcionesModo" 
+                [(ngModel)]="modoImpresion" 
+                (onChange)="cambiarModo($event)"
+                optionLabel="label" 
+                optionValue="value">
+           </p-selectButton>
+       </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label><i class="pi pi-arrows-h"></i> Tamaño de Etiqueta</label>
+        <p-select
+          [(ngModel)]="tamanoEtiqueta"
+          [options]="tamanosDisponibles"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="w-full">
+        </p-select>
+        
+        <small class="help-text" *ngIf="modoImpresion === 'barras'">Etiquetas rectangulares estándar con código de barras.</small>
+        <small class="help-text" *ngIf="modoImpresion === 'lomo'">Etiquetas verticales delgadas para el lomo (Tejuelos).</small>
+      </div>
+
+      <div class="form-field" *ngIf="modoImpresion === 'barras'">
+        <label><i class="pi pi-list"></i> Información Adicional</label>
+        <div class="checkbox-group">
+          <div class="checkbox-item">
+            <p-checkbox [(ngModel)]="mostrarISBN" [binary]="true" inputId="showISBN"></p-checkbox>
+            <label for="showISBN">Mostrar ISBN</label>
+          </div>
+          <div class="checkbox-item">
+            <p-checkbox [(ngModel)]="mostrarUbicacion" [binary]="true" inputId="showUbicacion"></p-checkbox>
+            <label for="showUbicacion">Mostrar Ubicación</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="section-header">
+      <h3 class="section-title"><i class="pi pi-book"></i> Seleccionar Ejemplares</h3>
+      
+      <div class="action-buttons">
+        <span class="selection-counter" *ngIf="ejemplaresSeleccionados.length > 0">
+          {{ ejemplaresSeleccionados.length }} seleccionado(s)
+        </span>
+        
+        <button pButton label="Todos" icon="pi pi-check-square" class="p-button-outlined p-button-gold" (click)="seleccionarTodos()" [disabled]="ejemplaresFiltrados.length === 0"></button>
+        <button pButton label="Limpiar" icon="pi pi-times" class="p-button-outlined p-button-secondary" (click)="limpiarSeleccion()" [disabled]="ejemplaresSeleccionados.length === 0"></button>
+        
+        <button pButton label="PDF" icon="pi pi-file-pdf" class="p-button-outlined p-button-danger" (click)="descargarPDF()" [disabled]="ejemplaresSeleccionados.length === 0" [loading]="preparandoPDF"></button>
+        
+        <button pButton label="Vista Previa" icon="pi pi-eye" class="p-button-gold" (click)="verVistaPrevia()" [disabled]="ejemplaresSeleccionados.length === 0"></button>
+        <button pButton label="Imprimir" icon="pi pi-print" class="p-button-wine" (click)="imprimirDirecto()" [disabled]="ejemplaresSeleccionados.length === 0"></button>
+      </div>
+    </div>
+
+    <div class="search-container">
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" [(ngModel)]="filtroTexto" (input)="filtrarEjemplares()" placeholder="    Buscar..." class="w-full" />
+      </span>
+    </div>
+
+    <div class="ejemplares-grid" *ngIf="ejemplaresFiltrados.length > 0">
+      <div class="ejemplar-card" *ngFor="let ejemplar of ejemplaresFiltrados" [class.selected]="isEjemplarSeleccionado(ejemplar)" (click)="toggleEjemplar(ejemplar)">
+        <div class="ejemplar-checkbox" (click)="$event.stopPropagation()">
+          <p-checkbox [binary]="true" [ngModel]="isEjemplarSeleccionado(ejemplar)" (ngModelChange)="toggleEjemplar(ejemplar)" [inputId]="'ejemplar-' + ejemplar.id"></p-checkbox>
+        </div>
+        <div class="ejemplar-info">
+          <div class="ejemplar-codigo"><i class="pi pi-bookmark"></i> {{ ejemplar.codigo }}</div>
+          <div class="ejemplar-titulo">{{ ejemplar.libroTitulo }}</div>
+          <div class="ejemplar-autor">{{ ejemplar.autoresNombres }}</div>
+          <div class="ejemplar-ubicacion"><i class="pi pi-map-marker"></i> {{ ejemplar.ubicacion || 'Sin ubicación' }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="empty-state" *ngIf="ejemplaresFiltrados.length === 0 && !cargando">
+      <i class="pi pi-inbox"></i>
+      <p>No se encontraron ejemplares</p>
+    </div>
+  </div>
+</div>
+
+<div class="preview-overlay" *ngIf="vistaPrevia">
+  <div class="preview-container">
+    <div class="preview-header">
+      <h3><i class="pi pi-eye"></i> Vista Previa ({{ modoImpresion === 'barras' ? 'Código de Barras' : 'Etiquetas de Identificador' }})</h3>
+      <button pButton icon="pi pi-times" class="p-button-text p-button-rounded" (click)="cerrarVistaPrevia()"></button>
+    </div>
+
+    <div class="preview-content">
+      <div class="preview-page">
+        
+        <div class="etiquetas-grid-preview" *ngIf="modoImpresion === 'barras'">
+          <div class="etiqueta-preview" *ngFor="let ejemplar of ejemplaresSeleccionados; let i = index" [class]="tamanoEtiqueta">
+            <div class="etiqueta-codigo">{{ ejemplar.codigo }}</div>
+            <div class="etiqueta-barcode"><svg [id]="'barcode-preview-' + i"></svg></div>
+            <div class="etiqueta-info">
+              <strong>{{ ejemplar.libroTitulo }}</strong>
+              <div>{{ ejemplar.autoresNombres }}</div>
+              <div *ngIf="mostrarISBN && ejemplar.libroISBN">ISBN: {{ ejemplar.libroISBN }}</div>
+              <div *ngIf="mostrarUbicacion && ejemplar.ubicacion">{{ ejemplar.ubicacion }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="etiquetas-lomo-grid-preview" *ngIf="modoImpresion === 'lomo'">
+           <div class="etiqueta-lomo-preview" *ngFor="let ejemplar of ejemplaresSeleccionados" [class]="tamanoEtiqueta">
+               <div class="lomo-top"><span class="lomo-code">{{ ejemplar.codigo }}</span></div>
+               <div class="lomo-body"><span class="lomo-title">{{ ejemplar.libroTitulo }}</span></div>
+               <div class="lomo-footer"><span class="lomo-cutter">{{ ejemplar.cutter }}</span></div>
+           </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="preview-footer">
+      <button pButton label="Descargar PDF" icon="pi pi-file-pdf" class="p-button-outlined p-button-danger" (click)="descargarPDF()" [loading]="preparandoPDF"></button>
+      <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="cerrarVistaPrevia()"></button>
+      <button pButton label="Imprimir" icon="pi pi-print" class="p-button-wine" (click)="imprimir()"></button>
+    </div>
+  </div>
+</div>
+
+<div class="print-only-container" *ngIf="preparandoImpresion">
+  <div class="print-page">
+    
+    <div class="etiquetas-grid-print" *ngIf="modoImpresion === 'barras'">
+      <div class="etiqueta-print" *ngFor="let ejemplar of ejemplaresSeleccionados; let i = index" [class]="tamanoEtiqueta">
+        <div class="etiqueta-codigo-print">{{ ejemplar.codigo }}</div>
+        <div class="etiqueta-barcode-print"><svg [id]="'barcode-print-' + i"></svg></div>
+        <div class="etiqueta-info-print">
+          <strong>{{ ejemplar.libroTitulo }}</strong>
+          <div>{{ ejemplar.autoresNombres }}</div>
+          <div *ngIf="mostrarISBN && ejemplar.libroISBN">ISBN: {{ ejemplar.libroISBN }}</div>
+          <div *ngIf="mostrarUbicacion && ejemplar.ubicacion">{{ ejemplar.ubicacion }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="etiquetas-lomo-grid-print" *ngIf="modoImpresion === 'lomo'">
+        <div class="etiqueta-lomo-print" *ngFor="let ejemplar of ejemplaresSeleccionados" [class]="tamanoEtiqueta">
+            <div class="lomo-print-code">{{ ejemplar.codigo }}</div>
+            <div class="lomo-print-title">{{ ejemplar.libroTitulo }}</div>
+            <div class="lomo-print-cutter">{{ ejemplar.cutter }}</div>
+        </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="pdf-only-container" *ngIf="preparandoPDF">
+  <div id="pdf-content" class="pdf-page">
+      
+     <div class="etiquetas-grid-pdf" *ngIf="modoImpresion === 'barras'">
+        <div class="etiqueta-pdf" *ngFor="let ejemplar of ejemplaresSeleccionados; let i = index" [class]="tamanoEtiqueta">
+             <div class="etiqueta-codigo-pdf">{{ ejemplar.codigo }}</div>
+             <div class="etiqueta-barcode-pdf"><svg [id]="'barcode-pdf-' + i"></svg></div>
+             <div class="etiqueta-info-pdf">
+                 <strong>{{ ejemplar.libroTitulo }}</strong>
+                 <div>{{ ejemplar.autoresNombres }}</div>
+                 <div *ngIf="mostrarISBN && ejemplar.libroISBN">ISBN: {{ ejemplar.libroISBN }}</div>
+                 <div *ngIf="mostrarUbicacion && ejemplar.ubicacion">{{ ejemplar.ubicacion }}</div>
+             </div>
+         </div>
+     </div>
+
+     <div class="etiquetas-lomo-grid-print" *ngIf="modoImpresion === 'lomo'">
+        <div class="etiqueta-lomo-print" *ngFor="let ejemplar of ejemplaresSeleccionados" [class]="tamanoEtiqueta">
+            <div class="lomo-print-code">{{ ejemplar.codigo }}</div>
+            <div class="lomo-print-title">{{ ejemplar.libroTitulo }}</div>
+            <div class="lomo-print-cutter">{{ ejemplar.cutter }}</div>
+        </div>
+    </div>
+
+  </div>
+</div>

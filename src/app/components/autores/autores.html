@@ -8,13 +8,14 @@
   </ng-template>
 </p-confirmDialog>
 
+<!-- HEADER -->
 <div class="header-container">
   <div class="form-header-container">
     <div class="form-header page-header">
       <div class="header-left">
         <button
           pButton
-          icon="pi pi-arrow-left back"
+          icon="pi pi-arrow-left"
           class="p-button-text back-button"
           (click)="regresar()"
           pTooltip="Regresar al Panel"
@@ -28,13 +29,15 @@
           label="Agregar Autor"
           icon="pi pi-user-plus"
           styleClass="p-button-wine"
-          (click)="abrirModalAgregar()">
+          (click)="abrirModalAgregar()"
+          class="ani-one">
         </p-button>
       </div>
     </div>
   </div>
 </div>
 
+<!-- CONTENIDO PRINCIPAL -->
 <div class="admin-page-container">
   <p-table 
     #dtAutores 
@@ -48,6 +51,7 @@
     currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} autores" 
     [showCurrentPageReport]="true">
 
+    <!-- CAPTION -->
     <ng-template pTemplate="caption">
       <div class="table-header">
         <span>Lista de Autores</span>
@@ -59,7 +63,7 @@
               type="text" 
               [(ngModel)]="globalFilter" 
               (input)="applyFilterGlobal(dtAutores, $event)" 
-              placeholder="Buscar..." 
+              placeholder="Buscar autores..." 
               class="table-search-input" />
           </span>
           <p-button 
@@ -72,6 +76,7 @@
       </div>
     </ng-template>
 
+    <!-- HEADER -->
     <ng-template pTemplate="header">
       <tr>
         <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre"></p-sortIcon></th>
@@ -81,10 +86,11 @@
       </tr>
     </ng-template>
 
+    <!-- BODY -->
     <ng-template pTemplate="body" let-autor>
       <tr>
         <td>{{ autor.nombre }}</td>
-        <td>{{ autor.apPaterno }}</td>
+        <td>{{ autor.apPaterno || 'N/A' }}</td>
         <td>{{ autor.apMaterno || 'N/A' }}</td>
         <td>
           <div class="table-actions">
@@ -92,14 +98,14 @@
               pButton 
               icon="pi pi-pencil" 
               class="action-btn-compact edit-btn" 
-              pTooltip="Editar" 
+              pTooltip="Editar"
               (click)="abrirModalEditar(autor)">
             </button>
             <button 
               pButton 
               icon="pi pi-trash" 
               class="action-btn-compact delete-btn" 
-              pTooltip="Eliminar" 
+              pTooltip="Eliminar"
               (click)="eliminar(autor)">
             </button>
           </div>
@@ -107,12 +113,14 @@
       </tr>
     </ng-template>
 
+    <!-- EMPTY -->
     <ng-template pTemplate="emptymessage">
       <tr>
         <td colspan="4" class="text-center empty-message">No se encontraron autores.</td>
       </tr>
     </ng-template>
 
+    <!-- LOADING -->
     <ng-template pTemplate="loadingbody">
       <tr>
         <td colspan="4" class="text-center loading-message">Cargando autores...</td>
@@ -125,43 +133,46 @@
 <p-dialog
   [header]="isEditMode ? 'Editar Autor' : 'Agregar Nuevo Autor'"
   [(visible)]="displayModal"
-  [modal]="true"
-  [style]="{ width: '600px' }"
+  [modal]="true" 
+  [style]="{ width: '90%', maxWidth: '600px' }"
   [draggable]="false"
   [dismissableMask]="false"
   [focusOnShow]="false">
   
   <form [formGroup]="autorForm" (ngSubmit)="onSubmit()" class="form-container">
+    <!-- NOMBRE -->
     <div class="field">
       <label for="nombre">
-        <i class="pi pi-user"></i> Nombre <span class="text red">*</span>
+        <i class="pi pi-user"></i> Nombre <span class="text.red">*</span>
       </label>
       <input 
         id="nombre" 
         pInputText 
         formControlName="nombre" 
         placeholder="Ej: Juan" 
-      />
+        class="form-comp" />
       <small class="p-error" *ngIf="autorForm.get('nombre')?.invalid && autorForm.get('nombre')?.touched">
         El nombre es requerido
       </small>
     </div>
 
+    <!-- APELLIDO PATERNO -->
     <div class="field">
       <label for="apPaterno">
-        <i class="pi pi-id-card"></i> Apellido Paterno <span class="text red">*</span>
+        <i class="pi pi-id-card"></i> Apellido Paterno <span class="text.red">*</span>
       </label>
       <input 
         id="apPaterno" 
         pInputText 
         formControlName="apPaterno" 
         placeholder="Ej: Pérez" 
-      />
+        class="form-comp" />
       <small class="p-error" *ngIf="autorForm.get('apPaterno')?.invalid && autorForm.get('apPaterno')?.touched">
         El apellido paterno es requerido
       </small>
     </div>
 
+    <!-- APELLIDO MATERNO -->
     <div class="field">
       <label for="apMaterno">
         <i class="pi pi-id-card"></i> Apellido Materno
@@ -171,8 +182,9 @@
         pInputText 
         formControlName="apMaterno" 
         placeholder="Ej: García (opcional)" 
-      />
+        class="form-comp" />
     </div>
+
 
     <div class="form-footer">
       <button type="button" pButton class="btn-info text" (click)="cerrarModal()">
@@ -182,7 +194,7 @@
         type="submit" 
         pButton 
         icon="pi pi-check" 
-        class="btn-primary" 
+        class="btn-primary ani-one" 
         [loading]="isSubmitting" 
         [disabled]="autorForm.invalid">
         Guardar

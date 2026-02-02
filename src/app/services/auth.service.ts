@@ -1,8 +1,7 @@
-// src/app/services/auth.service.ts
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, catchError, throwError, BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -11,38 +10,57 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private apiUrl = 'http://localhost:8080/sdt/v1/auth';
+  
+  // Inicializamos verificando si hay token en la sesión actual
+  private isAuthenticatedSubject = new BehaviorSubject<boolean>(!!sessionStorage.getItem('token'));
+  
+  public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
   login(credentials: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
       tap((response: any) => {
-        if (response && response.token) {
-          // Guardar el token (usando 'token' en lugar de 'authToken')
-          localStorage.setItem('token', response.token);
-          
-          // Guardar los datos del usuario incluyendo idPersona
-          const userData = {
-            id: response.id,
-            idPersona: response.idPersona || response.id, // Agregar idPersona
-            nombre: response.nombre,
-            apPaterno: response.apPaterno,
-            apMaterno: response.apMaterno,
-            email: response.email,
-            roles: response.roles
-          };
-          localStorage.setItem('userData', JSON.stringify(userData));
+        if (!response || !response.token) {
+          throw new Error('Respuesta inválida del servidor');
         }
-      })
+        
+        sessionStorage.setItem('token', response.token);
+        
+        // Manejo seguro de datos de persona/usuario
+        let nombre = response.nombre || null;
+        let apPaterno = response.apPaterno || null;
+        let apMaterno = response.apMaterno || null;
+        let idPersona = response.idPersona || null;
+        
+        if (response.persona) {
+          nombre = response.persona.nombre || nombre;
+          apPaterno = response.persona.apPaterno || apPaterno;
+          apMaterno = response.persona.apMaterno || apMaterno;
+          idPersona = response.persona.id || idPersona;
+        }
+        
+        const userData = {
+          id: response.id,
+          idPersona: idPersona || response.id,
+          nombre: nombre,
+          apPaterno: apPaterno,
+          apMaterno: apMaterno,
+          email: response.email,
+          roles: response.roles || []
+        };
+
+        sessionStorage.setItem('userData', JSON.stringify(userData));
+        this.isAuthenticatedSubject.next(true);
+      }),
+      catchError((error) => throwError(() => error))
     );
   }
 
-  // Obtener los datos del usuario desde localStorage
   private getUserData(): any {
-    const userData = localStorage.getItem('userData');
+    const userData = sessionStorage.getItem('userData');
     if (userData) {
       try {
         return JSON.parse(userData);
       } catch (e) {
-        console.error('Error al parsear userData:', e);
         return null;
       }
     }
@@ -51,14 +69,15 @@ export class AuthService {
 
   getUserRole(): string {
     const userData = this.getUserData();
-    if (!userData || !userData.roles) {
+    
+    if (!userData || !userData.roles || userData.roles.length === 0) {
       return 'USER';
     }
 
-    // roles es un array de objetos: [{ id: 1, name: "Administrador", ... }]
-    const isAdmin = userData.roles.some((role: any) => 
-      role.name === 'Administrador' || role.name === 'Bibliotecario'
-    );
+    const isAdmin = userData.roles.some((role: any) => {
+      const roleName = typeof role === 'string' ? role : role.name;
+      return roleName === 'Administrador' || roleName === 'Bibliotecario';
+    });
     
     return isAdmin ? 'ADMIN' : 'USER';
   }
@@ -68,16 +87,13 @@ export class AuthService {
     if (!userData || !userData.roles || userData.roles.length === 0) {
       return 'Usuario';
     }
-
-    // Retornar el nombre del primer rol
-    return userData.roles[0].name || 'Usuario';
+    const firstRole = userData.roles[0];
+    return typeof firstRole === 'string' ? firstRole : firstRole.name || 'Usuario';
   }
 
   getFullName(): string {
     const userData = this.getUserData();
-    if (!userData) {
-      return 'Usuario';
-    }
+    if (!userData) return 'Usuario';
 
     const nombre = userData.nombre || '';
     const apPaterno = userData.apPaterno || '';
@@ -87,45 +103,51 @@ export class AuthService {
       return `${nombre} ${apPaterno} ${apMaterno}`.trim();
     }
     
-    return userData.email || 'Usuario';
+    if (userData.email) {
+      return userData.email.split('@')[0];
+    }
+    return 'Usuario';
   }
 
   getUserInitials(): string {
     const userData = this.getUserData();
-    if (!userData || !userData.nombre) {
-      return 'U';
-    }
-
-    const nombre = userData.nombre;
+    if (!userData) return 'U';
     
-    // Si el nombre tiene varios nombres (ej: "José Eduardo")
-    const nombreParts = nombre.trim().split(/\s+/);
-    if (nombreParts.length >= 2) {
-      // "José Eduardo" -> "JE"
-      return (nombreParts[0][0] + nombreParts[1][0]).toUpperCase();
-    } else if (nombreParts.length === 1) {
-      // Si solo hay un nombre, combinar con apellido
-      const apPaterno = userData.apPaterno || '';
-      if (apPaterno) {
-        return (nombreParts[0][0] + apPaterno[0]).toUpperCase();
+    if (userData.nombre) {
+      const nombreParts = userData.nombre.trim().split(/\s+/);
+      if (nombreParts.length >= 2) {
+        return (nombreParts[0][0] + nombreParts[1][0]).toUpperCase();
+      } else if (nombreParts.length === 1 && userData.apPaterno) {
+        return (nombreParts[0][0] + userData.apPaterno[0]).toUpperCase();
+      } else if (nombreParts.length === 1) {
+        return nombreParts[0][0].toUpperCase();
       }
-      return nombreParts[0][0].toUpperCase();
     }
-    
+    if (userData.email) {
+      return userData.email[0].toUpperCase();
+    }
     return 'U';
   }
 
   getToken(): string | null {
-    return localStorage.getItem('token');
+    return sessionStorage.getItem('token');
   }
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    if (!this.isAuthenticatedSubject.value) {
+        const token = sessionStorage.getItem('token');
+        if (token) {
+            this.isAuthenticatedSubject.next(true);
+            return true;
+        }
+    }
+    return this.isAuthenticatedSubject.value;
   }
 
   logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('userData');
+    this.isAuthenticatedSubject.next(false);
     this.router.navigate(['/login']);
   }
 }

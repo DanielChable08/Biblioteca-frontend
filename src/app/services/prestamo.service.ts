@@ -64,8 +64,6 @@ export class PrestamoService {
 
   cargarDetallesEnMasiva(prestamoUuid: string, detalles: DetallePrestamoPayload[]): Observable<any> {
     const url = `${this.apiUrl}/prestamos/${prestamoUuid}/detalles/carga-masiva`;
-    console.log('📤 POST a:', url);
-    console.log('📦 Payload:', JSON.stringify(detalles, null, 2));
     return this.http.post<any>(url, detalles);
   }
 
@@ -78,9 +76,7 @@ export class PrestamoService {
     const payload = { 
       prestamoUuid: prestamoUuid,
       detallesIds: detallesIds 
-    };
-    console.log('📤 POST devolución a:', url);
-    console.log('📦 Payload:', payload);
+    };;
     return this.http.post(url, payload, { headers: this.getHeaders() });
   }
 

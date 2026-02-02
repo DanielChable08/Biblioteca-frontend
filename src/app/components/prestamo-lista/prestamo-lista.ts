@@ -18,6 +18,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { PrestamoService } from '../../services/prestamo.service';
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
+import { PrintTicketService } from '../../services/print-ticket.service';
 import { Prestamo, DetallePrestamo } from '../../models/biblioteca';
 
 @Component({
@@ -47,6 +48,7 @@ export default class PrestamoListaComponent implements OnInit {
   private router = inject(Router);
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
+  private printService = inject(PrintTicketService);
 
   prestamos: Prestamo[] = [];
   personasMap = new Map<number, string>();
@@ -106,6 +108,10 @@ export default class PrestamoListaComponent implements OnInit {
     this.prestamoActual = prestamo;
     this.detallesPrestamo = [];
     this.mostrarDetalle = true;
+    this.cargarDetalles(prestamo);
+  }
+
+  private cargarDetalles(prestamo: Prestamo): void {
     this.loadingDetalles = true;
 
     forkJoin({
@@ -161,7 +167,7 @@ export default class PrestamoListaComponent implements OnInit {
         this.detallesPrestamo = detallesMapeados;
       },
       error: (err: any) => {
-        console.error('❌ Error al cargar detalles:', err);
+        console.error(' Error al cargar detalles:', err);
         this.messageService.add({ 
           severity: 'error', 
           summary: 'Error', 
@@ -169,6 +175,113 @@ export default class PrestamoListaComponent implements OnInit {
         });
       }
     });
+  }
+
+  imprimirTicketPrestamo(prestamo?: Prestamo): void {
+    const prestamoAImprimir = prestamo || this.prestamoActual;
+    
+    if (!prestamoAImprimir) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'No hay préstamo seleccionado para imprimir.'
+      });
+      return;
+    }
+
+    if (prestamo && (!this.detallesPrestamo.length || this.prestamoActual?.uuid !== prestamo.uuid)) {
+      this.loadingDetalles = true;
+      
+      forkJoin({
+        detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
+        ejemplares: this.bookService.getEjemplares(),
+        libros: this.bookService.getLibros(),
+        estadosEjemplares: this.catalogService.getEstadosEjemplares()
+      }).pipe(
+        switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
+          const libroIds = [...new Set(ejemplares.map(e => e.idLibro))];
+          const autorRequests = libroIds.map(idLibro => {
+            const libro = libros.find(l => l.id === idLibro);
+            if (libro?.uuid) {
+              return this.bookService.getAutoresForLibro(libro.uuid);
+            }
+            return [];
+          });
+
+          return forkJoin(autorRequests.length > 0 ? autorRequests : [[]]).pipe(
+            map(autoresArray => {
+              const librosCompletos = libros.map((libro, index) => ({
+                ...libro,
+                autores: autoresArray[index] || []
+              }));
+
+              const ejemplaresCompletos = ejemplares.map(ejemplar => {
+                const libroDelEjemplar = librosCompletos.find(l => l.id === ejemplar.idLibro);
+                const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplar.idEstadoEjemplar);
+                return {
+                  ...ejemplar,
+                  libro: libroDelEjemplar,
+                  estadoEjemplar: estadoEjemplar
+                };
+              });
+
+              const detallesMapeados = detalles.map(detalle => {
+                const ejemplarEncontrado = ejemplaresCompletos.find(e => e.id === detalle.idEjemplar);
+                return {
+                  ...detalle,
+                  ejemplar: ejemplarEncontrado,
+                  estadoEjemplar: ejemplarEncontrado?.estadoEjemplar
+                };
+              });
+
+              return detallesMapeados;
+            })
+          );
+        }),
+        finalize(() => this.loadingDetalles = false)
+      ).subscribe({
+        next: (detallesMapeados) => {
+          this.generarTicket(prestamo, detallesMapeados);
+        },
+        error: (err: any) => {
+          this.messageService.add({ 
+            severity: 'error', 
+            summary: 'Error', 
+            detail: 'No se pudieron cargar los detalles para imprimir.' 
+          });
+          console.error('Error al cargar detalles para impresión:', err);
+        }
+      });
+    } else {
+      this.generarTicket(prestamoAImprimir, this.detallesPrestamo);
+    }
+  }
+
+  private generarTicket(prestamo: Prestamo, detalles: any[]): void {
+    if (detalles.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'No hay ejemplares para imprimir.'
+      });
+      return;
+    }
+
+    const ejemplaresData = detalles.map(detalle => ({
+      codigo: detalle.ejemplar?.codigo || 'N/A',
+      titulo: detalle.ejemplar?.libro?.titulo || 'No disponible',
+      autor: this.getAutoresNombres(detalle)
+    }));
+
+    const ticketData = {
+      lector: `${prestamo.lector?.nombre || ''} ${prestamo.lector?.apPaterno || ''}`.trim(),
+      bibliotecario: `${prestamo.bibliotecario?.nombre || ''} ${prestamo.bibliotecario?.apPaterno || ''}`.trim(),
+      fechaPrestamo: new Date(prestamo.fechaPrestamo),
+      fechaLimite: new Date(prestamo.fechaLimite),
+      ejemplares: ejemplaresData
+    };
+
+    this.printService.imprimirTicketPrestamo(ticketData);
   }
 
   abrirModalDevolucion(prestamo: Prestamo): void {
@@ -233,7 +346,7 @@ export default class PrestamoListaComponent implements OnInit {
         this.detallesDevolucion = detallesMapeados;
       },
       error: (err: any) => {
-        console.error('❌ Error al cargar detalles:', err);
+        console.error('Error al cargar detalles:', err);
         this.messageService.add({ 
           severity: 'error', 
           summary: 'Error', 
@@ -306,8 +419,11 @@ export default class PrestamoListaComponent implements OnInit {
   }
 
   multas(): void {
-    this.router.navigate(['admin/multas'], { queryParams: { from: 'prestamos' } });
+    sessionStorage.setItem('multasOrigen', 'prestamos');
+    this.router.navigate(['admin/multas']);
   }
+
+
 
   editarPrestamo(prestamo: Prestamo): void {
     this.router.navigate(['/admin/prestamos/editar', prestamo.uuid]);

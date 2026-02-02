@@ -16,8 +16,8 @@ import { MessageService } from 'primeng/api';
 
 import { PrestamoService } from '../../services/prestamo.service';
 import { CatalogService } from '../../services/catalog.service';
-import { UsuarioService } from '../../services/usuario.service';
 import { BookService } from '../../services/book.service';
+import { UsuarioService } from '../../services/usuario.service';
 import { EjemplarService } from '../../services/ejemplar.service';
 import { AuthService } from '../../services/auth.service';
 import { SharedDataService } from '../../services/shared-data.service';
@@ -81,8 +81,9 @@ export default class PrestamoFormularioComponent implements OnInit {
   displayEjemplarModal = false;
   catalogoTipo: 'lector' | 'estadoPrestamo' | null = null;
   ejemplarFilter = '';
+  
   minFechaLimite: Date = new Date();
-  minFechaPrestamo: Date = new Date();
+  minFechaPrestamo: Date = this.getTodayMidnight();
 
   idPersonaBibliotecario!: number;
 
@@ -105,6 +106,12 @@ export default class PrestamoFormularioComponent implements OnInit {
     } else {
       this.idPersonaBibliotecario = -1;
     }
+  }
+
+  private getTodayMidnight(): Date {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
   }
 
   initForms(): void {
@@ -130,7 +137,9 @@ export default class PrestamoFormularioComponent implements OnInit {
   setupFechaListeners(): void {
     this.prestamoForm.get('fechaPrestamo')?.valueChanges.subscribe(fecha => {
       if (fecha) {
-        this.minFechaLimite = new Date(fecha);
+        const minLimite = new Date(fecha);
+        minLimite.setDate(minLimite.getDate() + 1);
+        this.minFechaLimite = minLimite;
       }
     });
   }
@@ -216,7 +225,7 @@ export default class PrestamoFormularioComponent implements OnInit {
       next: ({ ejemplares }) => {
         this.ejemplaresDisponibles = ejemplares;
         this.ejemplaresFiltrados = ejemplares;
-        console.log('📚 Ejemplares disponibles cargados:', ejemplares.length);
+        console.log('✓ Ejemplares disponibles cargados:', ejemplares.length);
       },
       error: (err: any) => {
         this.messageService.add({
@@ -278,13 +287,17 @@ export default class PrestamoFormularioComponent implements OnInit {
 
     const fechaPrestamo: Date = this.prestamoForm.get('fechaPrestamo')!.value;
     const fechaLimite: Date = this.prestamoForm.get('fechaLimite')!.value;
-    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    
 
-    if (fechaPrestamo < hoy) {
+    const hoy = this.getTodayMidnight();
+    const fechaPrestamoMidnight = new Date(fechaPrestamo);
+    fechaPrestamoMidnight.setHours(0, 0, 0, 0);
+
+    if (fechaPrestamoMidnight < hoy) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Fecha inválida',
-        detail: 'La fecha de préstamo no puede ser anterior a hoy.'
+        detail: 'La fecha de préstamo debe ser hoy o posterior.'
       });
       return;
     }
@@ -293,7 +306,7 @@ export default class PrestamoFormularioComponent implements OnInit {
       this.messageService.add({
         severity: 'warn',
         summary: 'Fecha inválida',
-        detail: 'La fecha límite de devolución debe ser después de la fecha de préstamo.'
+        detail: 'La fecha límite debe ser posterior a la fecha de préstamo.'
       });
       return;
     }
@@ -343,11 +356,11 @@ export default class PrestamoFormularioComponent implements OnInit {
         finalize(() => this.isSubmitting = false)
       ).subscribe({
         next: (prestamo) => {
-          console.log('✅ Préstamo creado:', prestamo);
-          console.log('🔍 UUID recibido:', prestamo.uuid);
+          console.log('Préstamo creado:', prestamo);
+          console.log('✓ UUID recibido:', prestamo.uuid);
           
           if (!prestamo.uuid) {
-            console.error('❌ ERROR: El préstamo no tiene UUID');
+            console.error(' ERROR: El préstamo no tiene UUID');
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
@@ -362,12 +375,12 @@ export default class PrestamoFormularioComponent implements OnInit {
             idEstadoPrestamo: 1
           }));
           
-          console.log('📦 Detalles a enviar:', detalles);
-          console.log('🌐 Llamando a cargarDetallesEnMasiva con UUID:', prestamo.uuid);
+          console.log(' Detalles a enviar:', detalles);
+          console.log(' Llamando a cargarDetallesEnMasiva con UUID:', prestamo.uuid);
           
           this.prestamoService.cargarDetallesEnMasiva(prestamo.uuid, detalles).subscribe({
             next: () => {
-              console.log('✅ Detalles creados correctamente');
+              console.log('✓ Detalles creados correctamente');
               
               this.sharedDataService.notificarActualizacionEjemplares();
               
@@ -379,9 +392,9 @@ export default class PrestamoFormularioComponent implements OnInit {
               this.router.navigate(['/admin/prestamos']);
             },
             error: (err) => {
-              console.error('❌ Error al crear detalles:', err);
-              console.error('❌ Status:', err.status);
-              console.error('❌ Error completo:', err.error);
+              console.error(' Error al crear detalles:', err);
+              console.error('Status:', err.status);
+              console.error('Error completo:', err.error);
               this.messageService.add({
                 severity: 'error',
                 summary: 'Error',
@@ -391,7 +404,7 @@ export default class PrestamoFormularioComponent implements OnInit {
           });
         },
         error: (err) => {
-          console.error('❌ Error al crear préstamo:', err);
+          console.error(' Error al crear préstamo:', err);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',

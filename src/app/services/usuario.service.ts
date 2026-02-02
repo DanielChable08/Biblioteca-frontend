@@ -1,252 +1,241 @@
-// src/app/services/usuario.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, of } from 'rxjs';
-import { map, switchMap, catchError } from 'rxjs/operators';
-import { UsuarioCompleto, UsuarioPayload, UsuarioUpdatePayload } from '../models/usuario';
-import { Persona } from '../models/biblioteca';
+import { Observable, throwError } from 'rxjs';
+import { map, switchMap, catchError, tap } from 'rxjs/operators';
+import { 
+  Usuario, 
+  Persona, 
+  UsuarioCompleto, 
+  CrearUsuarioRequest,
+  ActualizarUsuarioRequest,
+  TipoPersona
+} from '../models/usuario';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UsuarioService {
+  private http = inject(HttpClient);
   private apiUrl = 'http://localhost:8080/sdt/v1';
 
-  constructor(private http: HttpClient) {}
 
-  // ✅ OBTENER TODOS LOS USUARIOS
   getUsuarios(): Observable<UsuarioCompleto[]> {
-    return forkJoin({
-      usuarios: this.http.get<any[]>(`${this.apiUrl}/usuarios`),
-      personas: this.http.get<Persona[]>(`${this.apiUrl}/personas`)
-    }).pipe(
-      map(({ usuarios, personas }) => {
-        console.log('📥 Usuarios del backend:', usuarios);
-        console.log('📥 Personas del backend:', personas);
+    return this.http.get<Usuario[]>(`${this.apiUrl}/usuarios`).pipe(
+      map((usuarios: Usuario[]) => {
+        console.log(' Usuarios del backend:', usuarios);
 
-        return usuarios.map((usuario: any) => {
-          // Buscar persona asociada por email o idPersona
-          const persona = personas.find((p: any) => 
-            (p.email && usuario.email && p.email.toLowerCase() === usuario.email.toLowerCase()) ||
-            (usuario.idPersona && p.id === usuario.idPersona)
-          );
+        return usuarios.map(usuario => {
+          const persona: Persona | null = usuario.persona;
 
           return {
             id: usuario.id,
             uuid: usuario.uuid || `user-${usuario.id}`,
             email: usuario.email,
-            idPersona: persona?.id || usuario.idPersona || 0,
-            nombre: persona?.nombre || 'N/A',
-            apPaterno: persona?.apPaterno || 'N/A',
-            apMaterno: persona?.apMaterno || '',
-            telefono: persona?.telefono || 'N/A',
-            idTipoPersona: persona?.idTipoPersona || 0,
-            rolNombre: usuario.role || 'Sin rol',
             active: usuario.active,
             creationDate: usuario.creationDate,
-            lastAccess: usuario.lastAccess
-          };
+            lastAccess: usuario.lastAccess,
+            rolNombre: usuario.role,
+            
+            idPersona: persona?.id || null,
+            personaUuid: persona?.uuid || '',
+            nombre: persona?.nombre || 'Sin asignar',
+            apPaterno: persona?.apPaterno || '',
+            apMaterno: persona?.apMaterno || '',
+            telefono: persona?.telefono || 'N/A',
+            idTipoPersona: persona?.idTipoPersona || 0
+          } as UsuarioCompleto;
         });
       }),
-      catchError((error) => {
-        console.error('❌ Error al cargar usuarios:', error);
-        throw error;
+      tap(usuarios => console.log(' Usuarios procesados:', usuarios)),
+      catchError((error: any) => {
+        console.error(' Error al obtener usuarios:', error);
+        return throwError(() => error);
       })
     );
   }
 
-  // ✅ OBTENER USUARIO POR ID
-  getUsuarioById(id: number): Observable<UsuarioCompleto> {
-    return forkJoin({
-      usuario: this.http.get<any>(`${this.apiUrl}/usuarios/${id}`),
-      personas: this.http.get<Persona[]>(`${this.apiUrl}/personas`)
-    }).pipe(
-      map(({ usuario, personas }) => {
-        console.log('📥 Usuario obtenido:', usuario);
-        console.log('📥 Personas disponibles:', personas);
 
-        // Buscar persona asociada
-        const persona = personas.find((p: any) => 
-          (p.email && usuario.email && p.email.toLowerCase() === usuario.email.toLowerCase()) ||
-          (usuario.idPersona && p.id === usuario.idPersona)
-        );
+  getUsuarioByUuid(uuid: string): Observable<UsuarioCompleto> {
+    return this.http.get<Usuario>(`${this.apiUrl}/usuarios/${uuid}`).pipe(
+      map((usuario: Usuario) => {
+        console.log(' Usuario obtenido:', usuario);
+
+        const persona: Persona | null = usuario.persona;
 
         return {
           id: usuario.id,
           uuid: usuario.uuid || `user-${usuario.id}`,
           email: usuario.email,
-          idPersona: persona?.id || usuario.idPersona || 0,
-          nombre: persona?.nombre || usuario.nombre || 'N/A',
-          apPaterno: persona?.apPaterno || usuario.apPaterno || 'N/A',
-          apMaterno: persona?.apMaterno || usuario.apMaterno || '',
-          telefono: persona?.telefono || usuario.telefono || 'N/A',
-          idTipoPersona: persona?.idTipoPersona || usuario.idTipoPersona || 0,
-          rolNombre: usuario.role || 'Sin rol',
           active: usuario.active,
           creationDate: usuario.creationDate,
-          lastAccess: usuario.lastAccess
-        };
+          lastAccess: usuario.lastAccess,
+          rolNombre: usuario.role,
+          
+          idPersona: persona?.id || null,
+          personaUuid: persona?.uuid || '',
+          nombre: persona?.nombre || '',
+          apPaterno: persona?.apPaterno || '',
+          apMaterno: persona?.apMaterno || '',
+          telefono: persona?.telefono || '',
+          idTipoPersona: persona?.idTipoPersona || 0
+        } as UsuarioCompleto;
       }),
-      catchError((error) => {
-        console.error('❌ Error al obtener usuario:', error);
-        throw error;
+      tap(usuario => console.log('Usuario completo:', usuario)),
+      catchError((error: any) => {
+        console.error(' Error al obtener usuario:', error);
+        return throwError(() => error);
       })
     );
   }
 
-  // ✅ CREAR USUARIO
-  createUsuario(usuarioData: UsuarioPayload): Observable<UsuarioCompleto> {
-    // 1. Crear persona
-    const personaPayload = {
-      nombre: usuarioData.nombre,
-      apPaterno: usuarioData.apPaterno,
-      apMaterno: usuarioData.apMaterno || ' ', // ✅ Espacio para evitar validación @NotBlank
-      telefono: usuarioData.telefono,
-      idTipoPersona: usuarioData.idTipoPersona
-    };
 
-    console.log('📤 1. Creando persona:', personaPayload);
-
-    return this.http.post<Persona>(`${this.apiUrl}/personas`, personaPayload).pipe(
+  createUsuario(request: CrearUsuarioRequest): Observable<UsuarioCompleto> {
+    return this.http.post<Persona>(`${this.apiUrl}/personas`, request.persona).pipe(
+      tap(persona => console.log(' Persona creada:', persona)),
+      
       switchMap((persona: Persona) => {
-        console.log('✅ Persona creada:', persona);
-
-        // 2. Crear usuario con la persona creada
         const usuarioPayload = {
-          email: usuarioData.email,
-          password: usuarioData.password,
+          email: request.usuario.email,
+          password: request.usuario.password,
           idPersona: persona.id,
-          rolesIds: [usuarioData.idTipoPersona] // ✅ Array de IDs de roles
+          roles: request.usuario.roles.map((rolId: number) => ({ id: rolId }))
         };
 
-        console.log('📤 2. Creando usuario:', usuarioPayload);
+        console.log(' Paso 2: Creando usuario:', usuarioPayload);
 
-        return this.http.post<any>(`${this.apiUrl}/usuarios`, usuarioPayload).pipe(
-          map((usuario: any) => {
-            console.log('✅ Usuario creado:', usuario);
-            
+        return this.http.post<Usuario>(`${this.apiUrl}/usuarios`, usuarioPayload).pipe(
+          map((usuario: Usuario) => {
+            console.log('Usuario creado:', usuario);
+
             return {
               id: usuario.id,
               uuid: usuario.uuid || `user-${usuario.id}`,
               email: usuario.email,
-              idPersona: persona.id,
-              nombre: persona.nombre,
-              apPaterno: persona.apPaterno,
-              apMaterno: persona.apMaterno,
-              telefono: persona.telefono,
-              idTipoPersona: persona.idTipoPersona,
-              rolNombre: usuario.role || 'Sin rol',
               active: usuario.active,
               creationDate: usuario.creationDate,
-              lastAccess: usuario.lastAccess
-            };
+              lastAccess: usuario.lastAccess,
+              rolNombre: usuario.role,
+              
+              idPersona: persona.id,
+              personaUuid: persona.uuid,
+              nombre: persona.nombre,
+              apPaterno: persona.apPaterno,
+              apMaterno: persona.apMaterno || '',
+              telefono: persona.telefono,
+              idTipoPersona: persona.idTipoPersona
+            } as UsuarioCompleto;
           })
         );
       }),
-      catchError((error) => {
-        console.error('❌ Error al crear usuario:', error);
-        console.error('❌ Detalles del error:', error.error);
-        throw error;
+      tap(usuarioCompleto => console.log(' Usuario completo creado:', usuarioCompleto)),
+      catchError((error: any) => {
+        console.error(' Error al crear usuario:', error);
+        return throwError(() => error);
       })
     );
   }
 
-  // ✅ ACTUALIZAR USUARIO
-  updateUsuario(id: number, usuarioData: UsuarioUpdatePayload): Observable<UsuarioCompleto> {
-    return this.http.get<any>(`${this.apiUrl}/usuarios/${id}`).pipe(
-      switchMap((usuario: any) => {
-        console.log('📥 Usuario a actualizar:', usuario);
-        
-        // Verificar si hay cambios en persona
-        if (usuarioData.nombre || usuarioData.apPaterno || usuarioData.telefono || usuarioData.idTipoPersona) {
-          return this.http.get<Persona[]>(`${this.apiUrl}/personas`).pipe(
-            switchMap((personas: Persona[]) => {
-              const persona = personas.find((p: any) => p.id === usuario.idPersona);
-              const updates: Observable<any>[] = [];
-              
-              if (persona) {
-                const personaPayload: any = {};
-                if (usuarioData.nombre) personaPayload.nombre = usuarioData.nombre;
-                if (usuarioData.apPaterno) personaPayload.apPaterno = usuarioData.apPaterno;
-                if (usuarioData.apMaterno !== undefined) {
-                  personaPayload.apMaterno = usuarioData.apMaterno || ' '; // ✅ Espacio si está vacío
-                }
-                if (usuarioData.telefono) personaPayload.telefono = usuarioData.telefono;
-                if (usuarioData.idTipoPersona) personaPayload.idTipoPersona = usuarioData.idTipoPersona;
+  updateUsuario(
+    uuid: string, 
+    request: ActualizarUsuarioRequest
+  ): Observable<UsuarioCompleto> {
+    console.log(' Actualizando usuario:', uuid);
+    console.log(' Request recibido:', request);
 
-                if (Object.keys(personaPayload).length > 0) {
-                  console.log('📤 Actualizando persona:', personaPayload);
-                  updates.push(
-                    this.http.put<Persona>(`${this.apiUrl}/personas/${persona.uuid}`, personaPayload)
-                  );
-                }
-              }
-
-              // Actualizar usuario (email y/o password)
-              const usuarioPayload: any = {};
-              if (usuarioData.email) usuarioPayload.email = usuarioData.email;
-              if (usuarioData.password) usuarioPayload.password = usuarioData.password;
-
-              if (Object.keys(usuarioPayload).length > 0) {
-                console.log('📤 Actualizando usuario:', usuarioPayload);
-                updates.push(
-                  this.http.put<any>(`${this.apiUrl}/usuarios/${id}`, usuarioPayload)
-                );
-              }
-
-              if (updates.length > 0) {
-                return forkJoin(updates).pipe(
-                  switchMap(() => {
-                    console.log('✅ Actualizaciones completadas');
-                    return this.getUsuarioById(id);
-                  })
-                );
-              }
-
-              return this.getUsuarioById(id);
-            })
-          );
-        }
-
-        // Solo actualizar usuario (email y/o password)
+ 
+    return this.getUsuarioByUuid(uuid).pipe(
+      switchMap((usuarioActual: UsuarioCompleto) => {
         const usuarioPayload: any = {};
-        if (usuarioData.email) usuarioPayload.email = usuarioData.email;
-        if (usuarioData.password) usuarioPayload.password = usuarioData.password;
+        
 
-        if (Object.keys(usuarioPayload).length === 0) {
-          return this.getUsuarioById(id);
+        if (request.usuario?.email) {
+          usuarioPayload.email = request.usuario.email;
+        }
+        
+   
+        if (request.usuario?.password && request.usuario.password.trim() !== '') {
+          usuarioPayload.password = request.usuario.password;
+          console.log(' Se actualizará la contraseña');
+        } else {
+          console.log(' No se actualizará la contraseña (campo vacío o no proporcionado)');
         }
 
-        console.log('📤 Actualizando solo usuario:', usuarioPayload);
-        return this.http.put<any>(`${this.apiUrl}/usuarios/${id}`, usuarioPayload).pipe(
-          switchMap(() => this.getUsuarioById(id))
-        );
+
+        if (request.usuario?.roles && request.usuario.roles.length > 0) {
+          usuarioPayload.roles = request.usuario.roles.map((rolId: number) => ({ id: rolId }));
+        }
+
+        if (usuarioActual.idPersona) {
+          usuarioPayload.idPersona = usuarioActual.idPersona;
+        }
+
+        if (request.persona) {
+          usuarioPayload.persona = {
+            nombre: request.persona.nombre,
+            apPaterno: request.persona.apPaterno,
+            apMaterno: request.persona.apMaterno || '',
+            telefono: request.persona.telefono,
+            idTipoPersona: request.persona.idTipoPersona
+          };
+          console.log(' Se actualizarán los datos de persona');
+        } else {
+          console.log(' No se actualizarán los datos de persona');
+        }
+
+        console.log('Payload final de actualización:', usuarioPayload);
+
+ 
+        return this.http.put<Usuario>(`${this.apiUrl}/usuarios/${uuid}`, usuarioPayload);
       }),
-      catchError((error) => {
-        console.error('❌ Error al actualizar usuario:', error);
-        throw error;
+      switchMap(() => this.getUsuarioByUuid(uuid)),
+      tap(usuario => console.log(' Usuario actualizado correctamente:', usuario)),
+      catchError((error: any) => {
+        console.error(' Error al actualizar usuario:', error);
+        return throwError(() => error);
       })
     );
   }
 
-  // ✅ ELIMINAR USUARIO
-  deleteUsuario(id: number): Observable<void> {
-    console.log('🗑️ Eliminando usuario:', id);
-    return this.http.delete<void>(`${this.apiUrl}/usuarios/${id}`).pipe(
-      catchError((error) => {
-        console.error('❌ Error al eliminar usuario:', error);
-        throw error;
+
+  toggleUsuarioStatus(uuid: string, active: boolean): Observable<void> {
+    console.log(` ${active ? 'Activando' : 'Desactivando'} usuario:`, uuid);
+
+    return this.http.patch<void>(`${this.apiUrl}/usuarios/${uuid}/status`, { active }).pipe(
+      tap(() => console.log(` Usuario ${active ? 'activado' : 'desactivado'}`)),
+      catchError((error: any) => {
+        console.error(' Error al cambiar estado:', error);
+        
+
+        console.log(' Intentando con PUT en lugar de PATCH...');
+        return this.http.put<void>(`${this.apiUrl}/usuarios/${uuid}`, { active }).pipe(
+          tap(() => console.log(` Usuario ${active ? 'activado' : 'desactivado'} con PUT`)),
+          catchError((error2: any) => {
+            console.error(' Error al cambiar estado con PUT:', error2);
+            return throwError(() => error2);
+          })
+        );
       })
     );
   }
 
-  // ✅ OBTENER TODAS LAS PERSONAS (helper)
+
+  deleteUsuario(uuid: string): Observable<void> {
+    console.log(' Eliminando usuario:', uuid);
+    return this.http.delete<void>(`${this.apiUrl}/usuarios/${uuid}`).pipe(
+      tap(() => console.log('Usuario eliminado')),
+      catchError((error: any) => {
+        console.error(' Error al eliminar usuario:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   getPersonas(): Observable<Persona[]> {
-    return this.http.get<Persona[]>(`${this.apiUrl}/personas`).pipe(
-      catchError((error) => {
-        console.error('❌ Error al obtener personas:', error);
-        return of([]);
-      })
-    );
+    return this.http.get<Persona[]>(`${this.apiUrl}/personas`);
   }
+
+  getTiposPersona(): Observable<TipoPersona[]> {
+    return this.http.get<TipoPersona[]>(`${this.apiUrl}/tipos-persona`);
+  }
+
 }

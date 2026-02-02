@@ -6,7 +6,7 @@
       <img src="assets/img/Logo-Dorado.png" class="brand-logo" alt="logo" />
       <div class="brand-info">
         <span class="brand-title">
-          Biblioteca Física
+          Biblioteca Joseph Ratzinger
           <span class="admin-badge">
             <p-chip [label]="currentUserRole" icon="pi pi-shield" class="chip-admin chip-compact" />
           </span>
@@ -71,7 +71,7 @@
     </div>
 
     <div class="mx-5 mt-3">
-      <p-divider />
+      <p-divider></p-divider>
     </div>
 
     <div class="info-stats-row">
@@ -90,37 +90,17 @@
         <p class="panel-description">Gestiona el catálogo de libros físicos de la iglesia</p>
       </div>
       <div class="admin-buttons">
-        <button
-          pButton
-          label="Agregar Libro"
-          icon="pi pi-plus"
-          class="btn-primary ani-one"
-          (click)="agregarLibro()"
-        ></button>
-        <button
-          pButton
-          label="Prestamos"
-          icon="pi pi-book"
-          class="btn-primary outlined ani-one"
-          (click)="PrestamosList()"
-        ></button>
-        <button
-          pButton
-          label="Usuarios"
-          icon="pi pi-address-book"
-          class="btn-primary outlined ani-one"
-          (click)="UsuariosList()"
-        ></button>
-        <button
-          pButton
-          label="Reportes"
-          icon="pi pi-chart-bar"
-          class="btn-secondary outlined ani-one"
-        ></button>
+        <button pButton [label]="mostrarStats ? 'Ocultar estadísticas' : 'Mostrar estadísticas'" [icon]="mostrarStats ? 'pi pi-eye-slash' : 'pi pi-eye'" class="btn-secondary outlined ani-one mr-2" (click)="toggleStats()" pTooltip="Mostrar u ocultar estadísticas" tooltipPosition="bottom"></button>
+        <button pButton label="Agregar Libro" icon="pi pi-plus" class="btn-primary ani-one" pTooltip="Registrar libros" (click)="agregarLibro()" tooltipPosition="bottom"></button>
+        <button pButton label="Prestamos" icon="pi pi-book" class="btn-primary outlined ani-one" (click)="PrestamosList()" pTooltip="Apartado de prestamos" tooltipPosition="bottom"></button>
+        <button pButton label="Usuarios" icon="pi pi-address-book" class="btn-primary outlined ani-one" (click)="UsuariosList()" pTooltip="Gestion de usuarios" tooltipPosition="bottom"></button>
+        <button pButton label="Personas" icon="pi pi-users" class="btn-primary outlined ani-one" (click)="PersonasList()" pTooltip="Gestionar personas" tooltipPosition="bottom"></button>
+        <button pButton label="Impresiones" icon="pi pi-print" class="btn-primary outlined ani-one" (click)="Impresiones()" pTooltip="Apartado de impresiones" tooltipPosition="bottom"></button>
+        <button pButton label="Políticas" icon="pi pi-chart-bar" class="btn-secondary outlined ani-one" (click)="irAPoliticas()" pTooltip="Ir a las politicas de multas" tooltipPosition="bottom"></button>
       </div>
     </div>
 
-    <div class="stats-grid">
+    <div class="stats-grid" *ngIf="mostrarStats">
       <div class="stat-box">
         <div class="stat-box-header">
           <span class="stat-box-title">Total de Libros</span>
@@ -159,22 +139,12 @@
   <div class="categories-wrapper">
     <h3 class="categories-title">Categorías</h3>
     <div class="categories-buttons-row">
-      <button
-        pButton
-        [class]="'category-button ' + (esCategoriaActiva('Todas') ? 'active-category' : '')"
-        (click)="filtrarCategoria('Todas')"
-      >
+      <button pButton [class]="'category-button ' + (esCategoriaActiva('Todas') ? 'active-category' : '')" (click)="filtrarCategoria('Todas')">
         <i class="pi pi-book"></i>
         <span>Todas</span>
         <b>{{ allLibros.length }}</b>
       </button>
-
-      <button
-        *ngFor="let cat of categorias"
-        pButton
-        [class]="'category-button ' + (esCategoriaActiva(cat.nombre) ? 'active-category' : '')"
-        (click)="filtrarCategoria(cat.nombre)"
-      >
+      <button *ngFor="let cat of categorias" pButton [class]="'category-button ' + (esCategoriaActiva(cat.nombre) ? 'active-category' : '')" (click)="filtrarCategoria(cat.nombre)">
         <i class="pi pi-tag"></i>
         <span>{{ cat.nombre }}</span>
         <b>{{ contadoresCategoria[cat.nombre] || 0 }}</b>
@@ -183,11 +153,7 @@
   </div>
 
   <div class="catalog-title">
-    {{
-      categoriaSeleccionada === 'Todas'
-        ? 'Catálogo Completo'
-        : 'Categoría: ' + categoriaSeleccionada
-    }}
+    {{ categoriaSeleccionada === 'Todas' ? 'Catálogo Completo' : 'Categoría: ' + categoriaSeleccionada }}
     ({{ libros.length }} libro{{ libros.length !== 1 ? 's' : '' }})
   </div>
 
@@ -196,16 +162,16 @@
   </div>
 
   <div *ngIf="!loading && libros.length > 0" class="catalog-grid">
-    <p-card *ngFor="let libro of libros" class="book-card-compact">
+    <p-card *ngFor="let libro of libros" class="book-card-compact" [class.inactive-card]="libro['activo'] === false">
       <ng-template pTemplate="header">
         <div class="book-image-container">
           <img
-            [src]="libro.imagen || 'assets/img/placeholder.png'"
+           [src]="(libro.imagen | secureImage | async) || 'assets/img/placeholder.png'"
             alt="portada"
             class="book-img-compact"
           />
           
-          <div class="book-status-badges">
+          <div class="book-status-badges" *ngIf="libro['activo'] !== false">
             <span 
               [class]="'status-badge ' + getEstadoPrincipal(libro).clase"
               [pTooltip]="getTooltipEstados(libro)"
@@ -216,6 +182,10 @@
               <i [class]="'pi ' + getEstadoPrincipal(libro).icono"></i>
               {{ getEstadoPrincipal(libro).cantidad }}
             </span>
+          </div>
+
+          <div class="inactive-overlay" *ngIf="libro['activo'] === false">
+            <span>DESACTIVADO</span>
           </div>
         </div>
       </ng-template>
@@ -253,25 +223,41 @@
           pTooltip="Ver Detalles"
           (click)="verLibro(libro)"
         ></button>
+
         <button
           pButton
           icon="pi pi-pen-to-square"
           class="action-btn-compact edit-btn"
           pTooltip="Editar"
+          [disabled]="libro['activo'] === false"
           (click)="editarLibro(libro)"
         ></button>
+
         <button
+          *ngIf="libro['activo'] !== false"
           pButton
           icon="pi pi-trash"
           class="action-btn-compact delete-btn"
-          pTooltip="Eliminar"
+          pTooltip="Eliminar / Desactivar"
           (click)="eliminarLibro(libro)"
         ></button>
+
+        <button
+          *ngIf="libro['activo'] === false"
+          pButton
+          icon="pi pi-refresh"
+          class="action-btn-compact reactivate-btn"
+          pTooltip="Reactivar Libro"
+          style="background-color: #27ae60; color: white; border-color: #27ae60;"
+          (click)="reactivarLibro(libro)"
+        ></button>
+
         <button
           pButton
           icon="pi pi-file-plus"
           class="action-btn-compact edit-btn"
           pTooltip="Agregar Ejemplar"
+          [disabled]="libro['activo'] === false"
           (click)="abrirModalAgregarEjemplar(libro)"
         ></button>
       </div>

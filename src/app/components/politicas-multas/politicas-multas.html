@@ -1,0 +1,123 @@
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
+<div class="header-container">
+    <div class="form-header-container">
+        <div class="form-header page-header-layout">
+            <div class="header-left">
+                <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar"></button>
+                <h2><i class="pi pi-sliders-h user-icon"></i> Políticas de Multas</h2>
+            </div>
+            <div class="header-right flex gap-2">
+                <p-button label="Nueva Política" icon="pi pi-plus" styleClass="p-button-wine" (click)="abrirModalCrear()"></p-button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="admin-page-container">
+    <p-table 
+        #dt 
+        [value]="politicas" 
+        [loading]="loading" 
+        [paginator]="true" 
+        [rows]="10" 
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [globalFilterFields]="['diasGracia', 'multaDiaria']" 
+        styleClass="p-datatable-striped p-datatable-gridlines custom-table">
+
+        <ng-template pTemplate="caption">
+            <div class="table-header">
+                <span>Listado de Configuraciones</span>
+                <div class="filter-container">
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text" (input)="applyFilterGlobal(dt, $event)" placeholder="Buscar..." class="table-search-input" />
+                    </span>
+                    <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dt)"></p-button>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="diasGracia">Días de Gracia <p-sortIcon field="diasGracia"></p-sortIcon></th>
+                <th pSortableColumn="multaDiaria">Multa Diaria <p-sortIcon field="multaDiaria"></p-sortIcon></th>
+                <th pSortableColumn="multaMaxima">Multa Máxima <p-sortIcon field="multaMaxima"></p-sortIcon></th>
+                <th pSortableColumn="vigente" class="text-center">Estado <p-sortIcon field="vigente"></p-sortIcon></th>
+                <th style="width: 10rem;" class="text-center">Acciones</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-p>
+            <tr>
+                <td>
+                    <span class="codigo-ejemplar">
+                        <i class="pi pi-clock"></i> {{ p.diasGracia }} días
+                    </span>
+                </td>
+                <td style="color: var(--wine); font-weight: 700;">{{ p.multaDiaria | currency }}</td>
+                <td>{{ p.multaMaxima ? (p.multaMaxima | currency) : 'Sin límite' }}</td>
+                <td class="text-center">
+                    <span class="user-role-badge" [ngClass]="p.vigente ? 'status-activo' : 'status-devuelto'">
+                        {{ p.vigente ? 'VIGENTE' : 'HISTÓRICA' }}
+                    </span>
+                </td>
+                <td>
+                    <div class="table-actions">
+                        <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" 
+                                pTooltip="Editar" tooltipPosition="top" (click)="abrirModalEditar(p)">
+                        </button>
+                        <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" 
+                                pTooltip="Eliminar" tooltipPosition="top" (click)="eliminar(p)">
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr><td colspan="5" class="text-center empty-message">No se encontraron políticas.</td></tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<p-dialog [header]="esEdicion ? 'Editar Política' : 'Nueva Política'" [(visible)]="mostrarDialogo" [modal]="true" [style]="{width: '40vw', minWidth: '450px'}" [closable]="true" styleClass="detalle-prestamo-dialog">
+    <div class="prestamo-info-section">
+        <div class="info-grid">
+            <div class="info-item full-width">
+                <i class="pi pi-dollar icon-fecha"></i>
+                <div class="info-content">
+                    <label>Costo Multa Diaria</label>
+                    <input pInputText type="number" [(ngModel)]="politicaForm.multaDiaria" class="w-full" min="0" />
+                </div>
+            </div>
+            <div class="info-item full-width">
+                <i class="pi pi-clock icon-limite"></i>
+                <div class="info-content">
+                    <label>Días de Gracia</label>
+                    <input pInputText type="number" [(ngModel)]="politicaForm.diasGracia" class="w-full" min="0" />
+                </div>
+            </div>
+            <div class="info-item full-width">
+                <i class="pi pi-ban icon-estado"></i>
+                <div class="info-content">
+                    <label>Tope Máximo</label>
+                    <input pInputText type="number" [(ngModel)]="politicaForm.multaMaxima" placeholder="Opcional" class="w-full" />
+                </div>
+            </div>
+            <div class="info-item full-width">
+                <div class="field-checkbox mt-3 flex align-items-center">
+                    <p-checkbox [(ngModel)]="politicaForm.vigente" [binary]="true" inputId="binary"></p-checkbox>
+                    <label for="binary" class="ml-2 font-bold text-wine cursor-pointer">Marcar como Vigente</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <div class="dialog-footer flex justify-content-end gap-2 mt-3">
+            <p-button label="Cancelar" icon="pi pi-times" styleClass="p-button-text p-button-secondary" (click)="mostrarDialogo = false"></p-button>
+            <p-button [label]="esEdicion ? 'Guardar' : 'Crear'" icon="pi pi-check" styleClass="p-button-wine" (click)="guardar()" [loading]="guardando"></p-button>
+        </div>
+    </ng-template>
+</p-dialog>

@@ -19,7 +19,7 @@ import { BookService } from '../../services/book.service';
 import { CatalogService } from '../../services/catalog.service';
 import { Ejemplar } from '../../models/biblioteca';
 import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
-import LibroDetalleComponent from '../libro-detalle/libro-detalle'; // ✅ Importar el modal
+import LibroDetalleComponent from '../libro-detalle/libro-detalle'; 
 
 @Component({
   selector: 'app-ejemplar-lista',
@@ -132,7 +132,6 @@ export default class EjemplarListaComponent implements OnInit {
     });
   }
 
-  // ✅ MÉTODO ACTUALIZADO: Abrir modal en lugar de navegar
   verLibro(ejemplar: any): void {
     if (!ejemplar.libro?.uuid) {
       this.messageService.add({
@@ -143,7 +142,6 @@ export default class EjemplarListaComponent implements OnInit {
       return;
     }
 
-    // ✅ Abrir el modal de detalles del libro
     this.dialogRef = this.dialogService.open(LibroDetalleComponent, {
       header: `Detalles de ${ejemplar.libro.titulo}`,
       width: '75%',

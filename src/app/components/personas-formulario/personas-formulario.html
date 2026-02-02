@@ -1,0 +1,143 @@
+<p-toast></p-toast>
+
+<div class="header-container">
+  <div class="form-header-container">
+    <div class="form-header">
+      <h2>
+        <i class="pi" [ngClass]="isEditMode ? 'pi-pencil' : 'pi-user-plus'"></i>
+        {{ isEditMode ? 'Editar Persona' : 'Agregar Nueva Persona' }}
+      </h2>
+      <p>{{ isEditMode ? 'Modifica la información de la persona seleccionada.' : 'Completa los datos para registrar una nueva persona en el sistema.' }}</p>
+    </div>
+  </div>
+</div>
+
+<div class="form-page-container">
+  <form [formGroup]="personaForm" (ngSubmit)="onSubmit()" class="form-container">
+    <div class="form-grid">
+      <div class="form-column">
+        <div class="field">
+          <label for="nombre">Nombre(s) <span class="text red">*</span></label>
+          <input
+            id="nombre"
+            type="text"
+            pInputText
+            class="form-comp"
+            formControlName="nombre"
+            placeholder="Ej: Juan Carlos"
+          />
+          <div
+            class="error-msg"
+            *ngIf="personaForm.get('nombre')?.invalid && (personaForm.get('nombre')?.dirty || isSubmitting)"
+          >
+            <small *ngIf="personaForm.get('nombre')?.errors?.['required']">
+              El nombre es obligatorio.
+            </small>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="apPaterno">Apellido Paterno <span class="text red">*</span></label>
+          <input
+            id="apPaterno"
+            type="text"
+            pInputText
+            class="form-comp"
+            formControlName="apPaterno"
+            placeholder="Ej: García"
+          />
+          <div
+            class="error-msg"
+            *ngIf="personaForm.get('apPaterno')?.invalid && (personaForm.get('apPaterno')?.dirty || isSubmitting)"
+          >
+            <small *ngIf="personaForm.get('apPaterno')?.errors?.['required']">
+              El apellido paterno es obligatorio.
+            </small>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="apMaterno">Apellido Materno</label>
+          <input
+            id="apMaterno"
+            type="text"
+            pInputText
+            class="form-comp"
+            formControlName="apMaterno"
+            placeholder="Ej: López"
+          />
+        </div>
+      </div>
+
+      <div class="form-column">
+        <!-- Teléfono -->
+        <div class="field">
+          <label for="telefono">Teléfono <span class="text red">*</span></label>
+          <div class="p-inputgroup">
+            <span class="p-inputgroup-addon">
+              <i class="pi pi-phone"></i>
+            </span>
+            <p-inputMask
+              id="telefono"
+              formControlName="telefono"
+              mask="(999) 999-9999"
+              placeholder="(999) 999-9999"
+              styleClass="form-comp"
+              [autoClear]="false"
+            ></p-inputMask>
+          </div>
+          <div
+            class="error-msg"
+            *ngIf="personaForm.get('telefono')?.invalid && (personaForm.get('telefono')?.dirty || isSubmitting)"
+          >
+            <small *ngIf="personaForm.get('telefono')?.errors?.['required']">
+              El teléfono es obligatorio.
+            </small>
+          </div>
+          <small style="font-size: 0.85rem; color: #6b5e5f; margin-top: 0.3rem; display: block;">
+            Ingresa los 10 dígitos del número telefónico
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="idTipoPersona">Tipo de Persona <span class="text red">*</span></label>
+          <p-select
+            id="idTipoPersona"
+            [options]="tiposPersona"
+            formControlName="idTipoPersona"
+            optionLabel="nombre"
+            optionValue="id"
+            placeholder="Seleccionar tipo"
+            styleClass="form-comp"
+          ></p-select>
+          <div
+            class="error-msg"
+            *ngIf="personaForm.get('idTipoPersona')?.invalid && (personaForm.get('idTipoPersona')?.dirty || isSubmitting)"
+          >
+            <small *ngIf="personaForm.get('idTipoPersona')?.errors?.['required']">
+              El tipo de persona es obligatorio.
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button
+        pButton
+        type="button"
+        label="Cancelar"
+        class="btn-info text"
+        (click)="cancelar()"
+      ></button>
+      <button
+        pButton
+        type="submit"
+        [label]="isEditMode ? 'Actualizar Persona' : 'Guardar Persona'"
+        icon="pi pi-check"
+        class="btn-primary"
+        [loading]="isSubmitting"
+      ></button>
+    </div>
+  </form>
+</div>

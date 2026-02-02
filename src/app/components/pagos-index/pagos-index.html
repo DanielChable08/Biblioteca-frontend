@@ -1,0 +1,133 @@
+<p-toast></p-toast>
+
+<div class="header-container">
+  <div class="form-header-container">
+    <div class="form-header">
+      <div class="header-left">
+        <h2>
+          <i class="pi pi-credit-card user-icon"></i>
+          Gestión de Pagos
+        </h2>
+      </div>
+      <button
+        pButton
+        label="Registrar pago de multas"
+        icon="pi pi-money-bill"
+        class="p-button-wine"
+        (click)="irARegistrarPago()">
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="admin-page-container">
+  <p-table
+    #dt
+    [value]="pagos"
+    [loading]="loading"
+    [paginator]="true"
+    [rows]="10"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pagos"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [globalFilterFields]="['folio', 'lectorNombre', 'metodoPago']"
+    responsiveLayout="scroll"
+    styleClass="custom-table"
+  >
+    <ng-template pTemplate="caption">
+      <div class="table-header">
+        <span>Listado de pagos registrados</span>
+        <div class="filter-container">
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              class="table-search-input"
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+              placeholder="Buscar por folio, lector, método..."
+            />
+          </span>
+          <button
+            pButton
+            icon="pi pi-filter-slash"
+            class="p-button-outlined clear-filter-button"
+            (click)="dt.clear()"
+            pTooltip="Limpiar filtros">
+          </button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Folio</th>
+        <th>Lector</th>
+        <th>Fecha</th>
+        <th>Total</th>
+        <th>Método</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-pago>
+      <tr>
+        <td>
+          <div class="folio-badge">
+            <i class="pi pi-hashtag"></i>
+            {{ pago.folio }}
+          </div>
+        </td>
+        <td>
+          <div class="lector-cell">
+            <i class="pi pi-user lector-icon"></i>
+            {{ pago.lectorNombre }}
+          </div>
+        </td>
+        <td>{{ formatearFecha(pago.fechaPago) }}</td>
+        <td>
+          <strong class="monto-total">{{ formatearMoneda(pago.total) }}</strong>
+        </td>
+        <td>
+          <div class="metodo-pago">
+            <i class="pi pi-money-bill"></i>
+            {{ pago.metodoPago }}
+          </div>
+        </td>
+        <td>
+          <span 
+            class="user-role-badge"
+            [ngClass]="{
+              'status-pagado': !pago.anulado,
+              'status-anulado': pago.anulado
+            }">
+            {{ getEstadoTexto(pago.anulado) }}
+          </span>
+        </td>
+        <td>
+          <div class="table-actions">
+            <button
+              pButton
+              icon="pi pi-wallet"
+              class="p-button-rounded p-button-text action-btn-compact"
+              pTooltip="Historial de este lector"
+              (click)="verHistorialLector(pago.lectorPago)">
+            </button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7">
+          <div class="empty-message">
+            <i class="pi pi-credit-card"></i>
+            <p>No hay pagos registrados</p>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

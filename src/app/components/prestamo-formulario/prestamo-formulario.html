@@ -24,7 +24,6 @@
 <div class="form-page-container">
   <form [formGroup]="prestamoForm" (ngSubmit)="onSubmit()" class="form-container">
 
-    <!-- INFORMACIÓN DEL PRÉSTAMO -->
     <div class="form-section">
       <h3 class="section-title">
         <i class="pi pi-info-circle"></i>
@@ -143,7 +142,6 @@
       </div>
     </div>
 
-    <!-- EJEMPLARES -->
     <div class="form-section">
       <div class="section-header">
         <h3 class="section-title">
@@ -160,7 +158,6 @@
         </button>
       </div>
 
-      <!-- Contador de ejemplares seleccionados -->
       <div class="ejemplares-counter" *ngIf="ejemplaresSeleccionados.length > 0">
         <span class="counter-text">
           {{ ejemplaresSeleccionados.length }} de {{ MAX_EJEMPLARES }} libros seleccionados
@@ -203,7 +200,6 @@
       </div>
     </div>
 
-    <!-- BOTONES DE ACCIÓN -->
     <div class="form-footer">
       <button
         type="button"
@@ -226,7 +222,6 @@
   </form>
 </div>
 
-<!-- MODAL PARA AGREGAR CATÁLOGOS -->
 <p-dialog
   [header]="getTituloModal()"
   [(visible)]="displayCatalogoModal"
@@ -271,7 +266,6 @@
   </form>
 </p-dialog>
 
-<!-- MODAL PARA SELECCIONAR EJEMPLARES -->
 <p-dialog
   [header]="'Seleccionar Ejemplares (' + ejemplaresSeleccionados.length + '/' + MAX_EJEMPLARES + ')'"
   [(visible)]="displayEjemplarModal"
@@ -305,17 +299,19 @@
         class="ejemplar-item"
         *ngFor="let ejemplar of ejemplaresFiltrados"
         [class.selected]="isEjemplarSeleccionado(ejemplar)"
-        [class.disabled]="!isEjemplarSeleccionado(ejemplar) && !canAddMoreEjemplares()"
-        (click)="toggleEjemplar(ejemplar)">
-        <div class="ejemplar-checkbox">
+        [class.disabled]="!isEjemplarSeleccionado(ejemplar) && !canAddMoreEjemplares()">
+        
+        <div class="ejemplar-checkbox" (click)="$event.stopPropagation()">
           <p-checkbox
             [binary]="true"
             [ngModel]="isEjemplarSeleccionado(ejemplar)"
+            (ngModelChange)="toggleEjemplar(ejemplar)"
             [disabled]="!isEjemplarSeleccionado(ejemplar) && !canAddMoreEjemplares()"
             [inputId]="'ejemplar-' + ejemplar.id">
           </p-checkbox>
         </div>
-        <div class="ejemplar-content">
+        
+        <div class="ejemplar-content" (click)="toggleEjemplar(ejemplar)">
           <div class="ejemplar-code">
             <i class="pi pi-bookmark"></i>
             <strong>{{ ejemplar.codigo }}</strong>

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PagoMulta, PagoMultaPayload } from '../models/biblioteca';
+import { PagoMulta, PagoMultaPayload, PagoMultaDetalle } from '../models/biblioteca';
 
 @Injectable({
   providedIn: 'root'
@@ -27,8 +27,8 @@ export class PagoService {
     return this.http.get<PagoMulta[]>(`${this.apiUrl}/pagos`, { headers: this.getHeaders() });
   }
 
-  getPagoById(id: number): Observable<PagoMulta> {
-    return this.http.get<PagoMulta>(`${this.apiUrl}/pagos/${id}`, { headers: this.getHeaders() });
+  getPagoById(id: number): Observable<PagoMultaDetalle> {
+    return this.http.get<PagoMultaDetalle>(`${this.apiUrl}/pagos/${id}`, { headers: this.getHeaders() });
   }
 
   registrarPago(pago: PagoMultaPayload): Observable<PagoMulta> {
@@ -37,5 +37,12 @@ export class PagoService {
 
   getPagosPorCajero(idCajero: number): Observable<PagoMulta[]> {
     return this.http.get<PagoMulta[]>(`${this.apiUrl}/pagos/cajero/${idCajero}`, { headers: this.getHeaders() });
+  }
+
+  anularPago(idPago: number, motivoAnulacion: string, anuladoPor: number): Observable<PagoMulta> {
+    return this.http.put<PagoMulta>(`${this.apiUrl}/pagos/${idPago}/anular`, {
+      motivoAnulacion,
+      anuladoPor
+    }, { headers: this.getHeaders() });
   }
 }

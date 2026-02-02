@@ -3,8 +3,7 @@ import { CommonModule, TitleCasePipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { finalize, map, switchMap, forkJoin } from 'rxjs';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { finalize, switchMap, forkJoin } from 'rxjs';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 import { ButtonModule } from 'primeng/button';
@@ -71,11 +70,13 @@ export default class LibroFormularioComponent implements OnInit {
   isEditMode = false;
   private libroUuid: string | null = null;
 
+  selectedFile: File | null = null;
+  imagePreview: string | ArrayBuffer | null = null;
+
   ngOnInit(): void {
     this.initForms();
     this.libroUuid = this.route.snapshot.paramMap.get('uuid');
     this.isEditMode = !!this.libroUuid;
-
     this.loadCatalogsAndData();
   }
 
@@ -83,37 +84,68 @@ export default class LibroFormularioComponent implements OnInit {
     this.libroForm = this.fb.group({
       titulo: ['', Validators.required],
       idAutores: [[], Validators.required],
-      resumen: [''], // ✅ Ya NO es requerido
-      isbn: ['', [Validators.required, Validators.pattern(/^\d{13}$/)]],
+      resumen: [''],
+      isbn: ['', [Validators.required, Validators.pattern(/^\d{10}$|^\d{13}$/)]],
       isbnDisplay: ['', Validators.required],
       anho: [new Date().getFullYear(), [Validators.required, Validators.pattern('^[0-9]{4}$')]],
-      paginas: [null, Validators.min(1)], // ✅ Ya NO es requerido, solo validación de mínimo
-      edicion: [''],
+      paginas: [null, [Validators.required, Validators.min(1)]],
+      edicion: [''], 
+      pasta: [''],
       idCategoria: [null, Validators.required],
       idEditorial: [null, Validators.required],
       idIdioma: [null, Validators.required],
       idTipoLibro: [null, Validators.required],
-      imagen: [''],
-      pasta: ['']
     });
 
     this.catalogoForm = this.fb.group({
       nombre: ['', Validators.required],
-      apPaterno: [''], // ✅ Ya NO es requerido por defecto
+      apPaterno: [''],
       apMaterno: ['']
     });
 
     this.libroForm.get('isbnDisplay')!.valueChanges.subscribe((val: string) => {
       const raw = (val || '').replace(/\D/g, '');
-      const formatted = raw.match(/.{1,3}/g)?.join('-') || '';
-
+      let formatted = '';
+      if (raw.length <= 10) {
+        if (raw.length > 0) formatted += raw.substring(0, 1);
+        if (raw.length > 1) formatted += '-' + raw.substring(1, 4);
+        if (raw.length > 4) formatted += '-' + raw.substring(4, 9);
+        if (raw.length > 9) formatted += '-' + raw.substring(9, 10);
+      } else {
+        if (raw.length > 0) formatted += raw.substring(0, 3);
+        if (raw.length > 3) formatted += '-' + raw.substring(3, 4);
+        if (raw.length > 4) formatted += '-' + raw.substring(4, 7);
+        if (raw.length > 7) formatted += '-' + raw.substring(7, 12);
+        if (raw.length > 12) formatted += '-' + raw.substring(12, 13);
+      }
       if (val !== formatted) {
         this.libroForm.get('isbnDisplay')!.setValue(formatted, { emitEvent: false });
       }
-
       const isbnCtrl = this.libroForm.get('isbn')!;
       isbnCtrl.setValue(raw, { emitEvent: true });
     });
+  }
+
+  onFileSelect(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Solo se permiten imágenes.' });
+        return;
+      }
+      this.selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreview = reader.result;
+        this.cdr.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeImage(): void {
+    this.selectedFile = null;
+    this.imagePreview = null;
   }
 
   private loadCatalogsAndData(): void {
@@ -124,7 +156,10 @@ export default class LibroFormularioComponent implements OnInit {
       idiomas: this.catalogService.getIdiomas(),
       tiposLibro: this.catalogService.getTiposLibros()
     }).subscribe(catalogs => {
-      this.autores = catalogs.autores;
+      this.autores = catalogs.autores.map(a => ({
+        ...a,
+        displayName: `${a.nombre} ${a.apPaterno || ''} ${a.apMaterno || ''}`.trim()
+      }));
       this.categorias = catalogs.categorias;
       this.editoriales = catalogs.editoriales;
       this.idiomas = catalogs.idiomas;
@@ -133,11 +168,6 @@ export default class LibroFormularioComponent implements OnInit {
       if (this.isEditMode && this.libroUuid) {
         this.loadBookData(this.libroUuid);
       }
-      
-      this.autores = this.autores.map(a => ({
-        ...a,
-        displayName: `${a.nombre} ${a.apPaterno || ''} ${a.apMaterno || ''}`.trim()
-      }));
     });
   }
 
@@ -146,68 +176,32 @@ export default class LibroFormularioComponent implements OnInit {
       libro: this.bookService.getLibroByUuid(uuid),
       autores: this.bookService.getAutoresForLibro(uuid)
     }).subscribe(({ libro, autores }) => {
-      console.log('Libro recibido:', libro);
-      console.log('¿Tiene imagen?', libro.imagen);
-
-      if (!libro.imagen || libro.imagen === '') {
-        console.log('⚠️ Imagen no encontrada, buscando en lista completa...');
-
-        this.bookService.getLibros().subscribe(libros => {
-          const libroConImagen = libros.find(l => l.uuid === uuid);
-
-          if (libroConImagen?.imagen) {
-            console.log('✅ Imagen encontrada en lista:', libroConImagen.imagen);
-            libro.imagen = libroConImagen.imagen;
-          } else {
-            console.log('❌ Imagen no encontrada en lista tampoco');
-          }
-
-          this.fillForm(libro, autores);
-        });
-      } else {
-        console.log('✅ Imagen encontrada directamente:', libro.imagen);
-        this.fillForm(libro, autores);
+      if (libro.imagen) {
+         this.imagePreview = libro.imagen.startsWith('http') 
+            ? libro.imagen 
+            : `http://localhost:8080/${libro.imagen}`; 
       }
+      this.fillForm(libro, autores);
     });
   }
 
   private fillForm(libro: any, autores: any[]): void {
     const autoresIds = autores.map(a => a.id);
-
-    const idCategoria = libro.categoria?.id || null;
-    const idEditorial = libro.editorial?.id || null;
-    const idIdioma = libro.idioma?.id || null;
-    const idTipoLibro = libro.tipoLibro?.id || null;
-    const imagenUrl = libro.imagen || '';
-
-    console.log('Valores a asignar al formulario:', {
-      idCategoria,
-      idEditorial,
-      idIdioma,
-      idTipoLibro,
-      autoresIds,
-      imagenUrl
-    });
-
     this.libroForm.patchValue({
       titulo: libro.titulo,
-      resumen: libro.resumen || '', // ✅ Puede ser vacío
+      resumen: libro.resumen || '',
       isbn: libro.isbn,
       isbnDisplay: libro.isbn,
       anho: parseInt(libro.anho, 10),
-      paginas: libro.paginas || null, // ✅ Puede ser null
+      paginas: libro.paginas || null,
       edicion: libro.edicion || '',
       pasta: libro.pasta || '',
-      imagen: imagenUrl,
-      idCategoria: idCategoria,
-      idEditorial: idEditorial,
-      idIdioma: idIdioma,
-      idTipoLibro: idTipoLibro,
+      idCategoria: libro.categoria?.id || null,
+      idEditorial: libro.editorial?.id || null,
+      idIdioma: libro.idioma?.id || null,
+      idTipoLibro: libro.tipoLibro?.id || null,
       idAutores: autoresIds
     });
-
-    console.log('✅ Formulario completado. Valor de imagen:', this.libroForm.get('imagen')?.value);
-
     this.cdr.detectChanges();
   }
 
@@ -218,187 +212,163 @@ export default class LibroFormularioComponent implements OnInit {
 
   abrirModalAgregar(tipo: TipoCatalogo): void {
     switch (tipo) {
-      case 'autor':
-        this.tituloDialog = 'Nuevo Autor';
-        break;
-      case 'categoria':
-        this.tituloDialog = 'Nueva Categoría';
-        break;
-      case 'editorial':
-        this.tituloDialog = 'Nueva Editorial';
-        break;
-      case 'idioma':
-        this.tituloDialog = 'Nuevo Idioma';
-        break;
-      case 'tipoLibro':
-        this.tituloDialog = 'Nuevo Tipo de Libro';
-        break;
-      default:
-        this.tituloDialog = 'Nuevo Dato';
+      case 'autor': this.tituloDialog = 'Nuevo Autor'; break;
+      case 'categoria': this.tituloDialog = 'Nueva Categoría'; break;
+      case 'editorial': this.tituloDialog = 'Nueva Editorial'; break;
+      case 'idioma': this.tituloDialog = 'Nuevo Idioma'; break;
+      case 'tipoLibro': this.tituloDialog = 'Nuevo Tipo de Libro'; break;
+      default: this.tituloDialog = 'Nuevo Dato';
     }
     this.catalogoSiendoAgregado = tipo;
     this.catalogoForm.reset();
-
-    // ✅ Ya NO se requiere apPaterno para autores
-    this.catalogoForm.get('apPaterno')?.clearValidators();
-    this.catalogoForm.get('apPaterno')?.updateValueAndValidity();
-
     this.displayCatalogoDialog = true;
   }
 
   guardarNuevoCatalogo(): void {
-    if (this.catalogoForm.invalid || !this.catalogoSiendoAgregado) return;
-
-    let request$;
+    if (this.catalogoForm.invalid || !this.catalogoSiendoAgregado) {
+      this.catalogoForm.markAllAsTouched();
+      return;
+    }
     const payload = this.catalogoForm.value;
     const tipo = this.catalogoSiendoAgregado;
+    let request$;
 
-    switch (tipo) {
-      case 'autor':
-        request$ = this.catalogService.createAutor(payload);
-        break;
-      case 'categoria':
-        request$ = this.catalogService.createCategoria({ nombre: payload.nombre });
-        break;
-      case 'editorial':
-        request$ = this.catalogService.createEditorial({ nombre: payload.nombre });
-        break;
-      case 'idioma':
-        request$ = this.catalogService.createIdioma({ nombre: payload.nombre });
-        break;
-      case 'tipoLibro':
-        request$ = this.catalogService.createTipoLibro({ nombre: payload.nombre });
-        break;
-      default:
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Tipo de catálogo no soportado.'
-        });
-        return;
+    if (tipo === 'autor') {
+      request$ = this.catalogService.createAutor({
+        nombre: payload.nombre,
+        apPaterno: payload.apPaterno,
+        apMaterno: payload.apMaterno
+      });
+    } else {
+       const serviceMap: any = {
+         'categoria': this.catalogService.createCategoria.bind(this.catalogService),
+         'editorial': this.catalogService.createEditorial.bind(this.catalogService),
+         'idioma': this.catalogService.createIdioma.bind(this.catalogService),
+         'tipoLibro': this.catalogService.createTipoLibro.bind(this.catalogService)
+       };
+       request$ = serviceMap[tipo]({ nombre: payload.nombre });
     }
 
-    request$.subscribe(nuevoItem => {
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: `${tipo.charAt(0).toUpperCase() + tipo.slice(1)} agregado.`
-      });
-      this.displayCatalogoDialog = false;
-
-      switch (tipo) {
-        case 'autor':
-          this.autores = [...this.autores, nuevoItem as Autor];
-          const currentAutores = this.libroForm.get('idAutores')?.value || [];
-          this.libroForm.get('idAutores')?.setValue([...currentAutores, nuevoItem.id]);
-          break;
-        case 'categoria':
-          this.categorias = [...this.categorias, nuevoItem];
-          this.libroForm.get('idCategoria')?.setValue(nuevoItem.id);
-          break;
-        case 'editorial':
-          this.editoriales = [...this.editoriales, nuevoItem];
-          this.libroForm.get('idEditorial')?.setValue(nuevoItem.id);
-          break;
-        case 'idioma':
-          this.idiomas = [...this.idiomas, nuevoItem];
-          this.libroForm.get('idIdioma')?.setValue(nuevoItem.id);
-          break;
-        case 'tipoLibro':
-          this.tiposLibro = [...this.tiposLibro, nuevoItem];
-          this.libroForm.get('idTipoLibro')?.setValue(nuevoItem.id);
-          break;
-      }
-
-      this.cdr.detectChanges();
+    request$.subscribe({
+      next: (nuevoItem: any) => {
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Agregado correctamente.' });
+        this.displayCatalogoDialog = false;
+        
+        if (tipo === 'autor') {
+           const nuevoAutor: Autor = { ...nuevoItem, displayName: `${nuevoItem.nombre} ${nuevoItem.apPaterno||''} ${nuevoItem.apMaterno||''}`.trim() };
+           this.autores = [...this.autores, nuevoAutor];
+           const current = this.libroForm.get('idAutores')?.value || [];
+           this.libroForm.get('idAutores')?.setValue([...current, nuevoAutor.id]);
+        } else if (tipo === 'categoria') {
+           this.categorias = [...this.categorias, nuevoItem];
+           this.libroForm.get('idCategoria')?.setValue(nuevoItem.id);
+        } else if (tipo === 'editorial') {
+           this.editoriales = [...this.editoriales, nuevoItem];
+           this.libroForm.get('idEditorial')?.setValue(nuevoItem.id);
+        } else if (tipo === 'idioma') {
+           this.idiomas = [...this.idiomas, nuevoItem];
+           this.libroForm.get('idIdioma')?.setValue(nuevoItem.id);
+        } else if (tipo === 'tipoLibro') {
+           this.tiposLibro = [...this.tiposLibro, nuevoItem];
+           this.libroForm.get('idTipoLibro')?.setValue(nuevoItem.id);
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar catálogo.' })
     });
   }
 
   onSubmit(): void {
     if (this.libroForm.invalid) {
       this.libroForm.markAllAsTouched();
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Formulario Incompleto',
-        detail: 'Por favor, rellena todos los campos requeridos.'
-      });
+      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Rellena los campos obligatorios.' });
       return;
     }
 
     this.isSubmitting = true;
-    const formValues = this.libroForm.value;
+    const fv = this.libroForm.value;
+
+    // Valores por defecto para evitar validaciones del backend
+    const edicionSegura = (fv.edicion && fv.edicion.trim() !== '') ? fv.edicion : 'S/E'; 
+    const pastaSegura = fv.pasta || '';
 
     const libroPayload = {
-      titulo: formValues.titulo,
-      isbn: formValues.isbn,
-      anho: formValues.anho.toString(),
-      resumen: formValues.resumen || '', // ✅ Puede ser vacío
-      edicion: formValues.edicion || '',
-      pasta: formValues.pasta || '',
-      imagen: formValues.imagen || '',
-      paginas: formValues.paginas || 0, // ✅ Enviar 0 si está vacío
-      idTipoLibro: formValues.idTipoLibro,
-      idCategoria: formValues.idCategoria,
-      idEditorial: formValues.idEditorial,
-      idIdioma: formValues.idIdioma,
+      titulo: fv.titulo,
+      isbn: fv.isbn,
+      anho: fv.anho.toString(),
+      resumen: fv.resumen || '',
+      edicion: edicionSegura,
+      pasta: pastaSegura,
+      paginas: fv.paginas || 0,
+      idTipoLibro: fv.idTipoLibro,
+      idCategoria: fv.idCategoria,
+      idEditorial: fv.idEditorial,
+      idIdioma: fv.idIdioma,
     };
 
+    // Si es null, el service no lo manda, y el backend usa la imagen default
+    const archivoParaEnviar = this.selectedFile ? this.selectedFile : null;
+
+    let operacionLibro$;
     if (this.isEditMode && this.libroUuid) {
-      this.bookService.updateLibro(this.libroUuid, libroPayload).pipe(
-        switchMap((libroActualizado: Libro) => {
-          const autoresPayload = formValues.idAutores.map((id: number) => ({ idAutor: id }));
-          return this.bookService.addAutoresToLibro(libroActualizado.uuid, autoresPayload);
-        }),
-        finalize(() => this.isSubmitting = false)
-      ).subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Libro actualizado correctamente.'
-          });
-          setTimeout(() => this.router.navigate(['/admin']), 1500);
-        },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo actualizar el libro.'
-          });
-          console.error(err);
-        }
-      });
-    } else {
-      this.bookService.createLibro(libroPayload).pipe(
-        switchMap((libroCreado: Libro) => {
-          const autoresPayload = formValues.idAutores.map((id: number) => ({ idAutor: id }));
-          return this.bookService.addAutoresToLibro(libroCreado.uuid, autoresPayload).pipe(
-            map(() => libroCreado)
-          );
-        }),
-        finalize(() => this.isSubmitting = false)
-      ).subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Libro creado correctamente.'
-          });
-          setTimeout(() => this.router.navigate(['/admin']), 1500);
-        },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo crear el libro.'
-          });
-          console.error(err);
-        }
-      });
+        operacionLibro$ = this.bookService.updateLibroConImagen(
+            this.libroUuid, 
+            libroPayload, 
+            archivoParaEnviar
+        );
+    } 
+    else {
+        operacionLibro$ = this.bookService.createLibroConImagen(
+            libroPayload, 
+            archivoParaEnviar
+        );
     }
+
+    operacionLibro$.pipe(
+      switchMap((libro: Libro) => {
+        const autoresPayload = fv.idAutores.map((id: number) => ({ idAutor: id }));
+        return this.bookService.addAutoresToLibro(libro.uuid, autoresPayload);
+      }),
+      finalize(() => this.isSubmitting = false)
+    ).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Operación completada.' });
+        setTimeout(() => this.router.navigate(['/admin']), 1500);
+      },
+      error: (err) => {
+        console.error('Error al guardar:', err);
+        
+        let detalle = 'No se pudo guardar el libro.';
+        const errorMsg = err.error?.message || JSON.stringify(err.error) || '';
+
+        // Detección de duplicados (Postgres SQL State 23505 devuelve 500 o 409)
+        // También capturamos si viene un 401 falso positivo por el redirect a /error
+        if (err.status === 409 || err.status === 401 ||
+           (err.status === 500 && (errorMsg.toLowerCase().includes('duplicate') || errorMsg.toLowerCase().includes('unique') || errorMsg.toLowerCase().includes('existe') || errorMsg.toLowerCase().includes('unicidad')))) {
+            
+            detalle = 'Error: Ya existe un libro registrado con este ISBN o Título.';
+        
+        } else if (err.status === 400) {
+            detalle = 'Datos inválidos. Verifica que no falte información.';
+        }
+
+        this.messageService.add({ 
+            severity: 'error', 
+            summary: 'Error', 
+            detail: detalle 
+        });
+        
+        // Al estar manejando el error aquí, y con el interceptor modificado,
+        // NO se cerrará la sesión.
+      }
+    });
   }
 
   cancelar(): void {
+    this.router.navigate(['/admin']);
+  }
+
+  regresar(): void {
     this.router.navigate(['/admin']);
   }
 }

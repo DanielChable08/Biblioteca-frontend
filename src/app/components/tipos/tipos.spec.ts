@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Tipos } from './tipos';
+import  Tipos  from './tipos';
 
 describe('Tipos', () => {
   let component: Tipos;

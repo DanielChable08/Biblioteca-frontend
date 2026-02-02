@@ -1,0 +1,64 @@
+<div class="historial-pagos-container">
+  <p-card>
+    <div class="card-header">
+      <div class="header-content">
+        <h2><i class="pi pi-wallet"></i> Historial de Pagos de {{ nombreLector }}</h2>
+        <p-button
+          label="Volver"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          (onClick)="volver()">
+        </p-button>
+      </div>
+    </div>
+
+    <p-table
+      [value]="pagos"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pagos"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      styleClass="p-datatable-sm p-datatable-striped"
+      responsiveLayout="scroll">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Fecha</th>
+          <th>Folio</th>
+          <th>Método</th>
+          <th class="text-right">Total</th>
+          <th class="text-right">Monto recibido</th>
+          <th class="text-right">Cambio</th>
+          <th class="text-center">Estado</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-pago>
+        <tr>
+          <td>{{ formatearFecha(pago.fechaPago) }}</td>
+          <td>{{ pago.folio }}</td>
+          <td>{{ pago.metodoPago }}</td>
+          <td class="text-right">{{ formatearMoneda(pago.total) }}</td>
+          <td class="text-right">{{ formatearMoneda(pago.montoRecibido) }}</td>
+          <td class="text-right">{{ formatearMoneda(pago.cambio) }}</td>
+          <td class="text-center">
+            <p-tag
+              [value]="getEstadoTexto(pago.anulado)"
+              [severity]="getEstadoSeverity(pago.anulado)">
+            </p-tag>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center">
+            No hay pagos registrados para este lector.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+</div>

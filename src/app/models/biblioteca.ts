@@ -1,4 +1,3 @@
-// ============ INTERFACES BASE ============
 export interface Catalogo {
   id: number;
   nombre: string;
@@ -7,13 +6,13 @@ export interface Catalogo {
 
 export interface Autor {
   id: number;
-  nombre: string;
-  apPaterno: string;
-  apMaterno: string;
   uuid: string;
+  nombre: string;
+  apPaterno?: string;
+  apMaterno?: string; 
+  displayName?: string;
 }
 
-// ============ EXTENSIONES DE CATALOGO ============
 export interface Editorial extends Catalogo {}
 
 export interface Idioma extends Catalogo {}
@@ -30,7 +29,6 @@ export interface MotivoMulta extends Catalogo {}
 
 export interface EstadoMulta extends Catalogo {}
 
-// ============ EJEMPLAR ============
 export interface Ejemplar {
   id: number;
   codigo: string;
@@ -44,7 +42,6 @@ export interface Ejemplar {
   libro?: Libro;
 }
 
-// ============ PERSONA ============
 export interface Persona {
   id: number;
   uuid: string;
@@ -53,6 +50,7 @@ export interface Persona {
   apMaterno?: string;
   telefono: string;
   idTipoPersona: number;
+  tipoPersona?: TipoPersona;
 }
 
 export interface TipoPersona {
@@ -61,7 +59,6 @@ export interface TipoPersona {
   nombre: string;
 }
 
-// ============ LIBRO ============
 export interface Libro {
   id: number;
   titulo: string;
@@ -76,7 +73,6 @@ export interface Libro {
   idEditorial: number;
   idIdioma: number;
   uuid: string;
-
   autores?: Autor[];
   categoria?: Catalogo;
   editorial?: Editorial;
@@ -84,6 +80,7 @@ export interface Libro {
   tipoLibro?: TipoLibro;
   imagen?: string;
   ejemplares?: Ejemplar[];
+  activo?: boolean;
 }
 
 export interface LibroPayload {
@@ -116,7 +113,6 @@ export interface PersonaPayload {
   idTipoPersona: number;
 }
 
-// ============ PRÉSTAMO ============
 export interface Prestamo {
   id?: number;
   uuid?: string;
@@ -139,7 +135,8 @@ export interface DetallePrestamo {
   fechaDevolucion?: string | null;
   idEstadoPrestamo: number;
   ejemplar?: Ejemplar;
-  estadoEjemplar?: EstadoEjemplar;
+  estadoPrestamo?: EstadoPrestamo;
+  multa?: Multa;
 }
 
 export interface PrestamoPayload {
@@ -156,14 +153,13 @@ export interface DetallePrestamoPayload {
   idEstadoPrestamo: number;
 }
 
-// ============ MULTAS ============
 export interface PoliticaMulta {
   id: number;
-  uuid: string;
   diasGracia: number;
   multaDiaria: number;
-  multaMaxima: number;
+  multaMaxima: number | null;
   vigente: boolean;
+  uuid: string;
 }
 
 export interface Multa {
@@ -175,6 +171,7 @@ export interface Multa {
   idEstadoMulta: number;
   idPersona?: number; 
   diasRetraso?: number;
+  montoPorDia?: number;
   motivoMulta?: MotivoMulta;
   estadoMulta?: EstadoMulta;
   prestamoDetalle?: DetallePrestamo;
@@ -188,27 +185,60 @@ export interface MultaPayload {
   idEstadoMulta: number;
 }
 
-// ============ PAGOS ============
 export interface PagoMulta {
   id: number;
-  montoRecibido: number;
   fechaPago: string;
-  cajero: number;
-  multas?: Multa[];
-  cajeroPersona?: Persona;
+  total: number;
+  montoRecibido: number;
+  cambio: number;
+  moneda: string;
+  metodoPago: string;
+  folio: string;
+  anulado: boolean;
+  motivoAnulacion?: string;
+  fechaAnulacion?: string;
+  uuid: string;
+  lectorPago: Persona; 
+  cajero: Persona;       
+  anuladoPor?: Persona;
 }
 
 export interface PagoMultaPayload {
   montoRecibido: number;
   cajero: number;
+  lectorPago: number;
   idsMultas: number[];
 }
 
-// ============ VISTA COMPLETA (para consultas JOIN) ============
+export interface PagoMultaDetalle {
+  pago: PagoMulta;
+  multas: Multa[];
+}
+
 export interface MultaCompleta extends Multa {
   nombreLector: string;
   apellidoLector: string;
   libroTitulo: string;
   codigoEjemplar: string;
-  diasAtraso: number; 
+  diasAtraso: number;
+}
+
+export interface PrestamoCompleto extends Prestamo {
+  lectorNombre: string;
+  bibliotecarioNombre: string;
+  totalEjemplares: number;
+  ejemplaresDevueltos: number;
+  ejemplaresPendientes: number;
+}
+
+export interface DashboardStats {
+  totalLibros: number;
+  totalEjemplares: number;
+  ejemplaresDisponibles: number;
+  ejemplaresPrestados: number;
+  prestamosActivos: number;
+  prestamosVencidos: number;
+  multasPendientes: number;
+  multasPagadas: number;
+  totalMultasEmitidas: number;
 }

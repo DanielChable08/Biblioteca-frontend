@@ -46,7 +46,7 @@ export default class IdiomasComponent implements OnInit {
   loading = false;
   globalFilter: string = '';
   
-  // Modal
+ 
   displayModal = false;
   isEditMode = false;
   isSubmitting = false;

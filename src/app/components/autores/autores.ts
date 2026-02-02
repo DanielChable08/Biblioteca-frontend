@@ -46,7 +46,6 @@ export default class AutoresComponent implements OnInit {
   loading = false;
   globalFilter: string = '';
   
-  // Modal
   displayModal = false;
   isEditMode = false;
   isSubmitting = false;

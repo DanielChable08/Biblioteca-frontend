@@ -243,9 +243,7 @@
   transform: scale(1.15);
 }
 
-/* ============ ESTILOS ESPECÍFICOS DE EJEMPLARES ============ */
 
-/* Badge de código de ejemplar */
 .codigo-ejemplar-badge {
   display: inline-flex;
   align-items: center;
@@ -261,13 +259,11 @@
   color: var(--gold);
 }
 
-/* Info del libro */
 .libro-info strong {
   color: var(--wine);
   font-size: 0.95rem;
 }
 
-/* Badge de ubicación */
 .ubicacion-badge {
   display: inline-flex;
   align-items: center;
@@ -285,7 +281,6 @@
   color: var(--gold);
 }
 
-/* Estados de ejemplar */
 .status-disponible {
   background-color: #d4edda;
   color: #155724;
@@ -328,7 +323,6 @@
   border: 1px solid #ddd;
 }
 
-/* Condiciones físicas */
 .condicion-badge {
   display: inline-block;
   padding: 0.35rem 0.8rem;
@@ -367,7 +361,6 @@
   border: 1px solid #e0e0e0;
 }
 
-/* Badge de rol/estado general */
 .user-role-badge {
   display: inline-block;
   padding: 0.35rem 0.8rem;
@@ -377,7 +370,6 @@
   text-align: center;
 }
 
-/* Diálogo de confirmación */
 :host ::ng-deep .p-dialog .p-dialog-header {
   background: var(--wine);
   color: white;
@@ -417,7 +409,6 @@
   background: var(--beige) !important;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .admin-page-container {
     padding: 1rem;

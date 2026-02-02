@@ -1,0 +1,167 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="header-container">
+  <div class="form-header-container">
+    <div class="form-header">
+      <div class="header-left">
+        <button
+          pButton
+          icon="pi pi-arrow-left"
+          class="p-button-text back-button"
+          (click)="volver()"
+          pTooltip="Volver al panel principal"
+          tooltipPosition="bottom"
+        ></button>
+        <h2><i class="pi pi-users"></i> Gestión de Personas</h2>
+      </div>
+      <button
+        pButton
+        label="Nueva Persona"
+        icon="pi pi-user-plus"
+        class="p-button-wine"
+        (click)="agregarPersona()"
+      ></button>
+    </div>
+  </div>
+</div>
+
+<div class="admin-page-container">
+  <p-table
+    #dt
+    [value]="personas"
+    [loading]="loading"
+    [paginator]="true"
+    [rows]="10"
+    [showCurrentPageReport]="true"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} personas"
+    [globalFilterFields]="['nombre', 'apPaterno', 'apMaterno', 'telefono']"
+    responsiveLayout="scroll"
+    styleClass="custom-table"
+  >
+    <ng-template pTemplate="caption">
+      <div class="table-header">
+        <span>Lista de Personas del Sistema</span>
+        <div class="filter-container">
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              class="table-search-input"
+              [(ngModel)]="searchValue"
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+              placeholder="Buscar por nombre, apellido o teléfono..."
+            />
+          </span>
+          <button
+            pButton
+            icon="pi pi-filter-slash"
+            class="p-button-outlined clear-filter-button"
+            (click)="clear(dt)"
+            pTooltip="Limpiar filtros"
+            tooltipPosition="top"
+          ></button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="nombre">
+          Nombre Completo <p-sortIcon field="nombre"></p-sortIcon>
+        </th>
+        <th pSortableColumn="telefono" style="width: 180px">
+          Teléfono <p-sortIcon field="telefono"></p-sortIcon>
+        </th>
+        <th pSortableColumn="idTipoPersona" style="width: 160px">
+          Tipo <p-sortIcon field="idTipoPersona"></p-sortIcon>
+        </th>
+        <th style="width: 120px; text-align: center">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-persona>
+      <tr>
+        <td>
+          <div class="persona-info">
+            <i class="pi pi-user persona-avatar-icon"></i>
+            <span class="persona-name">{{ getNombreCompleto(persona) }}</span>
+          </div>
+        </td>
+        <td>
+          <div class="phone-cell">
+            <i class="pi pi-phone phone-icon"></i>
+            {{ persona.telefono }}
+          </div>
+        </td>
+        <td>
+          <span
+            class="tipo-badge"
+            [ngClass]="{
+              'tipo-lector': getTipoPersonaNombre(persona.idTipoPersona) === 'Lector',
+              'tipo-bibliotecario': getTipoPersonaNombre(persona.idTipoPersona) === 'Bibliotecario',
+              'tipo-otro': getTipoPersonaNombre(persona.idTipoPersona) !== 'Lector' && getTipoPersonaNombre(persona.idTipoPersona) !== 'Bibliotecario'
+            }"
+          >
+            {{ getTipoPersonaNombre(persona.idTipoPersona) }}
+          </span>
+        </td>
+        <td>
+          <div class="table-actions">
+            <button
+              pButton
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-text action-btn-compact edit-btn"
+              (click)="editarPersona(persona.uuid)"
+              pTooltip="Editar"
+              tooltipPosition="top"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text action-btn-compact delete-btn"
+              (click)="eliminarPersona(persona, $event)"
+              pTooltip="Eliminar"
+              tooltipPosition="top"
+            ></button>
+            <!--<button
+              pButton
+              icon="pi pi-wallet"
+              class="p-button-rounded p-button-text action-btn-compact"
+              (click)="verHistorialPagos(persona.id)"
+              pTooltip="Ver Historial de Pagos"
+              tooltipPosition="top">
+            </button>-->
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5">
+          <div class="empty-message">
+            <i class="pi pi-users empty-icon"></i>
+            <p>No se encontraron personas</p>
+            <p style="font-size: 0.9rem; color: var(--gray)">
+              Intenta ajustar tus criterios de búsqueda
+            </p>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="loadingbody">
+      <tr>
+        <td colspan="5">
+          <div class="loading-message">
+            <i class="pi pi-spin pi-spinner loading-icon"></i>
+            <p>Cargando personas...</p>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

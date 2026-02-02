@@ -206,7 +206,6 @@
   transform: scale(1.15);
 }
 
-/* Estilos específicos para multas */
 .status-emitida {
   background-color: #fef3c7;
   color: #92400e;
@@ -233,11 +232,11 @@
 }
 
 .action-btn-compact.pay-btn {
-  color: #059669 !important;
+  color: var(--wine) !important;
 }
 
 .action-btn-compact.condonar-btn {
-  color: #1e40af !important;
+  color: var(--wine) !important;
 }
 
 .action-btn-compact:disabled {

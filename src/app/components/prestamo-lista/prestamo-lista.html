@@ -1,4 +1,19 @@
 <p-toast></p-toast>
+    <div class="header-container">
+        <div class="form-header-container">
+            <div class="form-header page-header-layout">
+                <div class="header-left">
+                    <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
+                    <h2><i class="pi pi-address-book user-icon"></i> Gestión de Préstamos</h2>
+                </div>
+                <div class="header-right">
+                    <p-button label="Nuevo Préstamo" icon="pi pi-plus" styleClass="p-button-wine" (click)="agregarPrestamo()"></p-button>
+                </div>
+                    <p-button label="Multas" icon="pi pi-dollar" styleClass="p-button-wine" (click)="multas()"></p-button>
+            </div>
+        </div>
+    </div>
+    
 <p-confirmDialog>
     <ng-template pTemplate="message" let-message>
         <div class="flex flex-column align-items-center text-center gap-3">
@@ -8,7 +23,6 @@
     </ng-template>
 </p-confirmDialog>
 
-<!-- MODAL DETALLES -->
 <p-dialog 
     header="Detalles del Préstamo" 
     [(visible)]="mostrarDetalle" 
@@ -116,9 +130,26 @@
             </p-table>
         </div>
     </ng-container>
+
+    <ng-template pTemplate="footer">
+        <div class="dialog-footer">
+            <p-button 
+                label="Cerrar" 
+                icon="pi pi-times" 
+                styleClass="p-button-text p-button-secondary" 
+                (onClick)="cerrarModalDetalle()">
+            </p-button>
+            <p-button 
+                label="Imprimir Ticket" 
+                icon="pi pi-print" 
+                styleClass="p-button-gold" 
+                (onClick)="imprimirTicketPrestamo()"
+                [disabled]="loadingDetalles || detallesPrestamo.length === 0">
+            </p-button>
+        </div>
+    </ng-template>
 </p-dialog>
 
-<!-- MODAL DEVOLUCIÓN -->
 <p-dialog 
     [(visible)]="mostrarModalDevolucion" 
     [modal]="true" 
@@ -235,20 +266,6 @@
 </p-dialog>
 
 <div class="admin-page-container">
-    <div class="header-container">
-        <div class="form-header-container">
-            <div class="form-header page-header-layout">
-                <div class="header-left">
-                    <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
-                    <h2><i class="pi pi-address-book user-icon"></i> Gestión de Préstamos</h2>
-                </div>
-                <div class="header-right">
-                    <p-button label="Nuevo Préstamo" icon="pi pi-plus" styleClass="p-button-wine" (click)="agregarPrestamo()"></p-button>
-                </div>
-                <p-button label="Multas" icon="pi pi-dollar" styleClass="p-button-wine" (click)="multas()"></p-button>
-            </div>
-        </div>
-    </div>
 
     <p-table 
         #dtPrestamos 
@@ -306,9 +323,41 @@
                 </td>
                 <td>
                     <div class="table-actions">
-                        <button pButton icon="pi pi-eye" class="action-btn-compact view-btn" pTooltip="Ver Detalles" (click)="verDetalles(prestamo)"></button>
-                        <button pButton icon="pi pi-arrow-right-arrow-left" class="action-btn-compact return-btn" pTooltip="Devolver" (click)="abrirModalDevolucion(prestamo)"></button>
-                        <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" pTooltip="Editar" (click)="editarPrestamo(prestamo)"></button>
+                        <button 
+                            pButton 
+                            icon="pi pi-eye" 
+                            class="action-btn-compact view-btn" 
+                            pTooltip="Ver Detalles" 
+                            tooltipPosition="bottom"
+                            (click)="verDetalles(prestamo)">
+                        </button>
+                        
+                        <button 
+                            pButton 
+                            icon="pi pi-print" 
+                            class="action-btn-compact edit-btn" 
+                            pTooltip="Imprimir Ticket" 
+                            tooltipPosition="bottom"
+                            (click)="imprimirTicketPrestamo(prestamo)">
+                        </button>
+                        
+                        <button 
+                            pButton 
+                            icon="pi pi-arrow-right-arrow-left" 
+                            class="action-btn-compact return-btn" 
+                            pTooltip="Devolver" 
+                            tooltipPosition="bottom"
+                            (click)="abrirModalDevolucion(prestamo)">
+                        </button>
+                        
+                        <button 
+                            pButton 
+                            icon="pi pi-pencil" 
+                            class="action-btn-compact edit-btn" 
+                            pTooltip="Editar" 
+                            tooltipPosition="bottom"
+                            (click)="editarPrestamo(prestamo)">
+                        </button>
                     </div>
                 </td>
             </tr>

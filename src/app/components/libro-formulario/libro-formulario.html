@@ -3,7 +3,10 @@
   <div class="header-container">
     <div class="form-header-container">
       <div class="form-header">
-        <h2 *ngIf="!isEditMode"><i class="pi pi-plus-circle"></i> Agregar Nuevo Libro</h2>
+        <h2 *ngIf="!isEditMode">
+          <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar" tooltipPosition="bottom"></button>
+          <i class="pi pi-plus-circle"></i> Agregar Nuevo Libro
+        </h2>
         <h2 *ngIf="isEditMode"><i class="pi pi-pencil"></i> Editar Libro</h2>
         <p *ngIf="!isEditMode">
           Completa la información para registrar un nuevo título en el catálogo.
@@ -12,31 +15,20 @@
       </div>
     </div>
   </div>
+  
   <div class="form-page-container">
-    <form [formGroup]="libroForm" (ngSubmit)="onSubmit()" class="form-container">
+    <form [formGroup]="libroForm" class="form-container">
       <div class="form-grid">
         <div class="form-column">
+          
           <div class="field">
             <label for="titulo">Título del Libro <label class="text red">*</label></label>
-            <input
-              class="form-comp"
-              id="titulo"
-              pInputText
-              formControlName="titulo"
-              placeholder="Ej: 'Demian'"
-            />
-            <div
-              class="error-msg text red"
-              [@dropIn]
-              *ngIf="
-                (libroForm.get('titulo')?.dirty || isSubmitting) && libroForm.get('titulo')?.invalid
-              "
-            >
-              <small *ngIf="libroForm.get('titulo')?.errors?.['required']">
-                El título es obligatorio.
-              </small>
+            <input class="form-comp" id="titulo" pInputText formControlName="titulo" placeholder="Ej: 'Demian'" />
+            <div class="error-msg text red" [@dropIn] *ngIf="(libroForm.get('titulo')?.dirty || isSubmitting) && libroForm.get('titulo')?.invalid">
+              <small *ngIf="libroForm.get('titulo')?.errors?.['required']">El título es obligatorio.</small>
             </div>
           </div>
+
           <div class="field">
             <label for="autores">Autor(es) <label class="text red">*</label></label>
             <div class="p-inputgroup">
@@ -50,254 +42,126 @@
                 display="chip"
                 placeholder="Seleccionar autor(es)"
                 emptyFilterMessage="Sin coincidencias encontradas"
-                [ngClass]="{
-                  'p-invalid':
-                    libroForm.get('idAutores')?.invalid &&
-                    (libroForm.get('idAutores')?.dirty || isSubmitting)
-                }"
+                [ngClass]="{'p-invalid': libroForm.get('idAutores')?.invalid && (libroForm.get('idAutores')?.dirty || isSubmitting)}"
                 [selectedItemsLabel]="'{0} seleccionados'"
-              >
-                > ></p-multiSelect
-              >
-              <button
-                type="button"
-                pButton
-                icon="pi pi-plus"
-                class="btn-primary"
-                (click)="abrirModalAgregar('autor')"
-                pTooltip="Agregar autor"
-                tooltipPosition="top"
-              ></button>
+              ></p-multiSelect>
+              <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('autor')" pTooltip="Agregar autor" tooltipPosition="top"></button>
             </div>
-            <div
-              class="error-msg text red"
-              [@dropIn]
-              *ngIf="
-                (libroForm.get('idAutores')?.dirty || isSubmitting) &&
-                libroForm.get('idAutores')?.invalid
-              "
-            >
-              <small *ngIf="libroForm.get('idAutores')?.errors?.['required']">
-                Seleccionar al menos un autor es obligatorio.
-              </small>
+            <div class="error-msg text red" [@dropIn] *ngIf="(libroForm.get('idAutores')?.dirty || isSubmitting) && libroForm.get('idAutores')?.invalid">
+              <small *ngIf="libroForm.get('idAutores')?.errors?.['required']">Seleccionar al menos un autor es obligatorio.</small>
             </div>
           </div>
+
           <div class="field">
             <label for="resumen">Resumen</label>
-            <textarea
-              id="resumen"
-              class="form-comp pb-3"
-              pInputTextarea
-              formControlName="resumen"
-              [rows]="7"
-              [autoResize]="true"
-              placeholder="Ej: 'En la historia del siglo XX es complicado encontrar autores más influyentes que Hermann Hesse. Sus libros han actuado como estímulo espiritual para diversas oleadas de jóvenes hartos de estar sujetos a unos patrones de vida demasiado estrechos. El legado de Hesse es una extensa, profunda y riquísima obra...'"
-            ></textarea>
+            <textarea id="resumen" class="form-comp pb-3" pInputTextarea formControlName="resumen" [rows]="7" [autoResize]="true" placeholder="Ej: 'En la historia del siglo XX es complicado encontrar autores más influyentes que Hermann Hesse. Sus libros han actuado como estímulo espiritual para diversas oleadas de jóvenes hartos de estar sujetos a unos patrones de vida demasiado estrechos. El legado de Hesse es una extensa, profunda y riquísima obra..."></textarea>
           </div>
+
           <div class="field">
-            <label for="imagen">URL de la Portada</label>
-            <div class="p-inputgroup">
-              <span class="p-inputgroup-addon pr-2"><i class="pi pi-link"></i></span>
-              <input
-                id="imagen"
-                pInputText
-                class="form-comp full-w"
-                formControlName="imagen"
-                placeholder="https://ejemplo.com/portada.jpg"
-              />
+            <label>Portada del Libro</label> <div *ngIf="imagePreview" class="image-preview-container" [@dropIn]>
+              <img [src]="imagePreview" alt="Vista previa de portada" class="image-preview">
+              <button type="button" pButton icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text image-remove-btn" (click)="removeImage()" pTooltip="Quitar imagen"></button>
+            </div>
+
+            <div class="file-input-wrapper">
+              <input type="file" id="fileInput" class="file-input" (change)="onFileSelect($event)" accept="image/png, image/jpeg, image/jpg">
+              <label for="fileInput" class="file-input-label">
+                <i class="pi pi-cloud-upload"></i>
+                <span *ngIf="!selectedFile && !imagePreview">Subir imagen de portada</span>
+                <span *ngIf="selectedFile || imagePreview">Cambiar imagen</span>
+              </label>
+            </div>
+            
+            <div class="image-instructions">
+              <i class="pi pi-info-circle"></i>
+              <span>Formatos: JPG, PNG. Máx 5MB. (Opcional)</span>
             </div>
           </div>
         </div>
 
         <div class="form-column">
           <div>
-            <div
-              class="fields-row"
-              [ngClass]="{
-                'p-invalid':
-                  (libroForm.get('isbnDisplay')?.invalid &&
-                    (libroForm.get('isbnDisplay')?.dirty || isSubmitting)) ||
-                  (libroForm.get('anho')?.invalid &&
-                    (libroForm.get('anho')?.dirty || isSubmitting)) ||
-                  (libroForm.get('paginas')?.invalid &&
-                    (libroForm.get('paginas')?.dirty || isSubmitting))
-              }"
-            >
-              <div class="">
-                <label for="isbn">ISBN <label class="text red">*</label></label
-                ><input
-                  id="isbn"
-                  class="form-comp full-w"
-                  pInputText
-                  maxlength="17"
-                  formControlName="isbnDisplay"
-                  placeholder="Ej: '978-607-453-611-9'"
-                />
+            <div class="fields-row">
+              <div>
+                <label for="isbn">ISBN <label class="text red">*</label></label>
+                <input id="isbn" class="form-comp full-w" pInputText maxlength="17" formControlName="isbnDisplay" placeholder="Ej: '978-607-453-611-9' o '0-123-45678-9'" />
               </div>
-              <div class="">
+              <div>
                 <label for="anho">Año <label class="text red">*</label></label>
-                <input
-                  id="anho"
-                  class="form-comp full-w"
-                  pInputText
-                  formControlName="anho"
-                  placeholder="Ej: '2019'"
-                  maxlength="4"
-                  (input)="soloNumeros($event)"
-                />
+                <input id="anho" class="form-comp full-w" pInputText formControlName="anho" placeholder="Ej: '2019'" maxlength="4" (input)="soloNumeros($event)" />
               </div>
-              <div class="">
-                <label for="paginas">Páginas</label>
-                <input
-                  id="paginas"
-                  class="form-comp full-w"
-                  pInputText
-                  formControlName="paginas"
-                  placeholder="Ej: '183'"
-                  maxlength="4"
-                  (input)="soloNumeros($event)"
-                />
+              <div>
+                <label for="paginas">Páginas <label class="text red">*</label></label>
+                <input id="paginas" class="form-comp full-w" pInputText formControlName="paginas" placeholder="Ej: '183'" maxlength="4" (input)="soloNumeros($event)" />
               </div>
             </div>
-            <div
-              class="text red mt-2"
-              [@dropIn]
-              *ngIf="
-                ((libroForm.get('isbnDisplay')?.dirty || isSubmitting) &&
-                  libroForm.get('isbnDisplay')?.invalid) ||
-                ((libroForm.get('anho')?.dirty || isSubmitting) &&
-                  libroForm.get('anho')?.invalid) ||
-                ((libroForm.get('paginas')?.dirty || isSubmitting) &&
-                  libroForm.get('paginas')?.invalid)
-              "
-            >
-              <small
-                *ngIf="(libroForm.get('isbnDisplay')?.errors?.['required']) || 
-              (libroForm.get('anho')?.errors?.['required']) || 
-              (libroForm.get('paginas')?.errors?.['required'])"
-              >
-                El ISBN, el año y las páginas son campos obligatorios. </small
-              ><br />
-              <small *ngIf="libroForm.get('isbn')?.errors?.['pattern']"
-                >El ISBN debe tener exactamente 13 dígitos.</small
-              >
+            
+            <div class="text red mt-2" [@dropIn]
+              *ngIf="((libroForm.get('isbnDisplay')?.dirty || isSubmitting) && libroForm.get('isbnDisplay')?.invalid) ||
+                     ((libroForm.get('anho')?.dirty || isSubmitting) && libroForm.get('anho')?.invalid) ||
+                     ((libroForm.get('paginas')?.dirty || isSubmitting) && libroForm.get('paginas')?.invalid)">
+              
+              <small *ngIf="(libroForm.get('isbnDisplay')?.errors?.['required']) || (libroForm.get('anho')?.errors?.['required']) || (libroForm.get('paginas')?.errors?.['required'])">
+                El ISBN, el año y las páginas son campos obligatorios. 
+              </small><br />
+              <small *ngIf="libroForm.get('isbn')?.errors?.['pattern']">
+                El ISBN debe tener exactamente 10 o 13 dígitos.
+              </small>
             </div>
           </div>
+
           <div class="field">
-            <label for="tipoLibro">Tipo de Libro <label class="text red">*</label></label>
+            <label for="tipoLibro">Facultad<label class="text red">*</label></label>
             <div class="p-inputgroup">
-              <p-select
-                id="tipoLibro"
-                [options]="tiposLibro"
-                class="form-comp full-w"
-                formControlName="idTipoLibro"
-                optionLabel="nombre"
-                optionValue="id"
-                placeholder="Seleccionar tipo"
-              ></p-select>
-              <button
-                type="button"
-                pButton
-                icon="pi pi-plus"
-                class="btn-primary"
-                (click)="abrirModalAgregar('tipoLibro')"
-                pTooltip="Agregar tipo de libro"
-                tooltipPosition="top"
-              ></button>
+              <p-select id="tipoLibro" [options]="tiposLibro" class="form-comp full-w" formControlName="idTipoLibro" optionLabel="nombre" optionValue="id" placeholder="Seleccionar tipo"></p-select>
+              <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('tipoLibro')" pTooltip="Agregar tipo" tooltipPosition="top"></button>
+            </div>
+            <div class="error-msg text red" *ngIf="(libroForm.get('idTipoLibro')?.dirty || isSubmitting) && libroForm.get('idTipoLibro')?.invalid">
+                <small>Campo obligatorio.</small>
             </div>
           </div>
+
           <div class="field">
             <label for="categoria">Categoría <label class="text red">*</label></label>
             <div class="p-inputgroup">
-              <p-select
-                id="categoria"
-                dataKey="id"
-                class="form-comp full-w"
-                [options]="categorias"
-                formControlName="idCategoria"
-                optionLabel="nombre"
-                optionValue="id"
-                placeholder="Seleccionar categoría"
-              ></p-select>
-              <button
-                type="button"
-                pButton
-                icon="pi pi-plus"
-                class="btn-primary"
-                (click)="abrirModalAgregar('categoria')"
-                pTooltip="Agregar categoría"
-                tooltipPosition="top"
-              ></button>
+              <p-select id="categoria" dataKey="id" class="form-comp full-w" [options]="categorias" formControlName="idCategoria" optionLabel="nombre" optionValue="id" placeholder="Seleccionar categoría"></p-select>
+              <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('categoria')" pTooltip="Agregar categoría" tooltipPosition="top"></button>
+            </div>
+            <div class="error-msg text red" *ngIf="(libroForm.get('idCategoria')?.dirty || isSubmitting) && libroForm.get('idCategoria')?.invalid">
+                <small>Campo obligatorio.</small>
             </div>
           </div>
+
           <div class="field">
             <label for="editorial">Editorial <label class="text red">*</label></label>
             <div class="p-inputgroup">
-              <p-select
-                id="editorial"
-                [options]="editoriales"
-                formControlName="idEditorial"
-                class="form-comp full-w"
-                optionLabel="nombre"
-                optionValue="id"
-                placeholder="Seleccionar editorial"
-              ></p-select>
-              <button
-                type="button"
-                pButton
-                icon="pi pi-plus"
-                class="btn-primary"
-                (click)="abrirModalAgregar('editorial')"
-                pTooltip="Agregar editorial"
-                tooltipPosition="top"
-              ></button>
+              <p-select id="editorial" [options]="editoriales" formControlName="idEditorial" class="form-comp full-w" optionLabel="nombre" optionValue="id" placeholder="Seleccionar editorial"></p-select>
+              <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('editorial')" pTooltip="Agregar editorial" tooltipPosition="top"></button>
+            </div>
+            <div class="error-msg text red" *ngIf="(libroForm.get('idEditorial')?.dirty || isSubmitting) && libroForm.get('idEditorial')?.invalid">
+                <small>Campo obligatorio.</small>
             </div>
           </div>
+
           <div class="field">
             <label for="idioma">Idioma <label class="text red">*</label></label>
             <div class="p-inputgroup">
-              <p-select
-                id="idioma"
-                [options]="idiomas"
-                class="form-comp full-w"
-                formControlName="idIdioma"
-                optionLabel="nombre"
-                optionValue="id"
-                placeholder="Seleccionar idioma"
-              ></p-select>
-              <button
-                type="button"
-                pButton
-                icon="pi pi-plus"
-                class="btn-primary"
-                (click)="abrirModalAgregar('idioma')"
-                pTooltip="Agregar idioma"
-                tooltipPosition="top"
-              ></button>
+              <p-select id="idioma" [options]="idiomas" class="form-comp full-w" formControlName="idIdioma" optionLabel="nombre" optionValue="id" placeholder="Seleccionar idioma"></p-select>
+              <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('idioma')" pTooltip="Agregar idioma" tooltipPosition="top"></button>
+            </div>
+            <div class="error-msg text red" *ngIf="(libroForm.get('idIdioma')?.dirty || isSubmitting) && libroForm.get('idIdioma')?.invalid">
+                <small>Campo obligatorio.</small>
             </div>
           </div>
+
           <div class="field-group">
             <div class="field">
-              <label for="edicion">Edición</label
-              ><input
-                id="edicion"
-                class="form-comp"
-                pInputText
-                formControlName="edicion"
-                placeholder="Ej: 'Primera edición: febrero de...'"
-                maxlength="50"
-              />
+              <label for="edicion">Edición</label>
+              <input id="edicion" class="form-comp" pInputText formControlName="edicion" placeholder="Ej: 'Primera edición'" maxlength="50" />
             </div>
             <div class="field">
-              <label for="pasta">Tipo de Pasta</label
-              ><input
-                id="pasta"
-                class="form-comp"
-                pInputText
-                formControlName="pasta"
-                placeholder="Ej: 'Dura'"
-                maxlength="50"
-              />
+              <label for="pasta">Tipo de Pasta</label>
+              <input id="pasta" class="form-comp" pInputText formControlName="pasta" placeholder="Ej: 'Dura'" maxlength="50" />
             </div>
           </div>
         </div>
@@ -305,52 +169,43 @@
 
       <div class="form-footer">
         <p-button label="Cancelar" styleClass="btn-info text" (click)="cancelar()"></p-button>
-        <p-button
-          [label]="isEditMode ? 'Actualizar Libro' : 'Guardar Libro'"
-          type="submit"
-          [loading]="isSubmitting"
-          icon="pi pi-check"
-          styleClass="btn-primary"
-        ></p-button>
+        
+        <p-button 
+          [label]="isEditMode ? 'Actualizar Libro' : 'Guardar Libro'" 
+          type="button" 
+          (click)="onSubmit()" 
+          [loading]="isSubmitting" 
+          icon="pi pi-check" 
+          styleClass="btn-primary">
+        </p-button>
       </div>
     </form>
   </div>
 </div>
 
-<p-dialog
-  [header]="'Agregar ' + (tituloDialog | titlecase)"
-  [(visible)]="displayCatalogoDialog"
-  [modal]="true"
-  [style]="{ width: '450px' }"
->
+<p-dialog [header]="'Agregar ' + (tituloDialog | titlecase)" [(visible)]="displayCatalogoDialog" [modal]="true" [style]="{ width: '450px' }">
   <form [formGroup]="catalogoForm" (ngSubmit)="guardarNuevoCatalogo()" class="mini-form">
     <div *ngIf="catalogoSiendoAgregado === 'autor'">
-      <div class="field">
-        <label for="nombreAutor" class="m-0">Nombre(s) <label class="text red">*</label></label
-        ><input id="nombreAutor" class="form-comp" pInputText formControlName="nombre" />
+        <div class="field">
+          <label for="nombreAutor" class="m-0">Nombre(s) <label class="text red">*</label></label>
+          <input id="nombreAutor" class="form-comp" pInputText formControlName="nombre" />
+        </div>
+        <div class="field">
+          <label for="apPaterno" class="m-0">Apellido Paterno</label>
+          <input id="apPaterno" class="form-comp" pInputText formControlName="apPaterno" />
+        </div>
+        <div class="field">
+          <label for="apMaterno" class="m-0">Apellido Materno</label>
+          <input id="apMaterno" class="form-comp" pInputText formControlName="apMaterno" />
+        </div>
       </div>
-      <div class="field">
-        <label for="apPaterno" class="m-0">Apellido Paterno</label
-        ><input id="apPaterno" class="form-comp" pInputText formControlName="apPaterno" />
+      <div *ngIf="catalogoSiendoAgregado !== 'autor'" class="field">
+        <label for="nombreCatalogo" class="m-0">Nombre <label class="text red">*</label></label>
+        <input id="nombreCatalogo" class="form-comp" pInputText formControlName="nombre" autofocus />
       </div>
-      <div class="field">
-        <label for="apMaterno" class="m-0">Apellido Materno</label
-        ><input id="apMaterno" class="form-comp" pInputText formControlName="apMaterno" />
+      <div class="form-footer">
+        <button type="button" pButton label="Cancelar" class="btn-info text" (click)="displayCatalogoDialog = false"></button>
+        <button type="submit" pButton label="Guardar" icon="pi pi-check" class="btn-primary"></button>
       </div>
-    </div>
-    <div *ngIf="catalogoSiendoAgregado !== 'autor'" class="field">
-      <label for="nombreCatalogo" class="m-0">Nombre <label class="text red">*</label></label>
-      <input id="nombreCatalogo" class="form-comp" pInputText formControlName="nombre" autofocus />
-    </div>
-    <div class="form-footer">
-      <button
-        type="button"
-        pButton
-        label="Cancelar"
-        class="btn-info text"
-        (click)="displayCatalogoDialog = false"
-      ></button>
-      <button type="submit" pButton label="Guardar" icon="pi pi-check" class="btn-primary"></button>
-    </div>
   </form>
 </p-dialog>

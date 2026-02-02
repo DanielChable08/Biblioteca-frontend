@@ -1,17 +1,18 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ToastModule } from 'primeng/toast'; // 1. Importar ToastModule
+import { ToastModule } from 'primeng/toast';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
-  standalone: true, // <- Importante: es standalone
-  imports: [
-    RouterOutlet,
-    ToastModule // 2. Añadirlo aquí
-  ],
+  standalone: true,
+  imports: [RouterOutlet, ToastModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
-  protected readonly title = signal('biblioteca-frontend');
+export class App implements OnInit {
+  private authService = inject(AuthService);
+
+  ngOnInit(): void {
+  }
 }

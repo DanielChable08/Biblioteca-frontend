@@ -1,266 +1,385 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { finalize, forkJoin, map, switchMap, of } from 'rxjs';
+
+import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { FormsModule } from '@angular/forms';
-import { SelectModule } from 'primeng/select';
+import { TooltipModule } from 'primeng/tooltip';
+import { DialogService, DynamicDialogModule } from 'primeng/dynamicdialog';
+import { MessageService, MenuItem } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
+import { DividerModule } from 'primeng/divider';
+import { ChipModule } from 'primeng/chip';
+import { MenuModule } from 'primeng/menu';
 
+import { BookService } from '../../services/book.service';
+import { CatalogService } from '../../services/catalog.service';
+import { EjemplarService } from '../../services/ejemplar.service';
+import { AuthService } from '../../services/auth.service';
+import { SecureImagePipe } from '../../pipes/secure-image.pipe';
+import { Libro, Catalogo, Autor } from '../../models/biblioteca';
 
-type CategoriaKey = 'Todas' | 'Sagradas Escrituras' | 'Teología' | 'Devocionales' | 'Historia' | 'Himnarios' | 'Oración' | 'Biografías';
+import LibroDetalleComponent from '../libro-detalle/libro-detalle';
 
-interface Libro {
-  id: string;
-  img: string;
-  titulo: string;
-  autor: string;
-  categoria: CategoriaKey;
-  catalogCode: string;
-  location: string;
-  shelf: string;
-  publishYear: number;
-  pages: number;
-  format: string;
-  language: string;
-  estado: string;
-}
+type CategoriaKey = 'Todas' | string;
 
 @Component({
-  selector: 'app-user-catalog',
+  selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ButtonModule, InputTextModule, FormsModule,SelectModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardModule,
+    ButtonModule,
+    InputTextModule,
+    TooltipModule,
+    ToastModule,
+    DynamicDialogModule,
+    DividerModule,
+    ChipModule,
+    MenuModule,
+    SecureImagePipe
+  ],
+  providers: [DialogService, MessageService],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
-export class DashboardComponent {
+export default class DashboardComponent implements OnInit, OnDestroy {
+  private bookService = inject(BookService);
+  private catalogService = inject(CatalogService);
+  private ejemplarService = inject(EjemplarService);
+  private dialogService = inject(DialogService);
+  private messageService = inject(MessageService);
+  private router = inject(Router);
+  private authService = inject(AuthService);
+
+  libros: Libro[] = [];
+  allLibros: Libro[] = [];
+  categorias: Catalogo[] = [];
   categoriaSeleccionada: CategoriaKey = 'Todas';
   terminoBusqueda = '';
+  loading = true;
   dropdownOpen = false;
+  contadoresCategoria: { [key: string]: number } = {};
+  catalogMenuItems: MenuItem[] = [];
+  currentFullName: string = '';
+  currentUserRole: string = '';
+  currentUserInitials: string = '';
 
-  categoriasLista = [
-    { label: 'Todas', value: 'Todas' as CategoriaKey, icon: 'pi pi-book' },
-    { label: 'Sagradas Escrituras', value: 'Sagradas Escrituras' as CategoriaKey, icon: 'pi pi-plus' },
-    { label: 'Teología', value: 'Teología' as CategoriaKey, icon: 'pi pi-graduation-cap' },
-    { label: 'Devocionales', value: 'Devocionales' as CategoriaKey, icon: 'pi pi-heart' },
-    { label: 'Historia', value: 'Historia' as CategoriaKey, icon: 'pi pi-clock' },
-    { label: 'Himnarios', value: 'Himnarios' as CategoriaKey, icon: 'pi pi-music' },
-    { label: 'Oración', value: 'Oración' as CategoriaKey, icon: 'pi pi-star' },
-    { label: 'Biografías', value: 'Biografías' as CategoriaKey, icon: 'pi pi-user' }
-  ];
+  mostrarStats = true;
 
-  libros: Libro[] = [
-    {
-      id: '1',
-      img: 'https://images.unsplash.com/photo-1638276630550-36cccfdff836?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Biblia Reina Valera 1960',
-      autor: 'Sociedades Bíblicas Unidas',
-      categoria: 'Sagradas Escrituras',
-      catalogCode: 'BIB001RVR',
-      location: 'Estantería Principal',
-      shelf: 'A-1',
-      publishYear: 1960,
-      pages: 1200,
-      format: 'Tapa Dura',
-      language: 'Español',
-      estado: 'Disponible'
-    },
-    {
-      id: '2',
-      img: 'https://images.unsplash.com/photo-1654193404293-886297721ca7?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Teología Sistemática',
-      autor: 'Wayne Grudem',
-      categoria: 'Teología',
-      catalogCode: 'TEO001WGR',
-      location: 'Sección Teología',
-      shelf: 'B-3',
-      publishYear: 1994,
-      pages: 1290,
-      format: 'Tapa Blanda',
-      language: 'Español',
-      estado: 'Disponible'
-    },
-    {
-      id: '3',
-      img: 'https://images.unsplash.com/photo-1659570456681-c2745e7003aa?auto=format&fit=crop&w=400&q=80',
-      titulo: 'En Pos de lo Supremo',
-      autor: 'Oswald Chambers',
-      categoria: 'Devocionales',
-      catalogCode: 'DEV001OCH',
-      location: 'Sección Devocionales',
-      shelf: 'C-2',
-      publishYear: 1935,
-      pages: 384,
-      format: 'Tapa Blanda',
-      language: 'Español',
-      estado: 'Disponible'
-    },
-    {
-      id: '4',
-      img: 'https://images.unsplash.com/photo-1595733533725-1a6bce052b84?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Historia de la Iglesia Cristiana',
-      autor: 'Justo L. González',
-      categoria: 'Historia',
-      catalogCode: 'HIS001JGZ',
-      location: 'Sección Historia',
-      shelf: 'D-1',
-      publishYear: 1994,
-      pages: 658,
-      format: 'Tapa Dura',
-      language: 'Español',
-      estado: 'Disponible'
-    },
-    {
-      id: '5',
-      img: 'https://images.unsplash.com/photo-1622724316148-1e179e5589f2?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Himnario Bautista',
-      autor: 'Convención Bautista',
-      categoria: 'Himnarios',
-      catalogCode: 'HIM001CBT',
-      location: 'Sección Música',
-      shelf: 'E-1',
-      publishYear: 2010,
-      pages: 560,
-      format: 'Espiral',
-      language: 'Español',
-      estado: 'Disponible'
-    },
-    {
-      id: '6',
-      img: 'https://images.unsplash.com/photo-1624935048859-9b3c9cc5ddf8?auto=format&fit=crop&w=400&q=80',
-      titulo: 'El Libro de Oración Común',
-      autor: 'Iglesia Episcopal',
-      categoria: 'Oración',
-      catalogCode: 'ORA001IEP',
-      location: 'Sección Liturgia',
-      shelf: 'F-2',
-      publishYear: 1979,
-      pages: 1001,
-      format: 'Tapa Dura',
-      language: 'Español',
-      estado: 'En Reparación'
-    },
-    {
-      id: '7',
-      img: 'https://images.unsplash.com/photo-1638276630550-36cccfdff836?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Nuevo Testamento Interlineal',
-      autor: 'Francisco Lacueva',
-      categoria: 'Sagradas Escrituras',
-      catalogCode: 'BIB002FLC',
-      location: 'Estantería Principal',
-      shelf: 'A-2',
-      publishYear: 1984,
-      pages: 896,
-      format: 'Tapa Blanda',
-      language: 'Español',
-      estado: 'Disponible'
-    },
-    {
-      id: '8',
-      img: 'https://images.unsplash.com/photo-1654193404293-886297721ca7?auto=format&fit=crop&w=400&q=80',
-      titulo: 'Teología del Pacto',
-      autor: 'Michael Horton',
-      categoria: 'Teología',
-      catalogCode: 'TEO002MHR',
-      location: 'Sección Teología',
-      shelf: 'B-4',
-      publishYear: 2006,
-      pages: 432,
-      format: 'Tapa Blanda',
-      language: 'Español',
-      estado: 'Prestado'
-    }
-  ];
+  private readonly IMAGES_BASE_URL = 'http://localhost:8080/assets/img/';
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event) {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.custom-dropdown-container')) {
-      this.dropdownOpen = false;
-    }
+  ngOnInit(): void {
+    this.loadUserInfo();
+    this.loadInitialData();
+    this.setupCatalogMenu();
   }
 
-  get contadorCategorias(): Record<CategoriaKey, number> {
-    const contador: Partial<Record<CategoriaKey, number>> = {};
-    
-    this.libros.forEach(libro => {
-      contador[libro.categoria] = (contador[libro.categoria] || 0) + 1;
+  ngOnDestroy(): void {}
+
+  setupCatalogMenu(): void {
+    this.catalogMenuItems = [
+      { separator: true },
+      { 
+        label: 'Cerrar Sesión', 
+        icon: 'pi pi-sign-out', 
+        styleClass: 'logout-menu-item', 
+        command: () => this.logout() 
+      }
+    ];
+  }
+
+  loadUserInfo(): void {
+    this.currentFullName = this.authService.getFullName();
+    this.currentUserRole = this.authService.getRoleName();
+    this.currentUserInitials = this.authService.getUserInitials();
+  }
+
+  loadInitialData(): void {
+    this.loading = true;
+
+    forkJoin({
+      libros: this.bookService.getLibros(),
+      categorias: this.catalogService.getCategorias(),
+      ejemplares: this.ejemplarService.getEjemplares(),
+      estados: this.catalogService.getEstadosEjemplares()
+    }).pipe(
+      switchMap(({ libros, categorias, ejemplares, estados }) => {
+        if (libros.length === 0) {
+          return of({ libros: [], categorias });
+        }
+
+        const autorRequests = libros.map(libro =>
+          this.bookService.getAutoresForLibro(libro.uuid)
+        );
+
+        return forkJoin(autorRequests).pipe(
+          map(autoresArray => {
+            const librosCompletos = libros.map((libro, index) => {
+              
+              let imagenCorregida = libro.imagen;
+              if (libro.imagen && !libro.imagen.startsWith('http')) {
+                  imagenCorregida = `${this.IMAGES_BASE_URL}${libro.imagen}`;
+              }
+
+              const categoriaDelLibro = categorias.find(cat => cat.id === libro.idCategoria);
+              const ejemplaresDelLibro = ejemplares
+                .filter(e => e.idLibro === libro.id)
+                .map(ejemplar => {
+                  const estadoDelEjemplar = estados.find(est => est.id === ejemplar.idEstadoEjemplar);
+                  return { ...ejemplar, estado: estadoDelEjemplar };
+                });
+
+              return {
+                ...libro,
+                imagen: imagenCorregida,
+                categoria: categoriaDelLibro,
+                autores: autoresArray[index],
+                ejemplares: ejemplaresDelLibro
+              };
+            });
+            return { libros: librosCompletos, categorias };
+          })
+        );
+      }),
+      finalize(() => this.loading = false)
+    ).subscribe({
+      next: ({ libros, categorias }) => {
+        this.allLibros = libros;
+        this.categorias = categorias;
+        this.actualizarContadores();
+        this.filtrarLibros();
+      },
+      error: (err: any) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los datos.'
+        });
+      }
     });
-    
-    return {
-      'Todas': this.libros.length,
-      'Sagradas Escrituras': contador['Sagradas Escrituras'] || 0,
-      'Teología': contador['Teología'] || 0,
-      'Devocionales': contador['Devocionales'] || 0,
-      'Historia': contador['Historia'] || 0,
-      'Himnarios': contador['Himnarios'] || 0,
-      'Oración': contador['Oración'] || 0,
-      'Biografías': contador['Biografías'] || 0
-    };
   }
 
-  
-  get librosFiltrados(): Libro[] {
-    let resultado = this.libros;
+  getEjemplaresDisponibles(libro: Libro): number {
+    return libro.ejemplares?.filter(
+      e => e.estado?.nombre?.toLowerCase() === 'disponible'
+    ).length || 0;
+  }
+
+  getEjemplaresPrestados(libro: Libro): number {
+    return libro.ejemplares?.filter(
+      e => e.estado?.nombre?.toLowerCase() === 'prestado'
+    ).length || 0;
+  }
+
+  getEjemplaresReparacion(libro: Libro): number {
+    return libro.ejemplares?.filter(
+      e => e.estado?.nombre?.toLowerCase() === 'en reparación'
+    ).length || 0;
+  }
+
+  getEstadoPrincipal(libro: Libro): { estado: string; cantidad: number; clase: string; icono: string } {
+    const disponibles = this.getEjemplaresDisponibles(libro);
+    const prestados = this.getEjemplaresPrestados(libro);
+    const reparacion = this.getEjemplaresReparacion(libro);
+    const total = libro.ejemplares?.length || 0;
+
+    if (total === 0) {
+      return { estado: 'Sin ejemplares', cantidad: 0, clase: 'unavailable', icono: 'pi-times-circle' };
+    }
+
+    if (disponibles > 0) {
+      return { estado: 'Disponible', cantidad: disponibles, clase: 'available', icono: 'pi-check-circle' };
+    }
+
+    if (prestados > 0) {
+      return { estado: 'No disponible', cantidad: prestados, clase: 'unavailable', icono: 'pi-times-circle' };
+    }
+
+    if (reparacion > 0) {
+      return { estado: 'En reparación', cantidad: reparacion, clase: 'repair', icono: 'pi-wrench' };
+    }
+
+    return { estado: 'No disponible', cantidad: 0, clase: 'unavailable', icono: 'pi-times-circle' };
+  }
+
+  getTooltipEstados(libro: Libro): string {
+    const disponibles = this.getEjemplaresDisponibles(libro);
+    const prestados = this.getEjemplaresPrestados(libro);
+    const reparacion = this.getEjemplaresReparacion(libro);
+    const total = libro.ejemplares?.length || 0;
+
+    if (total === 0) {
+      return 'Sin ejemplares';
+    }
+
+    let html = '<div style="text-align: left; font-size: 13px;">';
+    html += '<strong style="display: block; margin-bottom: 8px; color: #D4AF37;">Desglose de ejemplares</strong>';
     
-    if (this.categoriaSeleccionada !== 'Todas') {
-      resultado = resultado.filter(libro => libro.categoria === this.categoriaSeleccionada);
+    if (disponibles > 0) {
+      html += `
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+          <i class="pi pi-check-circle" style="color: #27ae60; font-size: 14px;"></i>
+          <span style="flex: 1;">Disponibles:</span>
+          <strong>${disponibles}</strong>
+        </div>
+      `;
+    }
+
+    if (prestados > 0) {
+      html += `
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+          <i class="pi pi-arrow-right-arrow-left" style="color: #95a5a6; font-size: 14px;"></i>
+          <span style="flex: 1;">Prestados:</span>
+          <strong>${prestados}</strong>
+        </div>
+      `;
+    }
+
+    if (disponibles === 0 && prestados > 0) {
+      html += `
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 4px; padding-top: 8px;">
+          <i class="pi pi-times-circle" style="color: #e67e22; font-size: 14px;"></i>
+          <span style="flex: 1; color: #e67e22;">No disponible</span>
+        </div>
+      `;
+    }
+
+    if (reparacion > 0) {
+      html += `
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+          <i class="pi pi-wrench" style="color: #e74c3c; font-size: 14px;"></i>
+          <span style="flex: 1;">En reparación:</span>
+          <strong>${reparacion}</strong>
+        </div>
+      `;
     }
     
-    if (this.terminoBusqueda) {
-      const termino = this.terminoBusqueda.toLowerCase();
+    html += '</div>';
+    return html;
+  }
+
+  getTotalEjemplaresDisponibles(): number {
+    return this.allLibros.reduce((total, libro) => 
+      total + this.getEjemplaresDisponibles(libro), 0
+    );
+  }
+
+  getTotalEjemplaresPrestados(): number {
+    return this.allLibros.reduce((total, libro) => 
+      total + this.getEjemplaresPrestados(libro), 0
+    );
+  }
+
+  getTotalEjemplaresReparacion(): number {
+    return this.allLibros.reduce((total, libro) => 
+      total + this.getEjemplaresReparacion(libro), 0
+    );
+  }
+
+  filtrarLibros(): void {
+    let resultado = this.allLibros;
+
+    if (this.categoriaSeleccionada !== 'Todas') {
       resultado = resultado.filter(libro => 
-        libro.titulo.toLowerCase().includes(termino) ||
-        libro.autor.toLowerCase().includes(termino) ||
-        libro.categoria.toLowerCase().includes(termino) ||
-        libro.catalogCode.toLowerCase().includes(termino)
+        libro.categoria?.nombre === this.categoriaSeleccionada
       );
     }
-    
-    return resultado;
-  }
 
-
-  get librosRecientes(): Libro[] {
-    return this.libros.slice(-4);
-  }
-
- 
-  toggleDropdown(): void {
-    this.dropdownOpen = !this.dropdownOpen;
-  }
-
-  selectCategoria(categoria: CategoriaKey): void {
-    this.categoriaSeleccionada = categoria;
-    this.dropdownOpen = false;
-  }
-
-  getDropdownText(): string {
-    if (this.categoriaSeleccionada === 'Todas') {
-      return 'Todas las categorías';
+    if (this.terminoBusqueda) {
+      const termino = this.terminoBusqueda.toLowerCase();
+      resultado = resultado.filter(libro =>
+        libro.titulo.toLowerCase().includes(termino) ||
+        this.getAutoresAsString(libro.autores).toLowerCase().includes(termino) ||
+        libro.isbn?.toLowerCase().includes(termino)
+      );
     }
-    return this.categoriaSeleccionada;
+    this.libros = resultado;
   }
 
-
-  filtrarCategoria(categoria: CategoriaKey): void {
-    this.categoriaSeleccionada = categoria;
+  buscar(): void { 
+    this.filtrarLibros(); 
   }
 
-
-  esCategoriaActiva(categoria: CategoriaKey): boolean {
-    return this.categoriaSeleccionada === categoria;
+  filtrarCategoria(categoria: CategoriaKey): void { 
+    this.categoriaSeleccionada = categoria; 
+    this.filtrarLibros(); 
   }
 
-  getStatusClass(estado: string): string {
-    switch (estado) {
-      case 'Disponible': return 'disponible';
-      case 'Prestado': return 'prestado';
-      case 'En Reparación': return 'reparacion';
-      default: return 'disponible';
+  toggleDropdown(): void { 
+    this.dropdownOpen = !this.dropdownOpen; 
+  }
+
+  selectCategoria(categoria: CategoriaKey): void { 
+    this.categoriaSeleccionada = categoria; 
+    this.dropdownOpen = false; 
+    this.filtrarLibros(); 
+  }
+
+  getDropdownText(): string { 
+    return this.categoriaSeleccionada === 'Todas' 
+      ? 'Todas las categorías' 
+      : this.categoriaSeleccionada; 
+  }
+
+  esCategoriaActiva(categoria: CategoriaKey): boolean { 
+    return this.categoriaSeleccionada === categoria; 
+  }
+
+  formatIsbn(isbn: string | undefined): string {
+    if (!isbn || isbn.length !== 13) {
+      return isbn || 'N/A';
     }
+    return [
+      isbn.slice(0, 3),
+      isbn.slice(3, 6),
+      isbn.slice(6, 9),
+      isbn.slice(9, 12),
+      isbn.slice(12, 13)
+    ].join('-');
   }
 
-  
-  verTodos(): void {
-    console.log('Ver todos los libros');
+  getAutoresAsString(autores?: Autor[]): string {
+    if (!autores || autores.length === 0) {
+      return 'Autor no asignado';
+    }
+    return autores.map(a => `${a.nombre} ${a.apPaterno}`).join(', ');
+  }
+
+  private actualizarContadores(): void {
+    const contadores: { [key: string]: number } = {};
+    this.categorias.forEach(cat => {
+      contadores[cat.nombre] = this.allLibros.filter(
+        libro => libro.categoria?.id === cat.id
+      ).length;
+    });
+    this.contadoresCategoria = contadores;
+  }
+
+  verLibro(libro: Libro): void {
+    this.dialogService.open(LibroDetalleComponent, {
+      header: 'Detalles de ' + libro.titulo,
+      width: '75%',
+      contentStyle: { "max-height": "90vh", "overflow": "auto" },
+      baseZIndex: 10000,
+      data: {
+        uuid: libro.uuid,
+        imagenUrl: libro.imagen 
+      },
+      modal: true,
+      closable: true,
+    });
+  }
+
+  toggleStats(): void {
+    this.mostrarStats = !this.mostrarStats;
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 }

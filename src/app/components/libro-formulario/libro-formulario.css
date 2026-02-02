@@ -11,6 +11,15 @@
   animation: fadeIn 0.5s ease-in-out;
 }
 
+.back-button {
+  color: var(--wine) !important;
+  margin-right: 2rem;
+}
+
+.back-button:hover {
+  background-color: rgba(92, 43, 46, 0.1) !important;
+}
+
 .form-header {
   padding-bottom: 1rem;
   border-bottom: 2px solid rgba(212, 175, 55, 0.4);
@@ -98,6 +107,15 @@ label {
   color: var(--wine);
 }
 
+.text.red {
+    color: #e24c4c;
+}
+
+.error-msg {
+    margin-top: 4px;
+    font-size: 0.85rem;
+}
+
 .fields-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
@@ -170,6 +188,86 @@ label {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* 🔥 NUEVOS ESTILOS PARA IMAGEN */
+.image-preview-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--beige);
+  border: 2px dashed rgba(212, 175, 55, 0.3); /* Ajustado a var(--gold-transparent-3) si existe, sino RGBA */
+  border-radius: 12px;
+}
+
+.image-preview {
+  width: 120px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(92, 43, 46, 0.15);
+}
+
+.image-remove-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 32px;
+  height: 32px;
+}
+
+.file-input-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-input-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--slate-100, #f1f5f9); /* Fallback si no existe la variable */
+  border: 2px dashed var(--slate-300, #cbd5e1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  color: var(--slate-600, #475569);
+  text-align: center;
+}
+
+.file-input-label:hover {
+  background: var(--beige);
+  border-color: rgba(212, 175, 55, 0.3);
+  color: var(--wine);
+}
+
+.file-input-label i {
+  font-size: 1.2rem;
+}
+
+.image-instructions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--slate-500, #64748b);
+  margin-top: 0.3rem;
+}
+
+.image-instructions i {
+  color: var(--gold);
+}
+
 @media (max-width: 900px) {
   .form-grid {
     grid-template-columns: 1fr;
@@ -181,6 +279,11 @@ label {
 
   .form-header h2 {
     font-size: 1.6rem;
+  }
+
+  .image-preview {
+    width: 100px;
+    height: 140px;
   }
 }
 

@@ -1,143 +1,204 @@
-<div class="user-catalog-container">
- 
-  <div class="user-header">
-      <div class="header-brand">
-        <img src="assets/img/Logo-Dorado.png" alt="Logo" class="brand-logo" />
-        <div class="brand-info">
-          <span class="brand-title">Biblioteca Física</span>
-          <div class="brand-subtitle">Catálogo de libros físicos de la congregación</div>
+<p-toast></p-toast>
+
+<div class="full-container">
+  <div class="main-header">
+    <div class="header-brand">
+      <img src="assets/img/Logo-Dorado.png" class="brand-logo" alt="logo" />
+      <div class="brand-info">
+        <span class="brand-title">
+          Biblioteca Joseph Ratzinger
+          <span class="admin-badge">
+            <p-chip [label]="currentUserRole" icon="pi pi-user" class="chip-admin chip-compact" />
+          </span>
+        </span>
+        <div class="brand-subtitle">Catálogo de consulta de libros físicos</div>
+      </div>
+    </div>
+    
+    <div class="header-user-section" 
+        (click)="menu.toggle($event)"
+        pTooltip="Opciones" 
+        tooltipPosition="bottom">
+      <div class="user-avatar">{{ currentUserInitials }}</div>
+      <div class="user-text">
+        <span class="user-name">{{ currentFullName }}</span>
+        <span class="user-role">{{ currentUserRole }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <p-menu #menu [model]="catalogMenuItems" [popup]="true" [appendTo]="'body'"></p-menu>
+
+  <div class="search-and-stats-wrapper">
+    <div class="search-section">
+      <div class="search-container">
+        <i class="pi pi-search search-icon"></i>
+        <input
+          type="text"
+          pInputText
+          placeholder="Buscar libros, autores, temas..."
+          class="searchbar full-w"
+          [(ngModel)]="terminoBusqueda"
+          (keyup.enter)="buscar()"
+        />
+      </div>
+      <div class="custom-filter-dropdown-container" (click)="toggleDropdown()">
+        <div class="custom-filter-dropdown-trigger">
+          <i class="pi pi-filter"></i>
+          <span>{{ getDropdownText() }}</span>
+          <i class="pi pi-chevron-down" [class.rotated]="dropdownOpen"></i>
+        </div>
+        <div class="custom-filter-dropdown-panel" *ngIf="dropdownOpen">
+          <div
+            class="filter-dropdown-option"
+            [class.selected]="'Todas' === categoriaSeleccionada"
+            (click)="selectCategoria('Todas'); $event.stopPropagation()"
+          >
+            <i class="pi pi-book"></i>
+            <span>Todas las categorías</span>
+          </div>
+          <div
+            *ngFor="let categoria of categorias"
+            class="filter-dropdown-option"
+            [class.selected]="categoria.nombre === categoriaSeleccionada"
+            (click)="selectCategoria(categoria.nombre); $event.stopPropagation()"
+          >
+            <i class="pi pi-tag"></i>
+            <span>{{ categoria.nombre }}</span>
+          </div>
         </div>
       </div>
-      <div class="header-user-section">
-        <div class="user-text">
-          <span class="user-role">Miembro de la Congregación</span>
-          <span class="user-name">Miembro</span>
-        </div>
-        <div class="user-avatar">M</div>
+    </div>
+
+    <div class="mx-5 mt-3">
+      <p-divider />
+    </div>
+
+    <div class="info-stats-row">
+      <span class="main-stat">{{ allLibros.length }} libros en catálogo</span>
+      <div>
+        <span class="secondary-stat px-2">Última actualización: Hoy</span>
+        <span class="secondary-stat px-2">Disponibles para consulta</span>
       </div>
+    </div>
   </div>
 
-      <div class="user-search-section">
-          <div class="search-container">
-            <i class="pi pi-search search-icon"></i>
-            <input type="text" pInputText placeholder="Buscar libros, autores, temas..." 
-              class="user-search-input" [(ngModel)]="terminoBusqueda" />
-          </div>
-          
-          <div class="custom-dropdown-container" (click)="toggleDropdown()">
-            <div class="custom-dropdown-trigger">
-              <i class="pi pi-filter"></i>
-              <span>{{ getDropdownText() }}</span>
-              <i class="pi pi-chevron-down" [class.rotated]="dropdownOpen"></i>
-            </div>
-            <div class="custom-dropdown-panel" *ngIf="dropdownOpen">
-              <div *ngFor="let categoria of categoriasLista" 
-                class="dropdown-option"
-                [class.selected]="categoria.value === categoriaSeleccionada"
-                (click)="selectCategoria(categoria.value); $event.stopPropagation()">
-                <i [class]="categoria.icon"></i>
-                <span>{{ categoria.label === 'Todas' ? 'Todas las categorías' : categoria.label }}</span>
-                <b>({{ contadorCategorias[categoria.value] }})</b>
-              </div>
-            </div>
-          </div>
+  <div class="admin-dashboard-panel">
 
-            <div class="user-info-row">
-              <span class="main-stat">{{ libros.length }} libros en catálogo</span>
-              <span class="secondary-stat">Última actualización: Hoy</span>
-              <span class="secondary-stat">Libros disponibles para consulta</span>
-            </div>
-       </div>
+    <div class="panel-title-section">
+      <div>
+        <h2 class="panel-main-title">Catálogo de Libros</h2>
+        <p class="panel-description">Consulta el catálogo completo de libros físicos disponibles</p>
+      </div>
+    </div>
 
-  <div class="categories-card">
+  </div>
+
+  <div class="categories-wrapper">
     <h3 class="categories-title">Categorías</h3>
-    <div class="categories-buttons-grid">
-      <button *ngFor="let categoria of categoriasLista" 
-        [class]="'category-btn ' + (esCategoriaActiva(categoria.value) ? 'active' : '')"
-        (click)="filtrarCategoria(categoria.value)">
-        <i [class]="categoria.icon"></i>
-        <span>{{ categoria.label }}</span>
-        <b>{{ contadorCategorias[categoria.value] }}</b>
+    <div class="categories-buttons-row">
+      <button
+        pButton
+        [class]="'category-button ' + (esCategoriaActiva('Todas') ? 'active-category' : '')"
+        (click)="filtrarCategoria('Todas')"
+      >
+        <i class="pi pi-book"></i>
+        <span>Todas</span>
+        <b>{{ allLibros.length }}</b>
+      </button>
+
+      <button
+        *ngFor="let cat of categorias"
+        pButton
+        [class]="'category-button ' + (esCategoriaActiva(cat.nombre) ? 'active-category' : '')"
+        (click)="filtrarCategoria(cat.nombre)"
+      >
+        <i class="pi pi-tag"></i>
+        <span>{{ cat.nombre }}</span>
+        <b>{{ contadoresCategoria[cat.nombre] || 0 }}</b>
       </button>
     </div>
   </div>
 
-  
-  <div class="books-section-header">
-    <div class="section-left">
-      <i class="pi pi-star section-star-icon"></i>
-      <h2 class="section-title">Libros Disponibles</h2>
-    </div>
-    <button class="ver-todos-link" (click)="verTodos()">
-      <span>Ver todos</span>
-      <i class="pi pi-arrow-right"></i>
-    </button>
+  <div class="catalog-title">
+    {{
+      categoriaSeleccionada === 'Todas'
+        ? 'Catálogo Completo'
+        : 'Categoría: ' + categoriaSeleccionada
+    }}
+    ({{ libros.length }} libro{{ libros.length !== 1 ? 's' : '' }})
   </div>
 
- 
-  <div class="admin-style-books-grid">
-    <div *ngFor="let libro of librosFiltrados.slice(0, 4)" class="admin-style-book-card">
-  
-      <div class="book-image-container">
-        <img [src]="libro.img" alt="portada" class="admin-book-img" />
-        <span class="status-badge" [ngClass]="getStatusClass(libro.estado)">{{ libro.estado }}</span>
-      </div>
-      
-      
-      <div class="book-info-admin-style">
-        <h4 class="admin-book-title">{{ libro.titulo }}</h4>
-        <p class="admin-book-author">{{ libro.autor }}</p>
-        <span class="admin-book-category">{{ libro.categoria }}</span>
-        
-        <div class="admin-book-details">
-          <span class="detail-item"><i class="pi pi-tag"></i> {{ libro.catalogCode }}</span>
-          <span class="detail-item"><i class="pi pi-map-marker"></i> {{ libro.location }} - {{ libro.shelf }}</span>
-          <span class="detail-item"><i class="pi pi-calendar"></i> {{ libro.publishYear }}</span>
-          <span class="detail-item"><i class="pi pi-file"></i> {{ libro.pages }} páginas • {{ libro.format }}</span>
+  <div *ngIf="loading" style="text-align: center; padding: 2rem">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2.5rem; color: var(--wine)"></i>
+  </div>
+
+  <div *ngIf="!loading && libros.length > 0" class="catalog-grid">
+    <p-card *ngFor="let libro of libros" class="book-card-compact">
+      <ng-template pTemplate="header">
+        <div class="book-image-container">
+          <img
+            [src]="(libro.imagen | secureImage | async) || 'assets/img/placeholder.png'"
+            alt="portada"
+            class="book-img-compact"
+          />
+          
+          <div class="book-status-badges">
+            <span 
+              [class]="'status-badge ' + getEstadoPrincipal(libro).clase"
+              [pTooltip]="getTooltipEstados(libro)"
+              [escape]="false"
+              tooltipPosition="bottom"
+              [showDelay]="200"
+            >
+              <i [class]="'pi ' + getEstadoPrincipal(libro).icono"></i>
+              {{ getEstadoPrincipal(libro).cantidad }}
+            </span>
+          </div>
+        </div>
+      </ng-template>
+
+      <div class="book-info-compact">
+        <h4 class="book-title-compact">{{ libro.titulo }}</h4>
+        <p class="book-author-compact">
+          {{ getAutoresAsString(libro.autores) }}
+        </p>
+        <span class="book-category-compact" [title]="libro.categoria?.nombre">
+          {{ libro.categoria?.nombre | slice : 0 : 22 }}{{ (libro.categoria?.nombre?.length || 0) > 22 ? '...' : '' }}
+        </span>
+
+        <div class="book-details-compact">
+          <span class="detail-item-compact">
+            <i class="pi pi-barcode"></i> {{ libro.ejemplares?.[0]?.codigo || 'Sin código' }}
+          </span>
+          <span class="detail-item-compact">
+            <i class="pi pi-tag"></i> {{ formatIsbn(libro.isbn) }}
+          </span>
+          <span class="detail-item-compact">
+            <i class="pi pi-calendar"></i> {{ libro.anho }}
+          </span>
+          <span class="detail-item-compact">
+            <i class="pi pi-file"></i> {{ libro.paginas }} páginas
+          </span>
         </div>
       </div>
-    </div>
-  </div>
 
- 
-  <div class="books-section-header" style="margin-top: 3rem;">
-    <div class="section-left">
-      <i class="pi pi-star section-star-icon"></i>
-      <h2 class="section-title">Agregados Recientemente</h2>
-    </div>
-    <button class="ver-todos-link" (click)="verTodos()">
-      <span>Ver todos</span>
-      <i class="pi pi-arrow-right"></i>
-    </button>
-  </div>
-
-  <div class="admin-style-books-grid">
-    <div *ngFor="let libro of librosRecientes" class="admin-style-book-card">
-      <div class="book-image-container">
-        <img [src]="libro.img" alt="portada" class="admin-book-img" />
-        <span class="status-badge" [ngClass]="getStatusClass(libro.estado)">{{ libro.estado }}</span>
+      <div class="book-actions-compact">
+        <button
+          pButton
+          icon="pi pi-align-left"
+          class="action-btn-compact view-btn"
+          pTooltip="Ver Detalles"
+          (click)="verLibro(libro)"
+        ></button>
       </div>
-      
-      <div class="book-info-admin-style">
-        <h4 class="admin-book-title">{{ libro.titulo }}</h4>
-        <p class="admin-book-author">{{ libro.autor }}</p>
-        <span class="admin-book-category">{{ libro.categoria }}</span>
-        
-        <div class="admin-book-details">
-          <span class="detail-item"><i class="pi pi-tag"></i> {{ libro.catalogCode }}</span>
-          <span class="detail-item"><i class="pi pi-map-marker"></i> {{ libro.location }} - {{ libro.shelf }}</span>
-          <span class="detail-item"><i class="pi pi-calendar"></i> {{ libro.publishYear }}</span>
-          <span class="detail-item"><i class="pi pi-file"></i> {{ libro.pages }} páginas • {{ libro.format }}</span>
-        </div>
-      </div>
-    </div>
-  </div> 
-
- 
-  <div *ngIf="librosFiltrados.length === 0" class="no-books-message">
+    </p-card>
+  </div>
+  
+  <div *ngIf="!loading && libros.length === 0" class="no-books-message">
     <i class="pi pi-info-circle"></i>
-    <h3>No hay libros en esta categoría</h3>
-    <p>La categoría "{{ categoriaSeleccionada }}" no contiene libros actualmente.</p>
+    <h3>No se encontraron libros</h3>
+    <p class="text primary">No hay libros que coincidan con la búsqueda o el filtro aplicado.</p>
   </div>
+  <br /><br />
 </div>
-

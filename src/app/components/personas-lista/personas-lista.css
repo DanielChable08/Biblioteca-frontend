@@ -1,0 +1,361 @@
+
+
+:host {
+  --wine: #5C2B2E;
+  --gold: #D4AF37;
+  --beige: #EDE6D7;
+  --white: #FFFFFF;
+  --gray: #C4C4C4;
+  --brown: #8B4513;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.header-container {
+  background-color: white;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.form-header-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 38px 24px;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.form-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--wine);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0;
+}
+
+.form-header h2 i {
+  color: var(--gold);
+  font-size: 2.5rem;
+}
+
+.back-button {
+  color: var(--wine) !important;
+  font-size: 1.2rem;
+  transition: color 0.3s;
+  margin-right: 0.5rem;
+}
+
+.back-button:hover {
+  color: var(--gold) !important;
+  background-color: rgba(92, 43, 46, 0.1) !important;
+}
+
+:host ::ng-deep .p-button-wine {
+  background: var(--wine) !important;
+  border-color: var(--wine) !important;
+  color: var(--white) !important;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+:host ::ng-deep .p-button-wine:hover {
+  background: #4a2224 !important;
+  border-color: #4a2224 !important;
+  transform: translateY(-1px);
+}
+
+.admin-page-container {
+  padding: 2rem;
+  background-color: var(--beige);
+  min-height: calc(100vh - 4rem);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+:host ::ng-deep .custom-table.p-datatable {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 3px 12px rgba(92, 43, 46, 0.08);
+  border: 1px solid var(--gray);
+}
+
+:host ::ng-deep .custom-table .p-datatable-header {
+  background-color: var(--white);
+  border-bottom: 1px solid var(--gray);
+  padding: 1rem;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-header > span {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--wine);
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+:host ::ng-deep .table-search-input.p-inputtext {
+  border: 1px solid var(--gray) !important;
+  border-radius: 8px !important;
+  padding-left: 2.5rem !important;
+  height: 40px;
+  min-width: 350px;
+}
+
+:host ::ng-deep .table-search-input.p-inputtext:enabled:focus {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 1px var(--gold) !important;
+}
+
+:host ::ng-deep .clear-filter-button.p-button.p-button-outlined {
+  color: var(--wine) !important;
+  border-color: var(--wine) !important;
+  height: 40px;
+  width: 40px;
+  border-radius: 8px !important;
+}
+
+:host ::ng-deep .clear-filter-button.p-button.p-button-outlined:enabled:hover {
+  background: var(--beige) !important;
+  color: var(--wine) !important;
+}
+
+:host ::ng-deep .clear-filter-button.p-button.p-button-outlined:enabled:focus {
+  box-shadow: 0 0 0 1px var(--gold) !important;
+  border-color: var(--wine) !important;
+}
+
+:host ::ng-deep .custom-table .p-datatable-thead > tr > th {
+  background-color: #f8f6f2;
+  color: var(--wine);
+  font-weight: 600;
+  border-color: var(--gray) !important;
+}
+
+:host ::ng-deep .custom-table .p-datatable-tbody > tr > td {
+  border-color: #e0d8c5 !important;
+  color: var(--brown);
+  vertical-align: middle;
+}
+
+:host ::ng-deep .custom-table .p-datatable-tbody > tr:hover {
+  background-color: #f4ecd7 !important;
+}
+
+:host ::ng-deep .custom-table .p-paginator {
+  background-color: var(--white);
+  border-top: 1px solid var(--gray);
+  border-radius: 0 0 12px 12px;
+}
+
+:host ::ng-deep .custom-table .p-paginator .p-paginator-element:not(.p-disabled).p-highlight {
+  background: var(--wine);
+  border-color: var(--wine);
+  color: var(--white);
+}
+
+.persona-info {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.persona-avatar-icon {
+  color: var(--gold);
+  font-size: 1.2rem;
+}
+
+.persona-name {
+  font-weight: 600;
+  color: var(--wine);
+}
+
+.phone-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--brown);
+}
+
+.phone-icon {
+  color: var(--gold);
+  font-size: 0.9rem;
+}
+
+.tipo-badge {
+  padding: 0.3rem 0.7rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-block;
+  text-transform: capitalize;
+}
+
+.tipo-lector {
+  background: rgba(76, 175, 80, 0.15);
+  color: #2e7d32;
+}
+
+.tipo-bibliotecario {
+  background: rgba(33, 150, 243, 0.15);
+  color: #1565c0;
+}
+
+.tipo-otro {
+  background: rgba(158, 158, 158, 0.15);
+  color: #424242;
+}
+
+.table-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.action-btn-compact {
+  background: none !important;
+  border: none !important;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 0.8rem !important;
+  color: var(--wine) !important;
+  cursor: pointer;
+}
+
+.action-btn-compact:hover {
+  background: var(--beige) !important;
+  transform: scale(1.15);
+}
+
+.action-btn-compact.edit-btn:hover {
+  color: var(--gold) !important;
+}
+
+.action-btn-compact.delete-btn:hover {
+  color: #c62828 !important;
+}
+
+.empty-message,
+.loading-message {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.empty-icon,
+.loading-icon {
+  font-size: 3rem;
+  color: var(--gray);
+  margin-bottom: 1rem;
+}
+
+.empty-message p,
+.loading-message p {
+  color: var(--brown);
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+
+:host ::ng-deep .custom-table .p-datatable-thead > tr > th {
+  background-color: #f8f6f2;
+  color: var(--wine);
+  font-weight: 600;
+  border-right: 1px solid var(--gray) !important;
+  border-bottom: 1px solid var(--gray) !important;
+  padding: 0.75rem 1rem;
+}
+
+:host ::ng-deep .custom-table .p-datatable-thead > tr > th:last-child {
+  border-right: none !important;
+}
+
+:host ::ng-deep .custom-table .p-datatable-tbody > tr > td {
+  border-right: 1px solid #e0d8c5 !important;
+  border-bottom: 1px solid #e0d8c5 !important;
+  color: var(--brown);
+  vertical-align: middle;
+  padding: 0.75rem 1rem;
+}
+
+:host ::ng-deep .custom-table .p-datatable-tbody > tr > td:last-child {
+  border-right: none !important;
+}
+
+:host ::ng-deep .custom-table .p-datatable-tbody > tr:hover {
+  background-color: #f4ecd7 !important;
+}
+
+:host ::ng-deep .custom-table .p-datatable-thead > tr > th:first-child,
+:host ::ng-deep .custom-table .p-datatable-tbody > tr > td:first-child {
+  text-align: center;
+}
+
+:host ::ng-deep .custom-table .p-datatable-thead > tr > th:last-child,
+:host ::ng-deep .custom-table .p-datatable-tbody > tr > td:last-child {
+  text-align: center;
+}
+
+
+
+@media (max-width: 768px) {
+  .admin-page-container {
+    padding: 1rem;
+  }
+
+  .form-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .table-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .filter-container {
+    width: 100%;
+  }
+
+  :host ::ng-deep .table-search-input.p-inputtext {
+    width: 100%;
+    min-width: unset;
+  }
+
+  :host ::ng-deep .custom-table .p-datatable-thead > tr > th,
+  :host ::ng-deep .custom-table .p-datatable-tbody > tr > td {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.5rem;
+  }
+
+  .table-actions {
+    gap: 0.2rem;
+  }
+}

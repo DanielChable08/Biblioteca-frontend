@@ -5,14 +5,21 @@
         <div class="form-header-container">
             <div class="form-header page-header-layout">
                 <div class="header-left">
-                    <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar a Multas" tooltipPosition="bottom"></button>
+                    <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" 
+                            (click)="regresar()" pTooltip="Regresar a Multas" tooltipPosition="bottom"></button>
                     <h2><i class="pi pi-money-bill user-icon"></i> Registrar Pago de Multas</h2>
                 </div>
+                <p-button 
+                label="Historial de pagos" 
+                icon="pi pi-list" 
+                styleClass="p-button-wine" 
+                (onClick)="irAlIndexPagos()"
+                [disabled]="procesando">
+                </p-button>
             </div>
         </div>
     </div>
 
-    <!-- Resumen de Pago -->
     <div class="pago-resumen">
         <div class="resumen-card">
             <div class="resumen-item">
@@ -40,14 +47,13 @@
         </div>
     </div>
 
-    <!-- Tabla de Multas -->
     <p-table 
         #dtMultas 
         [value]="multas" 
         [loading]="loading" 
         [paginator]="true" 
         [rows]="10" 
-        [globalFilterFields]="['motivoMulta.nombre', 'monto']" 
+        [globalFilterFields]="['motivoMulta.nombre', 'monto', 'lector.nombre', 'lector.apPaterno']" 
         styleClass="p-datatable-striped p-datatable-gridlines custom-table"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} multas" 
         [showCurrentPageReport]="true"
@@ -67,7 +73,8 @@
                             class="table-search-input" 
                         />
                     </span>
-                    <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtMultas)" pTooltip="Limpiar filtro"></p-button>
+                    <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" 
+                              (click)="clearFilter(dtMultas)" pTooltip="Limpiar filtro"></p-button>
                 </div>
             </div>
         </ng-template>
@@ -82,6 +89,7 @@
                     </p-checkbox>
                 </th>
                 <th>ID</th>
+                <th>Lector</th>
                 <th>Motivo</th>
                 <th>Monto</th>
                 <th>Fecha Emisión</th>
@@ -98,20 +106,20 @@
                     </p-checkbox>
                 </td>
                 <td>{{ multa.id }}</td>
+                <td>{{ getNombreLector(multa) }}</td>
                 <td>{{ multa.motivoMulta?.nombre || 'N/A' }}</td>
-                <td>${{ multa.monto | number:'1.2-2' }}</td>
+                <td><strong>${{ multa.monto | number:'1.2-2' }}</strong></td>
                 <td>{{ multa.fechaEmision | date:'dd/MM/yyyy' }}</td>
             </tr>
         </ng-template>
 
         <ng-template pTemplate="emptymessage">
             <tr>
-                <td colspan="5" class="text-center empty-message">No hay multas pendientes de pago.</td>
+                <td colspan="6" class="text-center empty-message">No hay multas pendientes de pago.</td>
             </tr>
         </ng-template>
     </p-table>
 
-    <!-- Botones de Acción -->
     <div class="pago-footer">
         <p-button 
             label="Cancelar" 

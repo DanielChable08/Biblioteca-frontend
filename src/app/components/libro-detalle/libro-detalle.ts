@@ -13,11 +13,12 @@
   import { finalize, forkJoin, map } from 'rxjs';
   import { DialogService } from 'primeng/dynamicdialog';
   import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
+  import { SecureImagePipe } from '../../pipes/secure-image.pipe';
 
   @Component({
     selector: 'app-libro-detalle',
     standalone: true,
-    imports: [CommonModule, ProgressSpinnerModule, TagModule, DividerModule, ButtonModule],
+    imports: [CommonModule, ProgressSpinnerModule, TagModule, DividerModule, ButtonModule,SecureImagePipe],
     templateUrl: './libro-detalle.html',
     styleUrls: ['./libro-detalle.css']
   })

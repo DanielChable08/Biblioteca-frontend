@@ -10,6 +10,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
@@ -27,7 +28,8 @@ type TipoCatalogoEjemplar = 'condicion' | 'estado';
     InputTextModule,
     SelectModule,
     ToastModule,
-    DialogModule
+    DialogModule,
+    TooltipModule
   ],
   templateUrl: './ejemplar-formulario.html',
   styleUrls: ['./ejemplar-formulario.css']
@@ -38,65 +40,100 @@ export default class EjemplarFormularioComponent implements OnInit {
   private bookService = inject(BookService);
   private dialogRef = inject(DynamicDialogRef);
   private config = inject(DynamicDialogConfig);
-  private messageService!: MessageService; // Se inicializa en ngOnInit
+  private messageService!: MessageService;
 
-  ejemplarForm!: FormGroup;
-  catalogoForm!: FormGroup;
+  ejemplarForm: FormGroup = this.fb.group({
+    ubicacion: [''],
+    idLibro: [null, Validators.required],
+    idCondicionFisicaEjemplar: [null, Validators.required],
+    idEstadoEjemplar: [null, Validators.required]
+  });
+
+  catalogoForm: FormGroup = this.fb.group({
+    nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]]
+  });
 
   condiciones: Catalogo[] = [];
   estados: Catalogo[] = [];
   libros: any[] = [];
-  isSubmitting = false;
 
+  isSubmitting = false;
   idLibro?: number;
   ejemplarUuid?: string;
   isEditMode = false;
   mostrarSelectorLibro = false;
-
   displayCatalogoDialog = false;
   catalogoSiendoAgregado: TipoCatalogoEjemplar | null = null;
 
   ngOnInit(): void {
-    // IMPORTANTE: Recibir el MessageService compartido desde el padre
-    this.messageService = this.config.data?.messageService || inject(MessageService);
+    this.messageService = this.config.data?.messageService;
+    
+    if (!this.messageService) {
+      console.error('MessageService no fue proporcionado');
+      return;
+    }
     
     this.idLibro = this.config.data?.idLibro;
     this.ejemplarUuid = this.config.data?.ejemplarUuid;
     this.isEditMode = !!this.ejemplarUuid;
     this.mostrarSelectorLibro = !this.idLibro;
 
-    this.initForms();
+    if (this.idLibro) {
+      this.ejemplarForm.patchValue({ idLibro: this.idLibro });
+    }
+
     this.loadCatalogs();
+    
+    if (this.mostrarSelectorLibro) {
+      this.loadLibros();
+    }
 
     if (this.isEditMode && this.ejemplarUuid) {
       this.loadEjemplarData();
     }
-
-    if (this.mostrarSelectorLibro) {
-      this.loadLibros();
-    }
-  }
-
-  private initForms(): void {
-    this.ejemplarForm = this.fb.group({
-      ubicacion: [''],
-      idLibro: [this.idLibro || null, Validators.required],
-      idCondicionFisicaEjemplar: [null, Validators.required],
-      idEstadoEjemplar: [null, Validators.required]
-    });
-
-    this.catalogoForm = this.fb.group({
-      nombre: ['', Validators.required]
-    });
   }
 
   private loadCatalogs(): void {
-    this.catalogService.getCondicionesFisicas().subscribe(data => this.condiciones = data);
-    this.catalogService.getEstadosEjemplares().subscribe(data => this.estados = data);
+    this.catalogService.getCondicionesFisicas().subscribe({
+      next: (data) => {
+        this.condiciones = data;
+      },
+      error: (err) => {
+        this.messageService?.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar las condiciones físicas'
+        });
+      }
+    });
+
+    this.catalogService.getEstadosEjemplares().subscribe({
+      next: (data) => {
+        this.estados = data;
+      },
+      error: (err) => {
+        this.messageService?.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los estados'
+        });
+      }
+    });
   }
 
   private loadLibros(): void {
-    this.bookService.getLibros().subscribe(data => this.libros = data);
+    this.bookService.getLibros().subscribe({
+      next: (data) => {
+        this.libros = data;
+      },
+      error: (err) => {
+        this.messageService?.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los libros'
+        });
+      }
+    });
   }
 
   private loadEjemplarData(): void {
@@ -105,18 +142,19 @@ export default class EjemplarFormularioComponent implements OnInit {
     this.bookService.getEjemplarByUuid(this.ejemplarUuid).subscribe({
       next: (ejemplar: any) => {
         this.ejemplarForm.patchValue({
-          ubicacion: ejemplar.ubicacion,
+          ubicacion: ejemplar.ubicacion || '',
           idLibro: ejemplar.idLibro,
           idCondicionFisicaEjemplar: ejemplar.idCondicionFisicaEjemplar,
           idEstadoEjemplar: ejemplar.idEstadoEjemplar
         });
       },
-      error: () => {
-        this.messageService.add({
+      error: (err) => {
+        this.messageService?.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'No se pudo cargar el ejemplar.'
+          detail: 'No se pudo cargar el ejemplar para edición'
         });
+        this.dialogRef.close();
       }
     });
   }
@@ -128,26 +166,43 @@ export default class EjemplarFormularioComponent implements OnInit {
   }
 
   guardarNuevoCatalogo(): void {
-    if (this.catalogoForm.invalid || !this.catalogoSiendoAgregado) return;
+    if (this.catalogoForm.invalid || !this.catalogoSiendoAgregado) {
+      this.catalogoForm.markAllAsTouched();
+      return;
+    }
+
+    const nombreCatalogo = this.catalogoForm.value.nombre.trim();
 
     const request$ = this.catalogoSiendoAgregado === 'condicion'
-      ? this.catalogService.createCondicionFisica(this.catalogoForm.value)
-      : this.catalogService.createEstadoEjemplar(this.catalogoForm.value);
+      ? this.catalogService.createCondicionFisica({ nombre: nombreCatalogo })
+      : this.catalogService.createEstadoEjemplar({ nombre: nombreCatalogo });
 
-    request$.subscribe(nuevoItem => {
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Opción agregada.'
-      });
-      this.displayCatalogoDialog = false;
+    request$.subscribe({
+      next: (nuevoItem) => {
+        this.messageService?.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: `${this.catalogoSiendoAgregado === 'condicion' ? 'Condición' : 'Estado'} agregado correctamente`
+        });
 
-      if (this.catalogoSiendoAgregado === 'condicion') {
-        this.condiciones = [...this.condiciones, nuevoItem];
-        this.ejemplarForm.patchValue({ idCondicionFisicaEjemplar: nuevoItem.id });
-      } else {
-        this.estados = [...this.estados, nuevoItem];
-        this.ejemplarForm.patchValue({ idEstadoEjemplar: nuevoItem.id });
+        this.displayCatalogoDialog = false;
+
+        if (this.catalogoSiendoAgregado === 'condicion') {
+          this.condiciones = [...this.condiciones, nuevoItem];
+          this.ejemplarForm.patchValue({ idCondicionFisicaEjemplar: nuevoItem.id });
+        } else {
+          this.estados = [...this.estados, nuevoItem];
+          this.ejemplarForm.patchValue({ idEstadoEjemplar: nuevoItem.id });
+        }
+
+        this.catalogoSiendoAgregado = null;
+      },
+      error: (err) => {
+        this.messageService?.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo agregar el elemento'
+        });
       }
     });
   }
@@ -155,6 +210,11 @@ export default class EjemplarFormularioComponent implements OnInit {
   onSubmit(): void {
     if (this.ejemplarForm.invalid) {
       this.ejemplarForm.markAllAsTouched();
+      this.messageService?.add({
+        severity: 'warn',
+        summary: 'Formulario incompleto',
+        detail: 'Por favor completa todos los campos obligatorios'
+      });
       return;
     }
 
@@ -169,18 +229,31 @@ export default class EjemplarFormularioComponent implements OnInit {
       finalize(() => this.isSubmitting = false)
     ).subscribe({
       next: () => {
-        this.messageService.add({
+        this.messageService?.add({
           severity: 'success',
           summary: 'Éxito',
-          detail: this.isEditMode ? 'Ejemplar actualizado.' : 'Ejemplar agregado.'
+          detail: this.isEditMode ? 'Ejemplar actualizado correctamente' : 'Ejemplar agregado correctamente'
         });
-        setTimeout(() => this.dialogRef.close(true), 1000);
+
+        setTimeout(() => {
+          this.dialogRef.close(true);
+        }, 1000);
       },
-      error: () => {
-        this.messageService.add({
+      error: (err) => {
+        let errorDetail = 'No se pudo guardar el ejemplar';
+        
+        if (err.status === 409) {
+          errorDetail = 'Ya existe un ejemplar con ese código de barras';
+        } else if (err.status === 404) {
+          errorDetail = 'Libro no encontrado';
+        } else if (err.error?.message) {
+          errorDetail = err.error.message;
+        }
+
+        this.messageService?.add({
           severity: 'error',
           summary: 'Error',
-          detail: this.isEditMode ? 'No se pudo actualizar.' : 'No se pudo agregar el ejemplar.'
+          detail: errorDetail
         });
       }
     });
@@ -188,6 +261,11 @@ export default class EjemplarFormularioComponent implements OnInit {
 
   cancelar(): void {
     this.dialogRef.close();
+  }
+
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.ejemplarForm.get(fieldName);
+    return !!(field && field.invalid && field.touched);
   }
 
   get tituloModal(): string {

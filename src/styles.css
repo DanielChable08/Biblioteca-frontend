@@ -1,4 +1,5 @@
 /* Paleta Global */
+
 :root {
   --beige: #ede6d7;
   --beig-transparent-5: #ede6d752;
@@ -308,7 +309,123 @@ input.form-comp:hover,
   color: var(--wine);
 }
 
+
+/*Barra de busqueda*/
+
+
+.table-search-input ~ .pi-search,
+.table-search-input + .pi-search,
+.p-input-icon-left .pi-search {
+  left: 10px !important;
+}
+
+.p-input-icon-left {
+  position: relative;
+}
+
+.p-input-icon-left i {
+  position: absolute;
+  left: 10px !important;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  color: var(--slate-500);
+  z-index: 2;
+}
+
+.table-search-input {
+  padding-left: 2.8rem !important; 
+}
+
+
+
+
 /*Estilos TextArea*/
 .p-textarea.form-comp {
   font-size: 0.95rem;
+}
+
+
+/* SOBRESCRIBIR COLOR PRIMARIO - DATEPICKER BEIGE/DORADO */
+body .p-datepicker .p-datepicker-calendar td > span.p-highlight {
+  background: #EDD9A3 !important;
+  color: #5C2B2E !important;
+  font-weight: 700 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, 0.3) !important;
+}
+
+body .p-datepicker .p-datepicker-calendar td > span.p-highlight:hover {
+  background: #D4AF37 !important;
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.5) !important;
+  transform: scale(1.05) !important;
+}
+
+body .p-datepicker .p-datepicker-calendar td.p-datepicker-today > span {
+  background-color: rgba(212, 175, 55, 0.15) !important;
+  color: #5C2B2E !important;
+  border: 2px solid #D4AF37 !important;
+  font-weight: 600 !important;
+}
+
+body .p-datepicker .p-datepicker-calendar td.p-datepicker-today > span.p-highlight {
+  background: #D4AF37 !important;
+  color: #5C2B2E !important;
+  border: 2px solid #5C2B2E !important;
+}
+
+body .p-datepicker .p-datepicker-calendar td > span:not(.p-highlight):not(.p-disabled):hover {
+  background-color: rgba(212, 175, 55, 0.2) !important;
+  color: #5C2B2E !important;
+}
+
+body .p-datepicker .p-datepicker-header {
+  background-color: #5C2B2E !important;
+  color: white !important;
+  border-bottom: 2px solid #D4AF37 !important;
+}
+
+body .p-datepicker .p-datepicker-header .p-datepicker-prev-button,
+body .p-datepicker .p-datepicker-header .p-datepicker-next-button {
+  color: #D4AF37 !important;
+}
+
+body .p-datepicker .p-datepicker-header .p-datepicker-prev-button:hover,
+body .p-datepicker .p-datepicker-header .p-datepicker-next-button:hover {
+  color: white !important;
+  background-color: rgba(212, 175, 55, 0.3) !important;
+}
+
+body .p-datepicker .p-datepicker-header .p-datepicker-title {
+  color: #D4AF37 !important;
+  font-weight: 600 !important;
+}
+
+body .p-datepicker .p-datepicker-calendar thead tr th {
+  color: #5C2B2E !important;
+  font-weight: 600 !important;
+  background-color: rgba(212, 175, 55, 0.1) !important;
+}
+
+body .p-datepicker {
+  border: 2px solid rgba(212, 175, 55, 0.3) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(92, 43, 46, 0.15) !important;
+}
+
+body .p-datepicker .p-timepicker {
+  border-top: 2px solid rgba(212, 175, 55, 0.3) !important;
+}
+
+body .p-datepicker .p-timepicker button {
+  color: #5C2B2E !important;
+}
+
+body .p-datepicker .p-timepicker button:hover {
+  background-color: rgba(212, 175, 55, 0.2) !important;
+}
+
+body .p-datepicker .p-timepicker span {
+  color: #5C2B2E !important;
+  font-weight: 600 !important;
 }

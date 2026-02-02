@@ -1,17 +1,16 @@
 import { Usuario } from './usuario';
 import { Catalogo, Ejemplar } from './biblioteca';
 
-// DETALLE DE PRÉSTAMO (cada ejemplar prestado)
+
 export interface PrestamoDetalle {
   id?: number;
   idEjemplar: number;
   fechaDevolucion?: string | null;
-  idEstadoEjemplar: number;        // CAMBIO: Este campo debe ser idEstadoEjemplar
+  idEstadoEjemplar: number;        
   ejemplar?: Ejemplar;
-  estadoEjemplar?: Catalogo;       // Relación opcional para mostrar el estado de cada ejemplar
+  estadoEjemplar?: Catalogo;       
 }
 
-// PRÉSTAMO PRINCIPAL
 export interface Prestamo {
   id?: number;
   uuid?: string;
@@ -27,7 +26,7 @@ export interface Prestamo {
   estadoPrestamo?: Catalogo;
 }
 
-// PAYLOAD PARA CREAR PRÉSTAMO PRINCIPAL
+
 export interface PrestamoPayload {
   fechaPrestamo: string;
   fechaLimite: string;
@@ -36,10 +35,19 @@ export interface PrestamoPayload {
   idEstadoPrestamo: number;
 }
 
-// PAYLOAD PARA DETALLE DE PRÉSTAMO
-// Este es el modelo que enviarás en el array de carga masiva
+
 export interface PrestamoDetallePayload {
   idEjemplar: number;
   fechaDevolucion?: string | null;
   idEstadoEjemplar: number;
+}
+
+
+export interface PoliticaMulta {
+  id: number;
+  diasGracia: number;
+  multaDiaria: number;
+  multaMaxima: number | null;
+  vigente: boolean;
+  uuid: string;
 }

@@ -14,7 +14,7 @@
   <div *ngIf="!loading && libro">
     <div class="detail-grid">
       <div class="book-cover-container">
-         <img [src]="libro.imagen || 'assets/img/placeholder.png'" alt="portada" />
+         <img [src]="(libro.imagen | secureImage | async) || 'assets/img/placeholder.png'">
       </div>
 
       <div class="book-info-container">

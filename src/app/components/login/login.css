@@ -92,10 +92,11 @@
 }
 
 .card-header h2 {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: var(--vino-profundo);
   margin: 1rem 0 0.5rem;
+  font-family:Verdana, Geneva, Tahoma, sans-serif;
 }
 
 .card-header p {

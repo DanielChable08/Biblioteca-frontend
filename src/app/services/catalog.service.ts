@@ -12,6 +12,7 @@ import {
   CondicionFisica,
   EstadoPrestamo 
 } from '../models/biblioteca';
+import { Rol } from '../models/usuario';
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +21,7 @@ export class CatalogService {
   private http = inject(HttpClient);
   private apiUrl = 'http://localhost:8080/sdt/v1';
 
+  // Autores
   getAutores(): Observable<Autor[]> {
     return this.http.get<Autor[]>(`${this.apiUrl}/autores`);
   }
@@ -28,11 +30,11 @@ export class CatalogService {
     return this.http.get<Autor>(`${this.apiUrl}/autores/${uuid}`);
   }
 
-  createAutor(autorData: { nombre: string; apPaterno: string; apMaterno: string }): Observable<Autor> {
+  createAutor(autorData: { nombre: string; apPaterno?: string; apMaterno?: string }): Observable<Autor> {
     return this.http.post<Autor>(`${this.apiUrl}/autores`, autorData);
   }
 
-  updateAutor(uuid: string, autorData: { nombre: string; apPaterno: string; apMaterno: string }): Observable<Autor> {
+  updateAutor(uuid: string, autorData: { nombre: string; apPaterno?: string; apMaterno?: string }): Observable<Autor> {
     return this.http.put<Autor>(`${this.apiUrl}/autores/${uuid}`, autorData);
   }
 
@@ -40,7 +42,7 @@ export class CatalogService {
     return this.http.delete<void>(`${this.apiUrl}/autores/${uuid}`);
   }
 
-  // ============ CATEGORÍAS ============
+  // Categorias
   getCategorias(): Observable<Catalogo[]> {
     return this.http.get<Catalogo[]>(`${this.apiUrl}/categorias`);
   }
@@ -61,7 +63,7 @@ export class CatalogService {
     return this.http.delete<void>(`${this.apiUrl}/categorias/${uuid}`);
   }
 
-  // ============ EDITORIALES ============
+  // Editoriales
   getEditoriales(): Observable<Catalogo[]> {
     return this.http.get<Catalogo[]>(`${this.apiUrl}/editoriales`);
   }
@@ -82,7 +84,7 @@ export class CatalogService {
     return this.http.delete<void>(`${this.apiUrl}/editoriales/${uuid}`);
   }
 
-  // ============ IDIOMAS ============
+  // Idiomas
   getIdiomas(): Observable<Catalogo[]> {
     return this.http.get<Catalogo[]>(`${this.apiUrl}/idiomas`);
   }
@@ -103,7 +105,7 @@ export class CatalogService {
     return this.http.delete<void>(`${this.apiUrl}/idiomas/${uuid}`);
   }
 
-  // ============ TIPOS DE LIBRO ============
+  // Tipos libros
   getTiposLibros(): Observable<Catalogo[]> {
     return this.http.get<Catalogo[]>(`${this.apiUrl}/tipos-libros`);
   }
@@ -124,11 +126,10 @@ export class CatalogService {
     return this.http.delete<void>(`${this.apiUrl}/tipos-libros/${uuid}`);
   }
 
-  // ============ ESTADOS DE EJEMPLAR ============
+  // Estados ejemplares
   getEstadosEjemplares(): Observable<EstadoEjemplar[]> {
     return this.http.get<EstadoEjemplar[]>(`${this.apiUrl}/estados-ejemplares`);
   }
-
 
   getEstadoEjemplarByUuid(uuid: string): Observable<EstadoEjemplar> {
     return this.http.get<EstadoEjemplar>(`${this.apiUrl}/estados-ejemplares/${uuid}`);
@@ -146,8 +147,7 @@ export class CatalogService {
     return this.http.delete<void>(`${this.apiUrl}/estados-ejemplares/${uuid}`);
   }
 
-
-  // ============ CONDICIONES FÍSICAS ============
+  // Condiciones fisicas
   getCondicionesFisicas(): Observable<Catalogo[]> {
     return this.http.get<Catalogo[]>(`${this.apiUrl}/condicion-fisica-ejemplar`);
   }
@@ -168,15 +168,18 @@ export class CatalogService {
     return this.http.delete<void>(`${this.apiUrl}/condicion-fisica-ejemplar/${uuid}`);
   }
 
-  // ============ TIPOS DE PERSONA ============
+  //Tipos de personas
+  getRoles(): Observable<Rol[]> {
+    return this.http.get<Rol[]>(`${this.apiUrl}/rol`);
+  }
+
   getTiposPersonas(): Observable<TipoPersona[]> {
     return this.http.get<TipoPersona[]>(`${this.apiUrl}/tipos-personas`);
   }
 
   getTiposPersona(): Observable<TipoPersona[]> {
-  return this.http.get<TipoPersona[]>(`${this.apiUrl}/tipos-personas`);
+    return this.http.get<TipoPersona[]>(`${this.apiUrl}/tipos-personas`);
   }
-
 
   getTipoPersonaByUuid(uuid: string): Observable<TipoPersona> {
     return this.http.get<TipoPersona>(`${this.apiUrl}/tipos-personas/${uuid}`);
@@ -194,7 +197,7 @@ export class CatalogService {
     return this.http.delete<void>(`${this.apiUrl}/tipos-personas/${uuid}`);
   }
 
-    // ============ ESTADOS DE PRÉSTAMO ============
+  // Estados de prestamos
   getEstadosPrestamos(): Observable<EstadoPrestamo[]> {
     return this.http.get<EstadoPrestamo[]>(`${this.apiUrl}/estados-prestamos`);
   }
@@ -214,5 +217,4 @@ export class CatalogService {
   deleteEstadoPrestamo(uuid: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/estados-prestamos/${uuid}`);
   }
-
 }

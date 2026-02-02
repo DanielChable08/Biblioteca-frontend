@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { map, finalize } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
@@ -42,22 +42,20 @@ export class MultaListaComponent implements OnInit {
   private multaService = inject(MultaService);
   private prestamoService = inject(PrestamoService);
   private router = inject(Router);
-  private route = inject(ActivatedRoute);
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
 
   multas: any[] = [];
   loading = false;
   globalFilter: string = '';
-  private rutaOrigen: string = '/admin';
+  private origenNavegacion: 'admin' | 'prestamos' = 'admin';
 
   ngOnInit(): void {
-    // Verificar si viene de préstamos
-    this.route.queryParams.subscribe(params => {
-      if (params['from'] === 'prestamos') {
-        this.rutaOrigen = '/admin/prestamos';
-      }
-    });
+    const origen = sessionStorage.getItem('multasOrigen');
+    if (origen === 'prestamos') {
+      this.origenNavegacion = 'prestamos';
+    }
+    console.log(' Multas - Origen:', this.origenNavegacion);
     
     this.loadData();
   }
@@ -71,20 +69,13 @@ export class MultaListaComponent implements OnInit {
       personas: this.prestamoService.getPersonas()
     }).pipe(
       map(({ multas, estados, motivos, personas }) => {
-        // Crear mapa de personas para búsqueda rápida
         const personasMap = new Map();
         personas.forEach(p => {
           personasMap.set(p.id, `${p.nombre} ${p.apPaterno} ${p.apMaterno || ''}`.trim());
         });
 
-        console.log('📊 Multas recibidas:', multas);
-        console.log('👥 Personas mapeadas:', personasMap);
-
-        // Mapear multas con información completa
         return multas.map(m => {
           const lectorNombre = personasMap.get(m.idPersona) || 'N/A';
-          
-          console.log(`Multa ${m.id}: idPersona=${m.idPersona}, Lector=${lectorNombre}`);
 
           return {
             ...m,
@@ -98,7 +89,6 @@ export class MultaListaComponent implements OnInit {
       finalize(() => this.loading = false)
     ).subscribe({
       next: (multasMapeadas) => {
-        console.log('✅ Multas mapeadas con lectores:', multasMapeadas);
         this.multas = multasMapeadas;
       },
       error: (err: any) => {
@@ -107,7 +97,7 @@ export class MultaListaComponent implements OnInit {
           summary: 'Error', 
           detail: 'No se pudieron cargar las multas.' 
         });
-        console.error('❌ Error al cargar multas:', err);
+        console.error(' Error al cargar multas:', err);
       }
     });
   }
@@ -148,11 +138,20 @@ export class MultaListaComponent implements OnInit {
   }
 
   registrarPago(multa: any): void {
-    this.router.navigate(['/admin/pagos'], { queryParams: { multaId: multa.id } });
+    sessionStorage.setItem('multaIdSeleccionada', multa.id.toString());
+    this.router.navigate(['admin/multas/pagar']);
   }
 
   regresar(): void {
-    this.router.navigate([this.rutaOrigen]);
+    console.log('🔙 Regresando a:', this.origenNavegacion);
+    
+    sessionStorage.removeItem('multasOrigen');
+    
+    if (this.origenNavegacion === 'prestamos') {
+      this.router.navigate(['/admin/prestamos']);
+    } else {
+      this.router.navigate(['/admin']);
+    }
   }
 
   applyFilterGlobal(table: any, event: Event): void {

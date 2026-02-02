@@ -20,12 +20,12 @@
           pTooltip="Regresar al Panel"
           tooltipPosition="bottom">
         </button>
-        <h2><i class="pi pi-book user-icon"></i> Gestión de Tipos de Libros</h2>
+        <h2><i class="pi pi-book user-icon"></i> Gestión de Facultades</h2>
       </div>
 
       <div class="header-right">
         <p-button
-          label="Agregar Tipo"
+          label="Agregar Facultad"
           icon="pi pi-plus"
           styleClass="p-button-wine"
           (click)="abrirModalAgregar()">
@@ -50,7 +50,7 @@
 
     <ng-template pTemplate="caption">
       <div class="table-header">
-        <span>Lista de Tipos de Libros</span>
+        <span>Lista de Facultades</span>
         <div class="filter-container">
           <span class="p-input-icon-left">
             <i class="pi pi-search"></i>
@@ -74,7 +74,7 @@
 
     <ng-template pTemplate="header">
       <tr>
-        <th pSortableColumn="nombre">Tipo de Libro <p-sortIcon field="nombre"></p-sortIcon></th>
+        <th pSortableColumn="nombre">Facultades <p-sortIcon field="nombre"></p-sortIcon></th>
         <th style="width: 10rem;">Acciones</th>
       </tr>
     </ng-template>
@@ -117,9 +117,8 @@
   </p-table>
 </div>
 
-<!-- MODAL FORMULARIO -->
 <p-dialog
-  [header]="isEditMode ? 'Editar Tipo de Libro' : 'Agregar Nuevo Tipo'"
+  [header]="isEditMode ? 'Editar Facultad' : 'Agregar Nueva Facultad'"
   [(visible)]="displayModal"
   [modal]="true"
   [style]="{ width: '500px' }"
@@ -130,7 +129,7 @@
   <form [formGroup]="tipoForm" (ngSubmit)="onSubmit()" class="form-container">
     <div class="field">
       <label for="nombre">
-        <i class="pi pi-book"></i> Tipo de Libro <span class="text red">*</span>
+        <i class="pi pi-book"></i> Facultad <span class="text red">*</span>
       </label>
       <input 
         id="nombre" 

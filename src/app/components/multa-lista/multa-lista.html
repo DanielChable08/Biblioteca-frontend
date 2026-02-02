@@ -17,7 +17,7 @@
                     <h2><i class="pi pi-dollar user-icon"></i> Gestión de Multas</h2>
                 </div>
                 <div class="header-right">
-                    <p-button label="Ver Pagos" icon="pi pi-money-bill" styleClass="p-button-wine" [routerLink]="['/admin/pagos']"></p-button>
+                    <p-button label="Ver Pagos" icon="pi pi-money-bill" styleClass="p-button-wine" [routerLink]="['/admin/multas/pagar']"></p-button>
                 </div>
             </div>
         </div>
@@ -98,6 +98,7 @@
                             class="action-btn-compact pay-btn" 
                             pTooltip="Registrar Pago" 
                             (click)="registrarPago(multa)"
+                            tooltipPosition="bottom"
                             [disabled]="multa.estadoMulta?.nombre === 'Pagada' || multa.estadoMulta?.nombre === 'Condonada'">
                         </button>
                         <button 
@@ -106,6 +107,7 @@
                             class="action-btn-compact condonar-btn" 
                             pTooltip="Condonar" 
                             (click)="condonarMulta(multa)"
+                            tooltipPosition="bottom"
                             [disabled]="multa.estadoMulta?.nombre === 'Pagada' || multa.estadoMulta?.nombre === 'Condonada'">
                         </button>
                     </div>
