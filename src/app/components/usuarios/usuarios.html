@@ -9,29 +9,27 @@
   </ng-template>
 </p-confirmDialog>
 
-<div class="header-container">
-  <div class="form-header-container">
-    <div class="form-header page-header">
-      <div class="header-left">
-        <button
-          pButton
-          icon="pi pi-arrow-left"
-          class="p-button-text back-button"
-          (click)="regresar()"
-          pTooltip="Regresar al Panel"
-          tooltipPosition="bottom">
-        </button>
-        <h2><i class="pi pi-users user-icon"></i> Gestión de Usuarios</h2>
-      </div>
+<div class="page-header-container">
+  <div class="page-header">
+    <div class="header-left">
+      <button
+        pButton
+        icon="pi pi-arrow-left"
+        class="p-button-text btn-back"
+        (click)="regresar()"
+        pTooltip="Regresar al Panel"
+        tooltipPosition="bottom">
+      </button>
+      <h2><i class="pi pi-users user-icon"></i> Gestión de Usuarios</h2>
+    </div>
 
-      <div class="header-right">
-        <p-button
-          label="Nuevo Usuario"
-          icon="pi pi-user-plus"
-          styleClass="p-button-wine"
-          (click)="agregarUsuario()">
-        </p-button>
-      </div>
+    <div class="header-right">
+      <p-button
+        label="Nuevo Usuario"
+        icon="pi pi-user-plus"
+        styleClass="btn-primary"
+        (click)="agregarUsuario()">
+      </p-button>
     </div>
   </div>
 </div>
@@ -166,7 +164,7 @@
           <p-button 
             label="Agregar Primer Usuario" 
             icon="pi pi-plus" 
-            styleClass="p-button-sm p-button-wine"
+            styleClass="p-button-sm btn-primary"
             (click)="agregarUsuario()">
           </p-button>
         </td>

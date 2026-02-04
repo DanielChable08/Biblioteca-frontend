@@ -41,7 +41,8 @@
         </p-select>
         
         <small class="help-text" *ngIf="modoImpresion === 'barras'">Etiquetas rectangulares estándar con código de barras.</small>
-        <small class="help-text" *ngIf="modoImpresion === 'lomo'">Etiquetas verticales delgadas para el lomo (Tejuelos).</small>
+        <small class="help-text" *ngIf="modoImpresion === 'lomo'">Etiquetas verticales para el lomo (Tejuelos clásicos).</small>
+        <small class="help-text" *ngIf="modoImpresion === 'horizontal'">Etiquetas de lomo con texto rotado (Identificador a lo largo).</small>
       </div>
 
       <div class="form-field" *ngIf="modoImpresion === 'barras'">
@@ -110,7 +111,7 @@
 <div class="preview-overlay" *ngIf="vistaPrevia">
   <div class="preview-container">
     <div class="preview-header">
-      <h3><i class="pi pi-eye"></i> Vista Previa ({{ modoImpresion === 'barras' ? 'Código de Barras' : 'Etiquetas de Identificador' }})</h3>
+      <h3><i class="pi pi-eye"></i> Vista Previa</h3>
       <button pButton icon="pi pi-times" class="p-button-text p-button-rounded" (click)="cerrarVistaPrevia()"></button>
     </div>
 
@@ -130,11 +131,15 @@
           </div>
         </div>
 
-        <div class="etiquetas-lomo-grid-preview" *ngIf="modoImpresion === 'lomo'">
-           <div class="etiqueta-lomo-preview" *ngFor="let ejemplar of ejemplaresSeleccionados" [class]="tamanoEtiqueta">
-               <div class="lomo-top"><span class="lomo-code">{{ ejemplar.codigo }}</span></div>
-               <div class="lomo-body"><span class="lomo-title">{{ ejemplar.libroTitulo }}</span></div>
-               <div class="lomo-footer"><span class="lomo-cutter">{{ ejemplar.cutter }}</span></div>
+        <div class="etiquetas-lomo-grid-preview" *ngIf="modoImpresion === 'lomo' || modoImpresion === 'horizontal'">
+           <div class="etiqueta-lomo-preview" 
+                *ngFor="let ejemplar of ejemplaresSeleccionados" 
+                [class]="tamanoEtiqueta"
+                [class.rotado]="modoImpresion === 'horizontal'"> <div class="contenido-interno-lomo">
+                   <div class="lomo-top"><span class="lomo-code">{{ ejemplar.codigo }}</span></div>
+                   <div class="lomo-body"><span class="lomo-title">{{ ejemplar.libroTitulo }}</span></div>
+                   <div class="lomo-footer"><span class="lomo-cutter">{{ ejemplar.cutter }}</span></div>
+               </div>
            </div>
         </div>
 
@@ -165,11 +170,17 @@
       </div>
     </div>
 
-    <div class="etiquetas-lomo-grid-print" *ngIf="modoImpresion === 'lomo'">
-        <div class="etiqueta-lomo-print" *ngFor="let ejemplar of ejemplaresSeleccionados" [class]="tamanoEtiqueta">
-            <div class="lomo-print-code">{{ ejemplar.codigo }}</div>
-            <div class="lomo-print-title">{{ ejemplar.libroTitulo }}</div>
-            <div class="lomo-print-cutter">{{ ejemplar.cutter }}</div>
+    <div class="etiquetas-lomo-grid-print" *ngIf="modoImpresion === 'lomo' || modoImpresion === 'horizontal'">
+        <div class="etiqueta-lomo-print" 
+             *ngFor="let ejemplar of ejemplaresSeleccionados" 
+             [class]="tamanoEtiqueta"
+             [class.rotado]="modoImpresion === 'horizontal'">
+            
+            <div class="contenido-interno-lomo">
+                <div class="lomo-print-code">{{ ejemplar.codigo }}</div>
+                <div class="lomo-print-title">{{ ejemplar.libroTitulo }}</div>
+                <div class="lomo-print-cutter">{{ ejemplar.cutter }}</div>
+            </div>
         </div>
     </div>
 
@@ -192,11 +203,17 @@
          </div>
      </div>
 
-     <div class="etiquetas-lomo-grid-print" *ngIf="modoImpresion === 'lomo'">
-        <div class="etiqueta-lomo-print" *ngFor="let ejemplar of ejemplaresSeleccionados" [class]="tamanoEtiqueta">
-            <div class="lomo-print-code">{{ ejemplar.codigo }}</div>
-            <div class="lomo-print-title">{{ ejemplar.libroTitulo }}</div>
-            <div class="lomo-print-cutter">{{ ejemplar.cutter }}</div>
+     <div class="etiquetas-lomo-grid-print" *ngIf="modoImpresion === 'lomo' || modoImpresion === 'horizontal'">
+        <div class="etiqueta-lomo-print" 
+             *ngFor="let ejemplar of ejemplaresSeleccionados" 
+             [class]="tamanoEtiqueta"
+             [class.rotado]="modoImpresion === 'horizontal'">
+            
+             <div class="contenido-interno-lomo">
+                <div class="lomo-print-code">{{ ejemplar.codigo }}</div>
+                <div class="lomo-print-title">{{ ejemplar.libroTitulo }}</div>
+                <div class="lomo-print-cutter">{{ ejemplar.cutter }}</div>
+            </div>
         </div>
     </div>
 

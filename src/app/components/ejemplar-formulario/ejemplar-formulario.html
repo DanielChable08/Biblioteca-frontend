@@ -44,12 +44,12 @@
     </label>
     <div class="p-inputgroup">
       <p-select
-        id="condicion"
-        [options]="condiciones"
-        formControlName="idCondicionFisicaEjemplar"
+        id="estado"
+        [options]="estados"
+        formControlName="idEstadoEjemplar"
         optionLabel="nombre"
         optionValue="id"
-        placeholder="Selecciona una condición"
+        placeholder="Selecciona un estado"
         class="form-comp"
       ></p-select>
       <button
@@ -58,7 +58,7 @@
         icon="pi pi-plus"
         class="btn-primary"
         (click)="abrirModalAgregar('condicion')"
-        pTooltip="Agregar nueva condición"
+        pTooltip="Agregar nueva condicion"
         tooltipPosition="top"
       ></button>
     </div>

@@ -328,7 +328,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       width: '75%',
       contentStyle: { "max-height": "90vh", "overflow": "auto" },
       baseZIndex: 10000,
-      data: { uuid: libro.uuid, imagenUrl: libro.imagen },
+      data: { uuid: libro.uuid, imagenUrl: libro.imagen,estaActivo: libro.activo},
       modal: true,
       closable: true,
     });
@@ -347,6 +347,20 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       if (ejemplarAgregado) this.loadInitialData();
     });
   }
+
+  
+  formatearISBN(isbn: string | undefined): string {
+    if (!isbn) return 'N/A';
+    const limpio = isbn.replace(/[^0-9X]/gi, '');
+    if (limpio.length === 10) {
+      return `${limpio.substring(0, 1)}-${limpio.substring(1, 4)}-${limpio.substring(4, 9)}-${limpio.substring(9, 10)}`;
+    }
+    if (limpio.length === 13) {
+      return `${limpio.substring(0, 3)}-${limpio.substring(3, 4)}-${limpio.substring(4, 8)}-${limpio.substring(8, 12)}-${limpio.substring(12, 13)}`;
+    }
+    return isbn;
+  }
+
 
   eliminarLibro(libro: Libro): void {
     this.confirmationService.confirm({

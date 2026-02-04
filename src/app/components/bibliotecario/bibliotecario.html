@@ -70,13 +70,13 @@
       </div>
     </div>
 
-    <div class="mx-5 mt-3">
+    <div class="mx-5 mt-3 mobile-hide-divider">
       <p-divider></p-divider>
     </div>
 
     <div class="info-stats-row">
       <span class="main-stat">{{ allLibros.length }} libros en catálogo</span>
-      <div>
+      <div class="secondary-stats-group">
         <span class="secondary-stat px-2">Última actualización: Hoy</span>
         <span class="secondary-stat px-2">Nuevos ingresos: 3 libros esta semana</span>
       </div>
@@ -85,7 +85,7 @@
 
   <div class="admin-dashboard-panel">
     <div class="panel-title-section">
-      <div>
+      <div class="panel-texts">
         <h2 class="panel-main-title">Panel de Administración</h2>
         <p class="panel-description">Gestiona el catálogo de libros físicos de la iglesia</p>
       </div>
@@ -204,7 +204,7 @@
             <i class="pi pi-barcode"></i> {{ libro.ejemplares?.[0]?.codigo || 'Sin código' }}
           </span>
           <span class="detail-item-compact">
-            <i class="pi pi-tag"></i> {{ formatIsbn(libro.isbn) }}
+            <i class="pi pi-tag"></i> {{ formatearISBN(libro.isbn) }}
           </span>
           <span class="detail-item-compact">
             <i class="pi pi-calendar"></i> {{ libro.anho }}

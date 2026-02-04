@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -19,7 +19,7 @@ import { BookService } from '../../services/book.service';
 import { CatalogService } from '../../services/catalog.service';
 import { Ejemplar } from '../../models/biblioteca';
 import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
-import LibroDetalleComponent from '../libro-detalle/libro-detalle'; 
+import LibroDetalleComponent from '../libro-detalle/libro-detalle';
 
 @Component({
   selector: 'app-ejemplar-lista',
@@ -40,7 +40,7 @@ import LibroDetalleComponent from '../libro-detalle/libro-detalle';
   templateUrl: './ejemplar-lista.html',
   styleUrls: ['./ejemplar-lista.css']
 })
-export default class EjemplarListaComponent implements OnInit {
+export default class EjemplarListaComponent implements OnInit, OnDestroy {
   private bookService = inject(BookService);
   private catalogService = inject(CatalogService);
   private router = inject(Router);
@@ -52,6 +52,10 @@ export default class EjemplarListaComponent implements OnInit {
   loading = false;
   globalFilter: string = '';
   private dialogRef?: DynamicDialogRef;
+
+  // COPIADO DE BIBLIOTECARIO.TS (Asegura que apunte a donde el otro componente apunta)
+  private readonly IMAGES_BASE_URL = 'http://localhost:8080/assets/img/'; 
+  // Si tu backend usa /sdt/v1/uploads/img/, cambia la línea de arriba por esa ruta.
 
   ngOnInit(): void {
     this.loadData();
@@ -101,15 +105,11 @@ export default class EjemplarListaComponent implements OnInit {
       width: '50vw',
       contentStyle: { overflow: 'auto' },
       baseZIndex: 10000,
-      data: {
-        messageService: this.messageService
-      }
+      data: { messageService: this.messageService }
     });
 
     this.dialogRef.onClose.subscribe((resultado) => {
-      if (resultado) {
-        this.loadData();
-      }
+      if (resultado) this.loadData();
     });
   }
 
@@ -119,17 +119,24 @@ export default class EjemplarListaComponent implements OnInit {
       width: '50vw',
       contentStyle: { overflow: 'auto' },
       baseZIndex: 10000,
-      data: {
-        ejemplarUuid: ejemplar.uuid,
-        messageService: this.messageService
-      }
+      data: { ejemplarUuid: ejemplar.uuid, messageService: this.messageService }
     });
 
     this.dialogRef.onClose.subscribe((resultado) => {
-      if (resultado) {
-        this.loadData();
-      }
+      if (resultado) this.loadData();
     });
+  }
+
+  formatearISBN(isbn: string | undefined): string {
+    if (!isbn) return 'N/A';
+    const limpio = isbn.replace(/[^0-9X]/gi, '');
+    if (limpio.length === 10) {
+      return `${limpio.substring(0, 1)}-${limpio.substring(1, 4)}-${limpio.substring(4, 9)}-${limpio.substring(9, 10)}`;
+    }
+    if (limpio.length === 13) {
+      return `${limpio.substring(0, 3)}-${limpio.substring(3, 4)}-${limpio.substring(4, 8)}-${limpio.substring(8, 12)}-${limpio.substring(12, 13)}`;
+    }
+    return isbn;
   }
 
   verLibro(ejemplar: any): void {
@@ -142,17 +149,23 @@ export default class EjemplarListaComponent implements OnInit {
       return;
     }
 
+    // === LÓGICA DE IMAGEN COPIADA DE BIBLIOTECARIO ===
+    // Construimos la URL completa antes de abrir el modal
+    let imagenCompleta = ejemplar.libro.imagen;
+    
+    if (imagenCompleta && !imagenCompleta.startsWith('http')) {
+        // Concatenamos la base URL
+        imagenCompleta = `${this.IMAGES_BASE_URL}${imagenCompleta}`;
+    }
+
     this.dialogRef = this.dialogService.open(LibroDetalleComponent, {
       header: `Detalles de ${ejemplar.libro.titulo}`,
       width: '75%',
-      contentStyle: { 
-        'max-height': '90vh', 
-        'overflow': 'auto' 
-      },
+      contentStyle: { 'max-height': '90vh', 'overflow': 'auto' },
       baseZIndex: 10000,
       data: {
         uuid: ejemplar.libro.uuid,
-        imagenUrl: ejemplar.libro.imagen
+        imagenUrl: imagenCompleta // <-- Enviamos la URL ya procesada
       },
       modal: true,
       closable: true
@@ -161,7 +174,7 @@ export default class EjemplarListaComponent implements OnInit {
 
   eliminarEjemplar(ejemplar: Ejemplar): void {
     this.confirmationService.confirm({
-      message: `¿Estás seguro de eliminar el ejemplar con código "${ejemplar.codigo}"? Esta acción no se puede deshacer.`,
+      message: `¿Estás seguro de eliminar el ejemplar con código "${ejemplar.codigo}"?`,
       header: 'Confirmar Eliminación',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, eliminar',
@@ -174,20 +187,11 @@ export default class EjemplarListaComponent implements OnInit {
           finalize(() => this.loading = false)
         ).subscribe({
           next: () => {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Éxito',
-              detail: 'Ejemplar eliminado correctamente.'
-            });
+            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ejemplar eliminado correctamente.' });
             this.loadData();
           },
           error: (err: any) => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'No se pudo eliminar el ejemplar.'
-            });
-            console.error('Error al eliminar ejemplar:', err);
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el ejemplar.' });
           }
         });
       }
@@ -213,8 +217,7 @@ export default class EjemplarListaComponent implements OnInit {
       case 'disponible': return 'status-disponible';
       case 'prestado': return 'status-prestado';
       case 'reservado': return 'status-reservado';
-      case 'en reparación':
-      case 'en reparacion': return 'status-reparacion';
+      case 'en reparación': case 'en reparacion': return 'status-reparacion';
       case 'extraviado': return 'status-extraviado';
       case 'dado de baja': return 'status-baja';
       default: return 'status-desconocido';
@@ -223,14 +226,10 @@ export default class EjemplarListaComponent implements OnInit {
 
   getCondicionClass(condicionNombre: string = ''): string {
     switch (condicionNombre.toLowerCase()) {
-      case 'excelente':
-      case 'nuevo': return 'condicion-excelente';
-      case 'bueno':
-      case 'buena': return 'condicion-buena';
+      case 'excelente': case 'nuevo': return 'condicion-excelente';
+      case 'bueno': case 'buena': return 'condicion-buena';
       case 'regular': return 'condicion-regular';
-      case 'malo':
-      case 'mala':
-      case 'deteriorado': return 'condicion-mala';
+      case 'malo': case 'mala': case 'deteriorado': return 'condicion-mala';
       default: return 'condicion-desconocida';
     }
   }

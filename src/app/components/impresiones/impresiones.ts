@@ -26,7 +26,7 @@ interface EjemplarExtendido extends Ejemplar {
   libroTitulo?: string;
   libroISBN?: string;
   autoresNombres?: string;
-  cutter?: string; // Para la etiqueta de lomo
+  cutter?: string; 
 }
 
 @Component({
@@ -58,11 +58,13 @@ export default class ImpresionesComponent implements OnInit {
   ejemplaresFiltrados: EjemplarExtendido[] = [];
   ejemplaresSeleccionados: EjemplarExtendido[] = [];
 
-  modoImpresion: 'barras' | 'lomo' = 'barras';
+  // Opciones de modo
+  modoImpresion: 'barras' | 'lomo' | 'horizontal' = 'barras';
   
   opcionesModo = [
     { label: 'Código de Barras', value: 'barras', icon: 'pi pi-barcode' },
-    { label: 'Etiqueta de Identificador', value: 'lomo', icon: 'pi pi-bookmark' }
+    { label: 'Lomo Vertical', value: 'lomo', icon: 'pi pi-bookmark' }, // Texto apilado
+    { label: 'Identificador Horiz.', value: 'horizontal', icon: 'pi pi-arrows-v' } // Texto rotado
   ];
 
   tamanosBarras = [
@@ -71,7 +73,7 @@ export default class ImpresionesComponent implements OnInit {
     { label: 'Grande (6cm x 4cm)', value: 'grande' }
   ];
 
-  // Tamaños para Lomo
+  // Tamaños para Lomo (Se usan para Vertical y Horizontal Rotado)
   tamanosLomo = [
     { label: 'Delgado (2cm x 5cm)', value: 'lomo-delgado' },
     { label: 'Estándar (3cm x 5cm)', value: 'lomo-estandar' },
@@ -99,6 +101,7 @@ export default class ImpresionesComponent implements OnInit {
       this.tamanosDisponibles = this.tamanosBarras;
       this.tamanoEtiqueta = 'mediana';
     } else {
+      // Tanto para 'lomo' como para 'horizontal' usamos los tamaños verticales (tiritas)
       this.tamanosDisponibles = this.tamanosLomo;
       this.tamanoEtiqueta = 'lomo-estandar';
     }
@@ -191,8 +194,7 @@ export default class ImpresionesComponent implements OnInit {
     this.ejemplaresFiltrados = this.ejemplares.filter(ejemplar => {
       return (ejemplar.codigo?.toLowerCase() || '').includes(filtro) ||
              (ejemplar.libroTitulo?.toLowerCase() || '').includes(filtro) ||
-             (ejemplar.autoresNombres?.toLowerCase() || '').includes(filtro) ||
-             (ejemplar.libroISBN?.toLowerCase() || '').includes(filtro);
+             (ejemplar.autoresNombres?.toLowerCase() || '').includes(filtro);
     });
   }
 
@@ -280,18 +282,15 @@ export default class ImpresionesComponent implements OnInit {
           backgroundColor: '#ffffff' 
         }).then(canvas => {
           const imgData = canvas.toDataURL('image/png');
-          
           const pdf = new jsPDF('p', 'mm', 'letter');
           const pdfWidth = pdf.internal.pageSize.getWidth();
-          
           const imgProps = pdf.getImageProperties(imgData);
           const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
           pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
           
           const fecha = new Date().toISOString().slice(0, 10);
-          const tipo = this.modoImpresion === 'barras' ? 'CB' : 'Lomo';
-          pdf.save(`Etiquetas_${tipo}_${fecha}.pdf`);
+          pdf.save(`Etiquetas_${this.modoImpresion}_${fecha}.pdf`);
           
           this.preparandoPDF = false;
           this.messageService.add({ severity: 'success', summary: 'Listo', detail: 'PDF descargado' });
@@ -305,7 +304,7 @@ export default class ImpresionesComponent implements OnInit {
   }
 
   private generarCodigosBarras(tipo: 'preview' | 'print' | 'pdf'): void {
-    if (this.modoImpresion === 'lomo') return;
+    if (this.modoImpresion === 'lomo' || this.modoImpresion === 'horizontal') return;
 
     this.ejemplaresSeleccionados.forEach((ejemplar, index) => {
       const svgId = `barcode-${tipo}-${index}`;

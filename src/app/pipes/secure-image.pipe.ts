@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpBackend } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Observable, map, of, catchError } from 'rxjs';
 
@@ -8,24 +8,39 @@ import { Observable, map, of, catchError } from 'rxjs';
   standalone: true 
 })
 export class SecureImagePipe implements PipeTransform {
-  private http = inject(HttpClient);
+  // 1. Inyectamos HttpBackend para saltarnos los interceptores
+  private httpBackend = inject(HttpBackend);
   private sanitizer = inject(DomSanitizer);
+  private http: HttpClient;
+
+  constructor() {
+    // Creamos un cliente HTTP nuevo que NO tiene interceptores
+    // Esto evita que un error 401 en la imagen te cierre la sesión.
+    this.http = new HttpClient(this.httpBackend);
+  }
 
   transform(url: string | undefined): Observable<SafeUrl | string> {
     if (!url || !url.startsWith('http')) {
-        return of(url || 'assets/img/placeholder.png');
+        return of('assets/img/placeholder.png');
     }
 
-    // Hacemos la petición GET con responseType: 'blob'
-    // El Interceptor de tu Auth (si lo tienes configurado) agregará el Token aquí
-    return this.http.get(url, { responseType: 'blob' }).pipe(
+    // 2. Buscamos el token en sessionStorage (donde lo tienes tú)
+    const token = sessionStorage.getItem('token');
+
+    let headers = new HttpHeaders();
+    if (token) {
+        headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    // 3. Hacemos la petición
+    return this.http.get(url, { headers, responseType: 'blob' }).pipe(
       map(blob => {
-        // Creamos una URL temporal local segura para el navegador
         return this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob));
       }),
       catchError(err => {
-        console.error('Error cargando imagen protegida:', err);
-        return of('assets/img/placeholder.png'); // Fallback si falla
+        console.warn('Fallo carga imagen segura (pero la sesión está a salvo)');
+        // Devolvemos el placeholder si falla
+        return of('assets/img/placeholder.png'); 
       })
     );
   }

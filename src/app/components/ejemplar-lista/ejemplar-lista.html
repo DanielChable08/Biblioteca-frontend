@@ -1,5 +1,5 @@
-
-<p-confirmDialog>
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '90vw', maxWidth: '400px'}">
     <ng-template pTemplate="message" let-message>
         <div class="flex flex-column align-items-center text-center gap-3">
             <i [class]="message.icon" class="dialog-icon"></i>
@@ -8,21 +8,33 @@
     </ng-template>
 </p-confirmDialog>
 
-<div class="admin-page-container">
-    <div class="header-container">
-        <div class="form-header-container">
-            <div class="form-header page-header-layout">
-                <div class="header-left">
-                    <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
-                    <h2><i class="pi pi-inbox user-icon"></i> Gestión de Ejemplares</h2>
-                </div>
-                <div class="header-right">
-                    <p-button label="Nuevo Ejemplar" icon="pi pi-plus" styleClass="p-button-wine" (click)="agregarEjemplar()"></p-button>
-                </div>
+<div class="header-container">
+    <div class="form-header-container">
+        <div class="form-header">
+            <div class="header-left">
+                <button 
+                    pButton 
+                    icon="pi pi-arrow-left" 
+                    class="p-button-text back-button" 
+                    (click)="regresar()" 
+                    pTooltip="Regresar al Panel" 
+                    tooltipPosition="bottom">
+                </button>
+                <h2><i class="pi pi-inbox user-icon"></i> Gestión de Ejemplares</h2>
+            </div>
+            <div class="header-right">
+                <p-button 
+                    label="Nuevo Ejemplar" 
+                    icon="pi pi-plus" 
+                    styleClass="p-button-wine" 
+                    (click)="agregarEjemplar()">
+                </p-button>
             </div>
         </div>
     </div>
+</div>
 
+<div class="admin-page-container">
     <p-table 
         #dtEjemplares 
         [value]="ejemplares" 
@@ -33,13 +45,13 @@
         [globalFilterFields]="['codigo', 'libro.titulo', 'libro.isbn', 'ubicacion', 'estadoEjemplar.nombre', 'condicionFisica.nombre']" 
         styleClass="p-datatable-striped p-datatable-gridlines custom-table"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ejemplares" 
-        [showCurrentPageReport]="true"
-    >
+        [showCurrentPageReport]="true">
+
         <ng-template pTemplate="caption">
             <div class="table-header">
                 <span>Lista de Ejemplares</span>
                 <div class="filter-container">
-                    <span class="p-input-icon-left">
+                    <span class="p-input-icon-left full-w-mobile">
                         <i class="pi pi-search"></i>
                         <input 
                             pInputText 
@@ -50,7 +62,12 @@
                             class="table-search-input" 
                         />
                     </span>
-                    <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtEjemplares)" pTooltip="Limpiar filtro"></p-button>
+                    <p-button 
+                        icon="pi pi-filter-slash" 
+                        styleClass="p-button-outlined clear-filter-button" 
+                        (click)="clearFilter(dtEjemplares)" 
+                        pTooltip="Limpiar filtro">
+                    </p-button>
                 </div>
             </div>
         </ng-template>
@@ -71,8 +88,7 @@
             <tr>
                 <td>
                     <span class="codigo-ejemplar-badge">
-                        <i class="pi pi-bookmark"></i>
-                        {{ ejemplar.codigo }}
+                        <i class="pi pi-bookmark"></i> {{ ejemplar.codigo }}
                     </span>
                 </td>
                 <td>
@@ -80,11 +96,12 @@
                         <strong>{{ ejemplar.libro?.titulo || 'Sin libro' }}</strong>
                     </div>
                 </td>
-                <td>{{ ejemplar.libro?.isbn || 'N/A' }}</td>
+                <td>
+                    {{ formatearISBN(ejemplar.libro?.isbn) }}
+                </td>
                 <td>
                     <span *ngIf="ejemplar.ubicacion" class="ubicacion-badge">
-                        <i class="pi pi-map-marker"></i>
-                        {{ ejemplar.ubicacion }}
+                        <i class="pi pi-map-marker"></i> {{ ejemplar.ubicacion }}
                     </span>
                     <span *ngIf="!ejemplar.ubicacion" style="color: #999;">Sin ubicación</span>
                 </td>
@@ -110,14 +127,14 @@
 
         <ng-template pTemplate="emptymessage">
             <tr>
-                <td colspan="7" class="text-center empty-message">No se encontraron ejemplares.</td>
+                <td colspan="7" class="text-center empty-message">
+                    No se encontraron ejemplares.
+                </td>
             </tr>
         </ng-template>
-
+        
         <ng-template pTemplate="loadingbody">
-            <tr>
-                <td colspan="7" class="text-center loading-message">Cargando ejemplares...</td>
-            </tr>
+             <tr><td colspan="7" class="text-center loading-message">Cargando ejemplares...</td></tr>
         </ng-template>
     </p-table>
 </div>
