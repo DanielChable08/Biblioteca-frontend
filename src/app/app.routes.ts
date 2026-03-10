@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -35,17 +36,17 @@ export const routes: Routes = [
   { 
     path: 'admin/usuarios', 
     loadComponent: () => import('./components/usuarios/usuarios').then(m => m.default),
-    canActivate: [authGuard, roleGuard]
+    canActivate: [authGuard, adminGuard]
   },
   { 
     path: 'admin/usuarios/nuevo', 
     loadComponent: () => import('./components/usuario-formulario/usuario-formulario').then(m => m.default),
-    canActivate: [authGuard, roleGuard]
+    canActivate: [authGuard, adminGuard]
   },
   {
     path: 'admin/usuarios/editar/:uuid',
     loadComponent: () => import('./components/usuario-formulario/usuario-formulario'),
-    canActivate: [authGuard, roleGuard]
+    canActivate: [authGuard, adminGuard]
   },
   { 
     path: 'admin/prestamos', 
@@ -57,6 +58,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/prestamo-formulario/prestamo-formulario').then(m => m.default),
     canActivate: [authGuard, roleGuard]
   },
+  {
+    path: 'admin/prestamos/editar/:uuid', 
+    loadComponent: () => import('./components/prestamo-formulario/prestamo-formulario').then(m => m.default),
+    canActivate: [authGuard, roleGuard]
+  },
   { 
     path: 'admin/multas', 
     loadComponent: () => import('./components/multa-lista/multa-lista').then(m => m.MultaListaComponent),
@@ -65,12 +71,12 @@ export const routes: Routes = [
   {
     path: 'admin/multas/pagar',
     loadComponent: () => import('./components/multa-pago/multa-pago').then(m => m.MultaPagoComponent),
-    canActivate: [authGuard, roleGuard]
+    canActivate: [authGuard, adminGuard]
   },
   { 
     path: 'admin/politicas', 
     loadComponent: () => import('./components/politicas-multas/politicas-multas').then(m => m.PoliticasMultasComponent),
-    canActivate: [authGuard, roleGuard]
+    canActivate: [authGuard, adminGuard]
   },
   { 
     path: 'admin/autores', 
@@ -114,34 +120,38 @@ export const routes: Routes = [
   },
   {
     path: 'admin/personas',
-    loadComponent: () => import('./components/personas-lista/personas-lista')
+    loadComponent: () => import('./components/personas-lista/personas-lista').then(m => m.default),
+    canActivate: [authGuard, adminGuard]
   },
   {
     path: 'admin/personas/nuevo',
-    loadComponent: () => import('./components/personas-formulario/personas-formulario')
+    loadComponent: () => import('./components/personas-formulario/personas-formulario').then(m => m.default),
+    canActivate: [authGuard, adminGuard]
   },
   {
     path: 'admin/personas/editar/:uuid',
-    loadComponent: () => import('./components/personas-formulario/personas-formulario')
+    loadComponent: () => import('./components/personas-formulario/personas-formulario').then(m => m.default),
+    canActivate: [authGuard, adminGuard]
   },
   {
     path: 'admin/impresiones',
-    loadComponent: () => import('./components/impresiones/impresiones')
+    loadComponent: () => import('./components/impresiones/impresiones').then(m => m.default),
+    canActivate: [authGuard, roleGuard]
   },
   {
     path: 'admin/personas/:idLector/historial-pagos',
     loadComponent: () => import('./components/historial-pagos/historial-pagos').then(m => m.default),
-    canActivate: [authGuard] 
+    canActivate: [authGuard, adminGuard] 
   },
   {
     path: 'admin/pagos',
     loadComponent: () => import('./components/pagos-index/pagos-index').then(m => m.default),
-    canActivate: [authGuard, roleGuard]
+    canActivate: [authGuard, adminGuard]
   },
   {
     path: 'admin/pagos/lector/:idLector',
     loadComponent: () => import('./components/historial-pagos/historial-pagos').then(m => m.default),
-    canActivate: [authGuard, roleGuard]
+    canActivate: [authGuard, adminGuard]
   },
   { 
     path: '**', 

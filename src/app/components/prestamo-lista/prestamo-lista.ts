@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { map, finalize, switchMap } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { map, finalize, switchMap, catchError } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 
 import { TableModule } from 'primeng/table';
@@ -121,40 +121,46 @@ export default class PrestamoListaComponent implements OnInit {
       estadosEjemplares: this.catalogService.getEstadosEjemplares()
     }).pipe(
       switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
-        const libroIds = [...new Set(ejemplares.map(e => e.idLibro))];
+        const idsEjemplaresEnPrestamo = new Set(detalles.map(d => d.idEjemplar));
+        const ejemplaresDelPrestamo = ejemplares.filter(e => idsEjemplaresEnPrestamo.has(e.id));
+        const libroIds = [...new Set(ejemplaresDelPrestamo.map(e => e.idLibro))];
+
         const autorRequests = libroIds.map(idLibro => {
           const libro = libros.find(l => l.id === idLibro);
           if (libro?.uuid) {
-            return this.bookService.getAutoresForLibro(libro.uuid);
+            return this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([])));
           }
-          return [];
+          return of([]);
         });
 
-        return forkJoin(autorRequests.length > 0 ? autorRequests : [[]]).pipe(
+        return forkJoin(autorRequests.length > 0 ? autorRequests : [of([])]).pipe(
           map(autoresArray => {
-            const librosCompletos = libros.map((libro, index) => ({
-              ...libro,
-              autores: autoresArray[index] || []
-            }));
-
-            const ejemplaresCompletos = ejemplares.map(ejemplar => {
-              const libroDelEjemplar = librosCompletos.find(l => l.id === ejemplar.idLibro);
-              const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplar.idEstadoEjemplar);
-              return {
-                ...ejemplar,
-                libro: libroDelEjemplar,
-                estadoEjemplar: estadoEjemplar
-              };
+            const autoresPorLibro = new Map<number, any[]>();
+            libroIds.forEach((id, index) => {
+                autoresPorLibro.set(id, autoresArray[index]);
             });
 
             const detallesMapeados = detalles.map(detalle => {
-              const ejemplarEncontrado = ejemplaresCompletos.find(e => e.id === detalle.idEjemplar);
+              const ejemplarEncontrado = ejemplares.find(e => e.id === detalle.idEjemplar);
+              const libroOriginal = libros.find(l => l.id === ejemplarEncontrado?.idLibro);
+              const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplarEncontrado?.idEstadoEjemplar);
+
+              const libroConAutores = libroOriginal ? {
+                  ...libroOriginal,
+                  autores: autoresPorLibro.get(libroOriginal.id) || []
+              } : undefined;
+
+              const ejemplarCompleto = ejemplarEncontrado ? {
+                  ...ejemplarEncontrado,
+                  libro: libroConAutores,
+                  estadoEjemplar: estadoEjemplar
+              } : undefined;
 
               return {
                 ...detalle,
-                ejemplar: ejemplarEncontrado,
-                estadoEjemplar: ejemplarEncontrado?.estadoEjemplar
-              };
+                ejemplar: ejemplarCompleto,
+                estadoEjemplar: estadoEjemplar
+              } as DetallePrestamo;
             });
 
             return detallesMapeados;
@@ -167,121 +173,10 @@ export default class PrestamoListaComponent implements OnInit {
         this.detallesPrestamo = detallesMapeados;
       },
       error: (err: any) => {
-        console.error(' Error al cargar detalles:', err);
-        this.messageService.add({ 
-          severity: 'error', 
-          summary: 'Error', 
-          detail: 'No se pudieron cargar los detalles.' 
-        });
+        console.error('Error al cargar detalles:', err);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los detalles.' });
       }
     });
-  }
-
-  imprimirTicketPrestamo(prestamo?: Prestamo): void {
-    const prestamoAImprimir = prestamo || this.prestamoActual;
-    
-    if (!prestamoAImprimir) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Advertencia',
-        detail: 'No hay préstamo seleccionado para imprimir.'
-      });
-      return;
-    }
-
-    if (prestamo && (!this.detallesPrestamo.length || this.prestamoActual?.uuid !== prestamo.uuid)) {
-      this.loadingDetalles = true;
-      
-      forkJoin({
-        detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
-        ejemplares: this.bookService.getEjemplares(),
-        libros: this.bookService.getLibros(),
-        estadosEjemplares: this.catalogService.getEstadosEjemplares()
-      }).pipe(
-        switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
-          const libroIds = [...new Set(ejemplares.map(e => e.idLibro))];
-          const autorRequests = libroIds.map(idLibro => {
-            const libro = libros.find(l => l.id === idLibro);
-            if (libro?.uuid) {
-              return this.bookService.getAutoresForLibro(libro.uuid);
-            }
-            return [];
-          });
-
-          return forkJoin(autorRequests.length > 0 ? autorRequests : [[]]).pipe(
-            map(autoresArray => {
-              const librosCompletos = libros.map((libro, index) => ({
-                ...libro,
-                autores: autoresArray[index] || []
-              }));
-
-              const ejemplaresCompletos = ejemplares.map(ejemplar => {
-                const libroDelEjemplar = librosCompletos.find(l => l.id === ejemplar.idLibro);
-                const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplar.idEstadoEjemplar);
-                return {
-                  ...ejemplar,
-                  libro: libroDelEjemplar,
-                  estadoEjemplar: estadoEjemplar
-                };
-              });
-
-              const detallesMapeados = detalles.map(detalle => {
-                const ejemplarEncontrado = ejemplaresCompletos.find(e => e.id === detalle.idEjemplar);
-                return {
-                  ...detalle,
-                  ejemplar: ejemplarEncontrado,
-                  estadoEjemplar: ejemplarEncontrado?.estadoEjemplar
-                };
-              });
-
-              return detallesMapeados;
-            })
-          );
-        }),
-        finalize(() => this.loadingDetalles = false)
-      ).subscribe({
-        next: (detallesMapeados) => {
-          this.generarTicket(prestamo, detallesMapeados);
-        },
-        error: (err: any) => {
-          this.messageService.add({ 
-            severity: 'error', 
-            summary: 'Error', 
-            detail: 'No se pudieron cargar los detalles para imprimir.' 
-          });
-          console.error('Error al cargar detalles para impresión:', err);
-        }
-      });
-    } else {
-      this.generarTicket(prestamoAImprimir, this.detallesPrestamo);
-    }
-  }
-
-  private generarTicket(prestamo: Prestamo, detalles: any[]): void {
-    if (detalles.length === 0) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Advertencia',
-        detail: 'No hay ejemplares para imprimir.'
-      });
-      return;
-    }
-
-    const ejemplaresData = detalles.map(detalle => ({
-      codigo: detalle.ejemplar?.codigo || 'N/A',
-      titulo: detalle.ejemplar?.libro?.titulo || 'No disponible',
-      autor: this.getAutoresNombres(detalle)
-    }));
-
-    const ticketData = {
-      lector: `${prestamo.lector?.nombre || ''} ${prestamo.lector?.apPaterno || ''}`.trim(),
-      bibliotecario: `${prestamo.bibliotecario?.nombre || ''} ${prestamo.bibliotecario?.apPaterno || ''}`.trim(),
-      fechaPrestamo: new Date(prestamo.fechaPrestamo),
-      fechaLimite: new Date(prestamo.fechaLimite),
-      ejemplares: ejemplaresData
-    };
-
-    this.printService.imprimirTicketPrestamo(ticketData);
   }
 
   abrirModalDevolucion(prestamo: Prestamo): void {
@@ -297,41 +192,47 @@ export default class PrestamoListaComponent implements OnInit {
       estadosEjemplares: this.catalogService.getEstadosEjemplares()
     }).pipe(
       switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
-        const libroIds = [...new Set(ejemplares.map(e => e.idLibro))];
+        const idsEjemplaresEnPrestamo = new Set(detalles.map(d => d.idEjemplar));
+        const ejemplaresDelPrestamo = ejemplares.filter(e => idsEjemplaresEnPrestamo.has(e.id));
+        const libroIds = [...new Set(ejemplaresDelPrestamo.map(e => e.idLibro))];
+
         const autorRequests = libroIds.map(idLibro => {
           const libro = libros.find(l => l.id === idLibro);
           if (libro?.uuid) {
-            return this.bookService.getAutoresForLibro(libro.uuid);
+            return this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([])));
           }
-          return [];
+          return of([]);
         });
 
-        return forkJoin(autorRequests.length > 0 ? autorRequests : [[]]).pipe(
+        return forkJoin(autorRequests.length > 0 ? autorRequests : [of([])]).pipe(
           map(autoresArray => {
-            const librosCompletos = libros.map((libro, index) => ({
-              ...libro,
-              autores: autoresArray[index] || []
-            }));
-
-            const ejemplaresCompletos = ejemplares.map(ejemplar => {
-              const libroDelEjemplar = librosCompletos.find(l => l.id === ejemplar.idLibro);
-              const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplar.idEstadoEjemplar);
-              return {
-                ...ejemplar,
-                libro: libroDelEjemplar,
-                estadoEjemplar: estadoEjemplar
-              };
+            const autoresPorLibro = new Map<number, any[]>();
+            libroIds.forEach((id, index) => {
+                autoresPorLibro.set(id, autoresArray[index]);
             });
 
             const detallesMapeados = detalles
               .filter(detalle => !detalle.fechaDevolucion)
               .map(detalle => {
-                const ejemplarEncontrado = ejemplaresCompletos.find(e => e.id === detalle.idEjemplar);
+                const ejemplarEncontrado = ejemplares.find(e => e.id === detalle.idEjemplar);
+                const libroOriginal = libros.find(l => l.id === ejemplarEncontrado?.idLibro);
+                const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplarEncontrado?.idEstadoEjemplar);
+
+                const libroConAutores = libroOriginal ? {
+                    ...libroOriginal,
+                    autores: autoresPorLibro.get(libroOriginal.id) || []
+                } : undefined;
+
+                const ejemplarCompleto = ejemplarEncontrado ? {
+                    ...ejemplarEncontrado,
+                    libro: libroConAutores,
+                    estadoEjemplar: estadoEjemplar
+                } : undefined;
 
                 return {
                   ...detalle,
-                  ejemplar: ejemplarEncontrado,
-                  estadoEjemplar: ejemplarEncontrado?.estadoEjemplar,
+                  ejemplar: ejemplarCompleto,
+                  estadoEjemplar: estadoEjemplar,
                   seleccionado: false
                 };
               });
@@ -347,11 +248,7 @@ export default class PrestamoListaComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('Error al cargar detalles:', err);
-        this.messageService.add({ 
-          severity: 'error', 
-          summary: 'Error', 
-          detail: 'No se pudieron cargar los detalles para devolución.' 
-        });
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los detalles para devolución.' });
       }
     });
   }
@@ -360,158 +257,183 @@ export default class PrestamoListaComponent implements OnInit {
     const detallesSeleccionados = this.detallesDevolucion.filter(d => d.seleccionado);
 
     if (detallesSeleccionados.length === 0) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Advertencia',
-        detail: 'Debes seleccionar al menos un ejemplar para devolver.'
-      });
+      this.messageService.add({ severity: 'warn', summary: 'Advertencia', detail: 'Debes seleccionar al menos un ejemplar para devolver.' });
       return;
     }
 
     this.procesandoDevolucion = true;
-
     const detallesIds = detallesSeleccionados.map(detalle => detalle.id);
 
-    this.prestamoService.devolverEjemplares(
-      this.prestamoDevolucion!.uuid!, 
-      detallesIds
-    ).pipe(
-      finalize(() => this.procesandoDevolucion = false)
-    ).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: `${detallesSeleccionados.length} ejemplar(es) devuelto(s) correctamente.`
+    this.prestamoService.devolverEjemplares(this.prestamoDevolucion!.uuid!, detallesIds)
+      .pipe(finalize(() => this.procesandoDevolucion = false))
+      .subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: `${detallesSeleccionados.length} ejemplar(es) devuelto(s) correctamente.` });
+          this.cerrarModalDevolucion();
+          this.loadData();
+        },
+        error: (err) => {
+          console.error('Error al devolver ejemplares:', err);
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron devolver los ejemplares.' });
+        }
+      });
+  }
+
+  imprimirTicketPrestamo(prestamo?: Prestamo): void {
+    const prestamoAImprimir = prestamo || this.prestamoActual;
+    if (!prestamoAImprimir) {
+      this.messageService.add({ severity: 'warn', summary: 'Advertencia', detail: 'No hay préstamo seleccionado.' });
+      return;
+    }
+
+    if (prestamo && (!this.detallesPrestamo.length || this.prestamoActual?.uuid !== prestamo.uuid)) {
+        this.loadingDetalles = true;
+        
+        forkJoin({
+            detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
+            ejemplares: this.bookService.getEjemplares(),
+            libros: this.bookService.getLibros(),
+            estadosEjemplares: this.catalogService.getEstadosEjemplares()
+        }).pipe(
+            switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
+                const idsEjemplaresEnPrestamo = new Set(detalles.map(d => d.idEjemplar));
+                const ejemplaresDelPrestamo = ejemplares.filter(e => idsEjemplaresEnPrestamo.has(e.id));
+                const libroIds = [...new Set(ejemplaresDelPrestamo.map(e => e.idLibro))];
+
+                const autorRequests = libroIds.map(idLibro => {
+                    const libro = libros.find(l => l.id === idLibro);
+                    return libro?.uuid ? this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([]))) : of([]);
+                });
+
+                return forkJoin(autorRequests.length > 0 ? autorRequests : [of([])]).pipe(
+                    map(autoresArray => {
+                        const autoresPorLibro = new Map<number, any[]>();
+                        libroIds.forEach((id, index) => autoresPorLibro.set(id, autoresArray[index]));
+
+                        return detalles.map(detalle => {
+                            const ejemplar = ejemplares.find(e => e.id === detalle.idEjemplar);
+                            const libro = libros.find(l => l.id === ejemplar?.idLibro);
+                            const libroConAutores = libro ? { ...libro, autores: autoresPorLibro.get(libro.id) || [] } : undefined;
+                            const ejemplarCompleto = ejemplar ? { ...ejemplar, libro: libroConAutores } : undefined;
+                            return { ...detalle, ejemplar: ejemplarCompleto };
+                        });
+                    })
+                );
+            }),
+            finalize(() => this.loadingDetalles = false)
+        ).subscribe({
+            next: (detalles) => this.generarTicket(prestamoAImprimir, detalles),
+            error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al generar ticket.' })
         });
-        this.cerrarModalDevolucion();
-        this.loadData();
-      },
-      error: (err) => {
-        console.error('Error al devolver ejemplares:', err);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se pudieron devolver los ejemplares.'
-        });
-      }
-    });
+    } else {
+      this.generarTicket(prestamoAImprimir, this.detallesPrestamo);
+    }
   }
 
-  cerrarModalDetalle(): void {
-    this.mostrarDetalle = false;
-    this.prestamoActual = null;
-    this.detallesPrestamo = [];
+  private generarTicket(prestamo: Prestamo, detalles: any[]): void {
+    if (detalles.length === 0) return;
+    const ejemplaresData = detalles.map(detalle => ({
+      codigo: detalle.ejemplar?.codigo || 'N/A',
+      titulo: detalle.ejemplar?.libro?.titulo || 'No disponible',
+      autor: this.getAutoresNombres(detalle) 
+    }));
+
+    const ticketData = {
+      lector: `${prestamo.lector?.nombre || ''} ${prestamo.lector?.apPaterno || ''}`.trim(),
+      bibliotecario: `${prestamo.bibliotecario?.nombre || ''} ${prestamo.bibliotecario?.apPaterno || ''}`.trim(),
+      fechaPrestamo: new Date(prestamo.fechaPrestamo),
+      fechaLimite: new Date(prestamo.fechaLimite),
+      ejemplares: ejemplaresData
+    };
+    this.printService.imprimirTicketPrestamo(ticketData);
   }
 
-  cerrarModalDevolucion(): void {
-    this.mostrarModalDevolucion = false;
-    this.prestamoDevolucion = null;
-    this.detallesDevolucion = [];
+  cerrarModalDetalle(): void { 
+    this.mostrarDetalle = false; this.prestamoActual = null; this.detallesPrestamo = []; 
   }
 
-  regresar(): void {
-    this.router.navigate(['/admin']);
+  cerrarModalDevolucion(): void { 
+    this.mostrarModalDevolucion = false; this.prestamoDevolucion = null; this.detallesDevolucion = []; 
   }
 
-  agregarPrestamo(): void {
-    this.router.navigate(['admin/prestamos/nuevo']);
+  regresar(): void { 
+    this.router.navigate(['/admin']); 
   }
 
-  multas(): void {
-    sessionStorage.setItem('multasOrigen', 'prestamos');
-    this.router.navigate(['admin/multas']);
+  agregarPrestamo(): void { 
+    this.router.navigate(['admin/prestamos/nuevo']); 
   }
 
-
-
-  editarPrestamo(prestamo: Prestamo): void {
-    this.router.navigate(['/admin/prestamos/editar', prestamo.uuid]);
+  multas(): void { 
+    sessionStorage.setItem('multasOrigen', 'prestamos'); this.router.navigate(['admin/multas']); 
   }
 
-  eliminarPrestamo(prestamo: Prestamo): void {
+  editarPrestamo(p: Prestamo): void { 
+    this.router.navigate(['/admin/prestamos/editar', p.uuid]); 
+  }
+  
+  eliminarPrestamo(p: Prestamo): void {
     this.confirmationService.confirm({
-      message: `¿Estás seguro de anular el préstamo? Esta acción no se puede deshacer.`,
-      header: 'Confirmar anulación',
+      message: '¿Anular préstamo?',
+      header: 'Confirmar',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí, anular',
-      rejectLabel: 'No',
-      acceptButtonStyleClass: 'p-button-danger custom-accept-button',
-      rejectButtonStyleClass: 'p-button-text custom-reject-button',
+      acceptLabel: 'Sí', rejectLabel: 'No',
+      acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.loading = true;
-        this.prestamoService.deletePrestamo(prestamo.uuid!).pipe(
-          finalize(() => this.loading = false)
-        ).subscribe({
+        this.prestamoService.deletePrestamo(p.uuid!).pipe(finalize(() => this.loading = false)).subscribe({
           next: () => {
-            this.messageService.add({ 
-              severity: 'success', 
-              summary: 'Éxito', 
-              detail: 'Préstamo anulado correctamente.' 
-            });
-            this.prestamos = this.prestamos.filter(p => p.uuid !== prestamo.uuid);
+            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Préstamo anulado.' });
+            this.prestamos = this.prestamos.filter(x => x.uuid !== p.uuid);
           },
-          error: (err: any) => {
-            this.messageService.add({ 
-              severity: 'error', 
-              summary: 'Error', 
-              detail: 'No se pudo anular el préstamo.' 
-            });
-            console.error('Error al eliminar préstamo:', err);
-          }
+          error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo anular.' })
         });
       }
     });
   }
 
-  applyFilterGlobal(table: any, event: Event): void {
-    const filterValue = (event.target as HTMLInputElement).value;
-    table.filterGlobal(filterValue, 'contains');
-  }
-
-  clearFilter(table: any): void {
-    this.globalFilter = '';
-    table.clear();
-  }
+  applyFilterGlobal(table: any, event: Event): void { table.filterGlobal((event.target as HTMLInputElement).value, 'contains'); }
+  clearFilter(table: any): void { this.globalFilter = ''; table.clear(); }
 
   getEstadoClass(estadoNombre: string = ''): string {
-    switch (estadoNombre.toLowerCase()) {
+    const estado = estadoNombre.toLowerCase();
+    switch (estado) {
       case 'activo': return 'status-activo';
       case 'devuelto': 
-      case 'devuelto a tiempo': return 'status-devuelto';
+      case 'devuelto a tiempo': 
+      case 'completado a tiempo': return 'status-devuelto';
       case 'atrasado':
-      case 'devuelto tarde': return 'status-atrasado';
+      case 'devuelto tarde': 
+      case 'completado con retardo': return 'status-atrasado';
       case 'parcialmente devuelto': return 'status-parcial';
-      case 'completado a tiempo':
-      case 'completado con retardo': return 'status-completado';
       default: return 'status-desconocido';
     }
   }
 
   getAutoresNombres(detalle: any): string {
-    if (!detalle?.ejemplar?.libro?.autores || detalle.ejemplar.libro.autores.length === 0) {
+    const libro = detalle?.ejemplar?.libro || detalle?.libro || detalle;
+    if (!libro?.autores || !Array.isArray(libro.autores) || libro.autores.length === 0) {
       return 'Sin autor';
     }
-    return detalle.ejemplar.libro.autores
-      .map((a: any) => `${a.nombre} ${a.apPaterno}`)
+    return libro.autores
+      .map((a: any) => `${a.nombre || ''} ${a.apPaterno || ''}`.trim())
+      .filter((n: string) => n !== '')
       .join(', ');
   }
 
-  getCantidadSeleccionados(): number {
-    return this.detallesDevolucion.filter(d => d.seleccionado).length;
+  getCantidadSeleccionados(): number { 
+    return this.detallesDevolucion.filter(d => d.seleccionado).length; 
   }
 
-  toggleSeleccionTodos(event: any): void {
-    const checked = event.checked;
-    this.detallesDevolucion.forEach(detalle => detalle.seleccionado = checked);
+  toggleSeleccionTodos(event: any): void { 
+    this.detallesDevolucion.forEach(d => d.seleccionado = event.checked); 
   }
 
-  todosSeleccionados(): boolean {
-    return this.detallesDevolucion.length > 0 && 
-           this.detallesDevolucion.every(d => d.seleccionado);
+  todosSeleccionados(): boolean { 
+    return this.detallesDevolucion.length > 0 && this.detallesDevolucion.every(d => d.seleccionado); 
   }
 
-  algunoSeleccionado(): boolean {
-    return this.detallesDevolucion.some(d => d.seleccionado);
+  algunoSeleccionado(): boolean { 
+    return this.detallesDevolucion.some(d => d.seleccionado); 
   }
 }

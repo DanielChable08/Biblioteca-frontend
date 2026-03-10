@@ -8,14 +8,12 @@ import { Observable, map, of, catchError } from 'rxjs';
   standalone: true 
 })
 export class SecureImagePipe implements PipeTransform {
-  // 1. Inyectamos HttpBackend para saltarnos los interceptores
   private httpBackend = inject(HttpBackend);
   private sanitizer = inject(DomSanitizer);
   private http: HttpClient;
 
   constructor() {
-    // Creamos un cliente HTTP nuevo que NO tiene interceptores
-    // Esto evita que un error 401 en la imagen te cierre la sesión.
+
     this.http = new HttpClient(this.httpBackend);
   }
 
@@ -24,7 +22,6 @@ export class SecureImagePipe implements PipeTransform {
         return of('assets/img/placeholder.png');
     }
 
-    // 2. Buscamos el token en sessionStorage (donde lo tienes tú)
     const token = sessionStorage.getItem('token');
 
     let headers = new HttpHeaders();
@@ -32,14 +29,12 @@ export class SecureImagePipe implements PipeTransform {
         headers = headers.set('Authorization', `Bearer ${token}`);
     }
 
-    // 3. Hacemos la petición
     return this.http.get(url, { headers, responseType: 'blob' }).pipe(
       map(blob => {
         return this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob));
       }),
       catchError(err => {
         console.warn('Fallo carga imagen segura (pero la sesión está a salvo)');
-        // Devolvemos el placeholder si falla
         return of('assets/img/placeholder.png'); 
       })
     );

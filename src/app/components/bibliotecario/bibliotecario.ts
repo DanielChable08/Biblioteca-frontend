@@ -16,8 +16,8 @@ import { ChipModule } from 'primeng/chip';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { MenuModule } from 'primeng/menu';
+import { PaginatorModule } from 'primeng/paginator';
 import { Router, NavigationEnd } from '@angular/router';
-// Importamos catchError y of para manejar errores sin romper la página
 import { finalize, forkJoin, map, switchMap, of, Subscription, filter, catchError } from 'rxjs';
 import { SecureImagePipe } from '../../pipes/secure-image.pipe';
 
@@ -41,7 +41,7 @@ type CategoriaKey = 'Todas' | string;
     CommonModule, FormsModule, CardModule, ButtonModule, InputTextModule,
     TooltipModule, PopoverModule, ToastModule, ConfirmPopupModule,
     ConfirmDialogModule, DynamicDialogModule, DividerModule, ChipModule,
-    DialogModule, SelectModule, MenuModule, SecureImagePipe
+    DialogModule, SelectModule, MenuModule, SecureImagePipe, PaginatorModule
   ],
   providers: [DialogService, ConfirmationService, MessageService],
   templateUrl: './bibliotecario.html',
@@ -72,9 +72,17 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   currentUserRole: string = '';
   currentUserInitials: string = '';
   mostrarStats = true;
+  
+  first: number = 0;
+  rows: number = 15;
+
   private ejemplaresSubscription?: Subscription;
   private routerSubscription?: Subscription;
   private readonly IMAGES_BASE_URL = 'http://localhost:8080/assets/img/';
+
+  get isAdmin(): boolean {
+      return this.authService.isAdmin();
+  }
 
   ngOnInit(): void {
     this.loadUserInfo();
@@ -101,8 +109,14 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     if (this.routerSubscription) this.routerSubscription.unsubscribe();
   }
 
+  onPageChange(event: any) {
+      this.first = event.first;
+      this.rows = event.rows;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   setupCatalogMenu(): void {
-    this.catalogMenuItems = [
+    const items: MenuItem[] = [
       { label: 'Gestionar Catálogos', styleClass: 'menu-header' },
       { separator: true },
       { label: 'Autores', icon: 'pi pi-user-edit', command: () => this.router.navigate(['/admin/autores']) },
@@ -116,9 +130,12 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       { label: 'Condición Física', icon: 'pi pi-clipboard', command: () => this.router.navigate(['/admin/condiciones']) },
       { separator: true },
       { label: 'Multas', icon: 'pi pi-receipt', command: () => this.router.navigate(['/admin/multas']) },     
-      { separator: true },
-      { label: 'Cerrar Sesión', icon: 'pi pi-sign-out', styleClass: 'logout-menu-item', command: () => this.logout() },
+      { separator: true }
     ];
+
+    const logoutItem: MenuItem = { label: 'Cerrar Sesión', icon: 'pi pi-sign-out', styleClass: 'logout-menu-item', command: () => this.logout() };
+
+    this.catalogMenuItems = [...items, logoutItem];
   }
 
   loadUserInfo(): void {
@@ -131,7 +148,6 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     this.loading = true;
 
     forkJoin({
-      // 1. Cargamos libros con manejo de error (devuelve array vacío si falla)
       libros: this.bookService.getAllLibrosAdmin().pipe(
         catchError(err => {
             console.error('Error cargando libros:', err);
@@ -147,11 +163,9 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
           return of({ libros: [], categorias });
         }
 
-        // 2. Cargamos autores de forma segura (blindaje anti-404)
         const autorRequests = libros.map(libro =>
           this.bookService.getAutoresForLibro(libro.uuid).pipe(
             catchError(() => {
-                // Si falla (404), devolvemos lista vacía
                 return of([]); 
             })
           )
@@ -174,13 +188,10 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
                   return { ...ejemplar, estado: estadoDelEjemplar };
                 });
 
-              // --- DIAGNÓSTICO DE ESTADO ACTIVO ---
-              // Verificamos qué está llegando realmente en el JSON
               const estadoDesdeBack = (libro as any).activo;
               
-              // Si estadoDesdeBack es 'undefined', el JSON no lo trae.
               if (estadoDesdeBack === undefined) {
-                 console.warn(`⚠️ Alerta Frontend: El libro "${libro.titulo}" no trae el campo 'activo' del backend. Se mostrará como ACTIVO por defecto.`);
+                 console.warn(`Alerta Frontend: El libro "${libro.titulo}" no trae el campo 'activo' del backend.`);
               }
 
               return {
@@ -189,7 +200,6 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
                 categoria: categoriaDelLibro,
                 autores: autoresArray[index],
                 ejemplares: ejemplaresDelLibro,
-                // Si el campo no viene, es true. Si viene false, es false.
                 activo: estadoDesdeBack !== false 
               };
             });
@@ -219,7 +229,6 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ... (Resto de métodos getters y helpers igual que antes) ...
   getEjemplaresDisponibles(libro: Libro): number { return libro.ejemplares?.filter(e => e.estado?.nombre?.toLowerCase() === 'disponible').length || 0; }
   getEjemplaresPrestados(libro: Libro): number { return libro.ejemplares?.filter(e => e.estado?.nombre?.toLowerCase() === 'prestado').length || 0; }
   getEjemplaresReparacion(libro: Libro): number { return libro.ejemplares?.filter(e => e.estado?.nombre?.toLowerCase() === 'en reparación').length || 0; }
@@ -276,6 +285,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       );
     }
     this.libros = resultado;
+    this.first = 0; 
   }
 
   buscar(): void { this.filtrarLibros(); }
@@ -288,6 +298,18 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   formatIsbn(isbn: string | undefined): string {
     if (!isbn || isbn.length !== 13) return isbn || 'N/A';
     return [isbn.slice(0, 3), isbn.slice(3, 6), isbn.slice(6, 9), isbn.slice(9, 12), isbn.slice(12, 13)].join('-');
+  }
+
+  formatearISBN(isbn: string | undefined): string {
+    if (!isbn) return 'Sin ISBN';
+    const limpio = isbn.replace(/[^0-9X]/gi, '');
+    if (limpio.length === 10) {
+      return `${limpio.substring(0, 1)}-${limpio.substring(1, 4)}-${limpio.substring(4, 9)}-${limpio.substring(9, 10)}`;
+    }
+    if (limpio.length === 13) {
+      return `${limpio.substring(0, 3)}-${limpio.substring(3, 4)}-${limpio.substring(4, 8)}-${limpio.substring(8, 12)}-${limpio.substring(12, 13)}`;
+    }
+    return isbn;
   }
 
   getAutoresAsString(autores?: Autor[]): string {
@@ -347,20 +369,6 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       if (ejemplarAgregado) this.loadInitialData();
     });
   }
-
-  
-  formatearISBN(isbn: string | undefined): string {
-    if (!isbn) return 'N/A';
-    const limpio = isbn.replace(/[^0-9X]/gi, '');
-    if (limpio.length === 10) {
-      return `${limpio.substring(0, 1)}-${limpio.substring(1, 4)}-${limpio.substring(4, 9)}-${limpio.substring(9, 10)}`;
-    }
-    if (limpio.length === 13) {
-      return `${limpio.substring(0, 3)}-${limpio.substring(3, 4)}-${limpio.substring(4, 8)}-${limpio.substring(8, 12)}-${limpio.substring(12, 13)}`;
-    }
-    return isbn;
-  }
-
 
   eliminarLibro(libro: Libro): void {
     this.confirmationService.confirm({

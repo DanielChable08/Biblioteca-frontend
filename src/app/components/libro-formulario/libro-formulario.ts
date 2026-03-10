@@ -85,8 +85,8 @@ export default class LibroFormularioComponent implements OnInit {
       titulo: ['', Validators.required],
       idAutores: [[], Validators.required],
       resumen: [''],
-      isbn: ['', [Validators.required, Validators.pattern(/^\d{10}$|^\d{13}$/)]],
-      isbnDisplay: ['', Validators.required],
+      isbn: ['', [Validators.pattern(/^\d{10}$|^\d{13}$/)]],
+      isbnDisplay: [''],
       anho: [new Date().getFullYear(), [Validators.required, Validators.pattern('^[0-9]{4}$')]],
       paginas: [null, [Validators.required, Validators.min(1)]],
       edicion: [''], 
@@ -190,8 +190,8 @@ export default class LibroFormularioComponent implements OnInit {
     this.libroForm.patchValue({
       titulo: libro.titulo,
       resumen: libro.resumen || '',
-      isbn: libro.isbn,
-      isbnDisplay: libro.isbn,
+      isbn: libro.isbn || '',
+      isbnDisplay: libro.isbn || '',
       anho: parseInt(libro.anho, 10),
       paginas: libro.paginas || null,
       edicion: libro.edicion || '',
@@ -216,7 +216,7 @@ export default class LibroFormularioComponent implements OnInit {
       case 'categoria': this.tituloDialog = 'Nueva Categoría'; break;
       case 'editorial': this.tituloDialog = 'Nueva Editorial'; break;
       case 'idioma': this.tituloDialog = 'Nuevo Idioma'; break;
-      case 'tipoLibro': this.tituloDialog = 'Nuevo Tipo de Libro'; break;
+      case 'tipoLibro': this.tituloDialog = 'Nueva Facultad'; break;
       default: this.tituloDialog = 'Nuevo Dato';
     }
     this.catalogoSiendoAgregado = tipo;
@@ -288,13 +288,12 @@ export default class LibroFormularioComponent implements OnInit {
     this.isSubmitting = true;
     const fv = this.libroForm.value;
 
-    // Valores por defecto para evitar validaciones del backend
     const edicionSegura = (fv.edicion && fv.edicion.trim() !== '') ? fv.edicion : 'S/E'; 
     const pastaSegura = fv.pasta || '';
 
     const libroPayload = {
       titulo: fv.titulo,
-      isbn: fv.isbn,
+      isbn: fv.isbn || null,
       anho: fv.anho.toString(),
       resumen: fv.resumen || '',
       edicion: edicionSegura,
@@ -306,7 +305,6 @@ export default class LibroFormularioComponent implements OnInit {
       idIdioma: fv.idIdioma,
     };
 
-    // Si es null, el service no lo manda, y el backend usa la imagen default
     const archivoParaEnviar = this.selectedFile ? this.selectedFile : null;
 
     let operacionLibro$;
@@ -338,28 +336,27 @@ export default class LibroFormularioComponent implements OnInit {
       error: (err) => {
         console.error('Error al guardar:', err);
         
-        let detalle = 'No se pudo guardar el libro.';
-        const errorMsg = err.error?.message || JSON.stringify(err.error) || '';
-
-        // Detección de duplicados (Postgres SQL State 23505 devuelve 500 o 409)
-        // También capturamos si viene un 401 falso positivo por el redirect a /error
-        if (err.status === 409 || err.status === 401 ||
-           (err.status === 500 && (errorMsg.toLowerCase().includes('duplicate') || errorMsg.toLowerCase().includes('unique') || errorMsg.toLowerCase().includes('existe') || errorMsg.toLowerCase().includes('unicidad')))) {
-            
-            detalle = 'Error: Ya existe un libro registrado con este ISBN o Título.';
+        const backendMessage = err.error?.message || (typeof err.error === 'string' ? err.error : null);
         
-        } else if (err.status === 400) {
-            detalle = 'Datos inválidos. Verifica que no falte información.';
+        if (backendMessage) {
+            this.messageService.add({ 
+                severity: 'error', 
+                summary: 'Atención', 
+                detail: backendMessage 
+            });
+        } else if (err.status === 409) {
+            this.messageService.add({ 
+                severity: 'error', 
+                summary: 'Conflicto', 
+                detail: 'Ya existe un libro registrado con este ISBN o Título.' 
+            });
+        } else {
+            this.messageService.add({ 
+                severity: 'error', 
+                summary: 'Error', 
+                detail: 'No se pudo guardar el libro. Verifica los datos.' 
+            });
         }
-
-        this.messageService.add({ 
-            severity: 'error', 
-            summary: 'Error', 
-            detail: detalle 
-        });
-        
-        // Al estar manejando el error aquí, y con el interceptor modificado,
-        // NO se cerrará la sesión.
       }
     });
   }

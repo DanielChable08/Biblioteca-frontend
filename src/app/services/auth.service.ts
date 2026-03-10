@@ -11,7 +11,6 @@ export class AuthService {
   private router = inject(Router);
   private apiUrl = 'http://localhost:8080/sdt/v1/auth';
   
-  // Inicializamos verificando si hay token en la sesión actual
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(!!sessionStorage.getItem('token'));
   
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
@@ -25,7 +24,6 @@ export class AuthService {
         
         sessionStorage.setItem('token', response.token);
         
-        // Manejo seguro de datos de persona/usuario
         let nombre = response.nombre || null;
         let apPaterno = response.apPaterno || null;
         let apMaterno = response.apMaterno || null;
@@ -76,10 +74,29 @@ export class AuthService {
 
     const isAdmin = userData.roles.some((role: any) => {
       const roleName = typeof role === 'string' ? role : role.name;
-      return roleName === 'Administrador' || roleName === 'Bibliotecario';
+      return roleName === 'Administrador' || roleName === 'ADMIN';
     });
     
-    return isAdmin ? 'ADMIN' : 'USER';
+    if (isAdmin) return 'ADMIN';
+
+    const isBibliotecario = userData.roles.some((role: any) => {
+        const roleName = typeof role === 'string' ? role : role.name;
+        return roleName === 'Bibliotecario';
+    });
+
+    if (isBibliotecario) return 'BIBLIOTECARIO';
+    
+    return 'USER';
+  }
+
+
+  isAdmin(): boolean {
+      return this.getUserRole() === 'ADMIN';
+  }
+
+  canAccessAdminPanel(): boolean {
+      const role = this.getUserRole();
+      return role === 'ADMIN' || role === 'BIBLIOTECARIO';
   }
 
   getRoleName(): string {

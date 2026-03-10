@@ -51,7 +51,11 @@ export default class Login implements OnInit {
     
     if (this.authService.isAuthenticated()) {
       const role = this.authService.getUserRole();
-      this.router.navigate([role === 'ADMIN' ? '/admin' : '/dashboard']);
+      if (role === 'ADMIN' || role === 'BIBLIOTECARIO') {
+        this.router.navigate(['/admin']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
     }
 
     this.route.queryParams.subscribe(params => {
@@ -71,8 +75,9 @@ export default class Login implements OnInit {
       this.loginForm.markAllAsTouched();
       this.messageService.add({
         severity: 'warn',
-        summary: 'Formulario incompleto',
-        detail: 'Por favor completa todos los campos'
+        summary: 'Datos incompletos',
+        detail: 'Ingresa un correo válido y tu contraseña para continuar.',
+        life: 3000
       });
       return;
     }
@@ -88,38 +93,69 @@ export default class Login implements OnInit {
         
         this.messageService.add({
           severity: 'success',
-          summary: 'Bienvenido',
-          detail: `Hola ${fullName}`,
+          summary: '¡Bienvenido!',
+          detail: `Hola de nuevo, ${fullName}`,
           life: 2000
         });
 
-        const targetUrl = role === 'ADMIN' ? this.returnUrl : '/dashboard';
-        this.router.navigate([targetUrl]);
+        setTimeout(() => {
+            if (role === 'ADMIN' || role === 'BIBLIOTECARIO') {
+                this.router.navigate(['/admin']);
+            } else {
+                this.router.navigate(['/dashboard']);
+            }
+        }, 500);
       },
       error: (err) => {
         this.loading = false;
-        let errorMessage = 'Error al intentar iniciar sesión';
-        let errorDetail = 'Por favor, intenta nuevamente';
+        console.error('Login error:', err);
 
-        if (err.status === 0) {
-          errorMessage = 'Servidor no disponible';
-          errorDetail = 'No se pudo conectar con el servidor. Verifica tu conexión o contacta al administrador.';
-        } else if (err.status === 401) {
-          errorMessage = 'Credenciales incorrectas';
-          errorDetail = 'El email o contraseña son incorrectos.';
-        } else if (err.status === 500) {
-          errorMessage = 'Error del servidor';
-          errorDetail = 'Ocurrió un error en el servidor. Contacta al administrador.';
-        } else if (err.status === 403) {
-          errorMessage = 'Acceso denegado';
-          errorDetail = 'No tienes permisos para acceder al sistema.';
-        } else {
-          errorDetail = err.error?.message || 'Error inesperado. Intenta nuevamente.';
+        let errorSummary = 'Error de acceso';
+        let errorDetail = 'Ocurrió un problema inesperado.';
+
+        switch (err.status) {
+            case 400:
+                errorSummary = 'Solicitud incorrecta';
+                errorDetail = 'Los datos enviados no son válidos.';
+                break;
+            
+            case 401:
+                errorSummary = 'Credenciales Incorrectas';
+                errorDetail = 'El correo electrónico o la contraseña son incorrectos.';
+                break;
+
+            case 403:
+                errorSummary = 'Acceso Denegado';
+                errorDetail = 'Tu cuenta está inactiva o no tienes permisos.';
+                break;
+
+            case 404:
+                errorSummary = 'Usuario no encontrado';
+                errorDetail = 'No existe una cuenta registrada con este correo.';
+                break;
+
+            case 500:
+                errorSummary = 'Error del Servidor';
+                errorDetail = 'El sistema no responde. Intenta más tarde.';
+                break;
+
+            case 0:
+                errorSummary = 'Sin Conexión';
+                errorDetail = 'No se pudo conectar con el servidor. Revisa tu internet.';
+                break;
+
+            default:
+                if (err.error && err.error.message) {
+                    errorDetail = err.error.message;
+                } else {
+                    errorDetail = 'Intenta nuevamente.';
+                }
+                break;
         }
         
         this.messageService.add({
           severity: 'error',
-          summary: errorMessage,
+          summary: errorSummary,
           detail: errorDetail,
           life: 5000
         });

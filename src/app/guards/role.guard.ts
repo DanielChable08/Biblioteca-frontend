@@ -8,7 +8,11 @@ export const roleGuard: CanActivateFn = (route, state) => {
 
   const userRole = authService.getUserRole();
 
-  if (state.url.startsWith('/admin') && userRole !== 'ADMIN') {
+  if (state.url.startsWith('/admin')) {
+    if (userRole === 'ADMIN' || userRole === 'BIBLIOTECARIO') {
+        return true;
+    }
+    
     router.navigate(['/dashboard']);
     return false;
   }

@@ -9,27 +9,29 @@
   </ng-template>
 </p-confirmDialog>
 
-<div class="page-header-container">
-  <div class="page-header">
-    <div class="header-left">
-      <button
-        pButton
-        icon="pi pi-arrow-left"
-        class="p-button-text btn-back"
-        (click)="regresar()"
-        pTooltip="Regresar al Panel"
-        tooltipPosition="bottom">
-      </button>
-      <h2><i class="pi pi-users user-icon"></i> Gestión de Usuarios</h2>
-    </div>
+<div class="header-container">
+  <div class="form-header-container">
+    <div class="form-header page-header-layout">
+      <div class="header-left">
+        <button
+          pButton
+          icon="pi pi-arrow-left"
+          class="p-button-text back-button"
+          (click)="regresar()"
+          pTooltip="Regresar al Panel"
+          tooltipPosition="bottom">
+        </button>
+        <h2><i class="pi pi-users user-icon"></i> Gestión de Usuarios</h2>
+      </div>
 
-    <div class="header-right">
-      <p-button
-        label="Nuevo Usuario"
-        icon="pi pi-user-plus"
-        styleClass="btn-primary"
-        (click)="agregarUsuario()">
-      </p-button>
+      <div class="header-right">
+        <p-button
+          label="Nuevo Usuario"
+          icon="pi pi-user-plus"
+          styleClass="p-button-wine w-full-mobile"
+          (click)="agregarUsuario()">
+        </p-button>
+      </div>
     </div>
   </div>
 </div>
@@ -45,21 +47,23 @@
     [globalFilterFields]="['email', 'nombre', 'apPaterno', 'telefono', 'rolNombre']" 
     styleClass="p-datatable-striped p-datatable-gridlines custom-table"
     currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios" 
-    [showCurrentPageReport]="true">
+    [showCurrentPageReport]="true"
+    responsiveLayout="stack"
+    breakpoint="960px">
 
     <ng-template pTemplate="caption">
       <div class="table-header">
-        <span>Lista de Usuarios del Sistema</span>
+        <span>Lista de Usuarios</span>
         <div class="filter-container">
-          <span class="p-input-icon-left">
+          <span class="p-input-icon-left w-full-mobile">
             <i class="pi pi-search"></i>
             <input 
               pInputText 
               type="text" 
               [(ngModel)]="globalFilter" 
               (input)="applyFilterGlobal(dt, $event)" 
-              placeholder="Buscar por nombre, email, teléfono o rol..." 
-              class="table-search-input" 
+              placeholder="Buscar..." 
+              class="table-search-input w-full-mobile" 
             />
           </span>
           <p-button 
@@ -76,7 +80,7 @@
     <ng-template pTemplate="header">
       <tr>
         <th pSortableColumn="nombre" style="width: 22%;">
-          Nombre Completo <p-sortIcon field="nombre"></p-sortIcon>
+          Nombre <p-sortIcon field="nombre"></p-sortIcon>
         </th>
         <th pSortableColumn="email" style="width: 20%;">
           Email <p-sortIcon field="email"></p-sortIcon>
@@ -96,6 +100,7 @@
       <tr [class.inactive-row]="!usuario.active">
 
         <td>
+          <span class="p-column-title">Nombre</span>
           <div class="user-info">
             <i class="pi pi-user user-avatar-icon"></i>
             <div class="user-details">
@@ -105,6 +110,7 @@
         </td>
 
         <td>
+          <span class="p-column-title">Email</span>
           <div class="email-cell">
             <i class="pi pi-envelope email-icon"></i>
             {{ usuario.email }}
@@ -112,19 +118,22 @@
         </td>
 
         <td>
+          <span class="p-column-title">Teléfono</span>
           <div class="phone-cell">
-            <i class="pi pi-phone phone-icon"></i>
+            <i class="pi pi-phone phone-icon" *ngIf="usuario.telefono"></i>
             {{ usuario.telefono || 'N/A' }}
           </div>
         </td>
 
         <td>
+          <span class="p-column-title">Rol</span>
           <span class="user-role-badge">
             {{ usuario.rolNombre || 'Sin rol' }}
           </span>
         </td>
 
         <td>
+          <span class="p-column-title">Estado</span>
           <span 
             class="status-badge" 
             [ngClass]="usuario.active ? 'status-active' : 'status-inactive'">
@@ -133,7 +142,8 @@
           </span>
         </td>
 
-        <td>
+        <td class="col-acciones">
+          <span class="p-column-title">Acciones</span>
           <div class="table-actions">
             <button 
               pButton 
@@ -158,13 +168,13 @@
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="7" class="text-center empty-message">
+        <td colspan="6" class="text-center empty-message">
           <i class="pi pi-info-circle empty-icon"></i>
-          <p>No se encontraron usuarios en el sistema.</p>
+          <p>No se encontraron usuarios.</p>
           <p-button 
-            label="Agregar Primer Usuario" 
+            label="Agregar Usuario" 
             icon="pi pi-plus" 
-            styleClass="p-button-sm btn-primary"
+            styleClass="p-button-sm p-button-wine"
             (click)="agregarUsuario()">
           </p-button>
         </td>
@@ -173,7 +183,7 @@
 
     <ng-template pTemplate="loadingbody">
       <tr>
-        <td colspan="7" class="text-center loading-message">
+        <td colspan="6" class="text-center loading-message">
           <i class="pi pi-spin pi-spinner loading-icon"></i>
           <p>Cargando usuarios...</p>
         </td>

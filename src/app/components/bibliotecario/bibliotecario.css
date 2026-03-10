@@ -383,7 +383,6 @@
   box-shadow: 0 3px 12px rgba(92, 43, 46, 0.08) !important;
   transition: all 0.3s ease;
   max-width: 260px;
-  /* Flex para asegurar que el footer siempre esté al final */
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -507,7 +506,7 @@
   gap: 0.4rem;
   padding: 0 0.5rem 0.1rem 0.2rem;
   border-top: 1px solid #f0f0f0;
-  margin-top: auto; /* Empuja los botones al fondo */
+  margin-top: auto; 
   padding-top: 0.5rem;
 }
 
@@ -565,6 +564,55 @@
   border: 2px solid white;
 }
 
+
+.paginator-container {
+    margin-top: 3rem;   
+    margin-bottom: 0.5rem; 
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+:host ::ng-deep .custom-paginator-transparent.p-paginator {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0;
+}
+
+:host ::ng-deep .custom-paginator-transparent .p-paginator-element {
+    background-color: transparent;
+    color: var(--wine);
+    font-weight: 600;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    margin: 0 4px; 
+    transition: all 0.2s ease;
+}
+
+:host ::ng-deep .custom-paginator-transparent .p-paginator-element:not(.p-highlight):not(.p-disabled):hover {
+    background-color: rgba(212, 175, 55, 0.15) !important;
+    color: var(--wine) !important;
+    transform: translateY(-2px);
+}
+
+:host ::ng-deep .custom-paginator-transparent .p-paginator-element.p-highlight {
+    background-color: var(--wine) !important;
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(92, 43, 46, 0.3);
+}
+
+:host ::ng-deep .custom-paginator-transparent .p-paginator-rpp-options {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    color: var(--wine);
+    margin-left: 1rem;
+    height: 40px;
+}
+
+
 .reactivate-btn { background-color: #27ae60 !important; border: 1px solid #27ae60 !important; color: white !important; }
 .reactivate-btn:hover { background-color: #219150 !important; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
@@ -602,7 +650,6 @@
 .status-badge { cursor: help; transition: all 0.3s ease; }
 .status-badge:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); }
 
-/* === RESPONSIVE QUERIES === */
 
 @media (max-width: 960px) {
   .main-header {
@@ -708,7 +755,6 @@
     display: none;
   }
 
-  /* AJUSTE PARA BOTONES: Permite que bajen si no caben y los centra */
   .book-actions-compact {
     flex-wrap: wrap;
     padding: 0.9rem 0.8rem;

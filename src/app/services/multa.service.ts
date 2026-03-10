@@ -24,7 +24,6 @@ export class MultaService {
     });
   }
 
-  // --- MÉTODOS DE MULTAS ---
   getMultas(): Observable<Multa[]> {
     return this.http.get<Multa[]>(`${this.apiUrl}/multas`, { headers: this.getHeaders() });
   }
@@ -37,15 +36,12 @@ export class MultaService {
     return this.http.put<void>(`${this.apiUrl}/multas/${id}/condonar`, {}, { headers: this.getHeaders() });
   }
 
-  // --- MÉTODOS DE POLÍTICAS (Corregidos) ---
 
   getPoliticasConfig(): Observable<PoliticaMulta[]> {
-    // Se agregó la ruta completa y las headers para evitar el 401
     return this.http.get<PoliticaMulta[]>(`${this.apiUrl}/politicas-multas`, { headers: this.getHeaders() });
   }
 
   getPoliticaVigente(): Observable<PoliticaMulta> {
-    // Endpoint: /politicas-multas/vigentes (ajustado a tu lista inicial)
     return this.http.get<PoliticaMulta>(`${this.apiUrl}/politicas-multas/vigentes`, { headers: this.getHeaders() });
   }
 
@@ -54,22 +50,18 @@ export class MultaService {
   }
 
 
-  // POST (Crear)
   createPolitica(politica: PoliticaMulta): Observable<PoliticaMulta> {
     return this.http.post<PoliticaMulta>(`${this.apiUrl}/politicas-multas`, politica, { headers: this.getHeaders() });
   }
 
-  // PUT (Editar) - Asumiendo que tu backend recibe el UUID en la URL
   updatePolitica(uuid: string, politica: PoliticaMulta): Observable<PoliticaMulta> {
     return this.http.put<PoliticaMulta>(`${this.apiUrl}/politicas-multas/${uuid}`, politica, { headers: this.getHeaders() });
   }
 
-  // DELETE (Eliminar)
   deletePolitica(uuid: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/politicas-multas/${uuid}`, { headers: this.getHeaders() });
   }
 
-  // --- CATÁLOGOS ---
   getMotivosMultas(): Observable<MotivoMulta[]> {
     return this.http.get<MotivoMulta[]>(`${this.apiUrl}/motivos-multas`, { headers: this.getHeaders() });
   }

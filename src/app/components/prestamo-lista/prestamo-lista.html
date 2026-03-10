@@ -1,18 +1,20 @@
 <p-toast></p-toast>
-    <div class="header-container">
-        <div class="form-header-container">
-            <div class="form-header page-header-layout">
-                <div class="header-left">
-                    <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
-                    <h2><i class="pi pi-address-book user-icon"></i> Gestión de Préstamos</h2>
-                </div>
-                <div class="header-right">
-                    <p-button label="Nuevo Préstamo" icon="pi pi-plus" styleClass="p-button-wine" (click)="agregarPrestamo()"></p-button>
-                </div>
-                    <p-button label="Multas" icon="pi pi-dollar" styleClass="p-button-wine" (click)="multas()"></p-button>
+
+<div class="header-container">
+    <div class="form-header-container">
+        <div class="form-header page-header-layout">
+            <div class="header-left">
+                <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar al Panel" tooltipPosition="bottom"></button>
+                <h2><i class="pi pi-address-book user-icon"></i> Gestión de Préstamos</h2>
+            </div>
+            
+            <div class="header-actions">
+                <p-button label="Nuevo Préstamo" icon="pi pi-plus" styleClass="p-button-wine w-full-mobile" (click)="agregarPrestamo()"></p-button>
+                <p-button label="Multas" icon="pi pi-dollar" styleClass="p-button-wine w-full-mobile" (click)="multas()"></p-button>
             </div>
         </div>
     </div>
+</div>
     
 <p-confirmDialog>
     <ng-template pTemplate="message" let-message>
@@ -27,7 +29,8 @@
     header="Detalles del Préstamo" 
     [(visible)]="mostrarDetalle" 
     [modal]="true" 
-    [style]="{width: '50vw', minWidth: '600px'}"
+    [style]="{width: '50vw'}" 
+    [breakpoints]="{'960px': '75vw', '640px': '95vw'}"
     [closable]="true" 
     (onHide)="cerrarModalDetalle()"
     styleClass="detalle-prestamo-dialog"
@@ -87,7 +90,7 @@
                 Ejemplares Prestados
             </h4>
             
-            <p-table [value]="detallesPrestamo" [loading]="loadingDetalles" styleClass="detalle-table">
+            <p-table [value]="detallesPrestamo" [loading]="loadingDetalles" styleClass="detalle-table" responsiveLayout="scroll">
                 <ng-template pTemplate="header">
                     <tr>
                         <th>Código</th>
@@ -136,13 +139,13 @@
             <p-button 
                 label="Cerrar" 
                 icon="pi pi-times" 
-                styleClass="p-button-text p-button-secondary" 
+                styleClass="p-button-text p-button-secondary w-full-mobile" 
                 (onClick)="cerrarModalDetalle()">
             </p-button>
             <p-button 
                 label="Imprimir Ticket" 
                 icon="pi pi-print" 
-                styleClass="p-button-gold" 
+                styleClass="p-button-gold w-full-mobile" 
                 (onClick)="imprimirTicketPrestamo()"
                 [disabled]="loadingDetalles || detallesPrestamo.length === 0">
             </p-button>
@@ -153,7 +156,8 @@
 <p-dialog 
     [(visible)]="mostrarModalDevolucion" 
     [modal]="true" 
-    [style]="{width: '60vw', minWidth: '700px'}"
+    [style]="{width: '60vw'}"
+    [breakpoints]="{'960px': '75vw', '640px': '95vw'}"
     [closable]="true" 
     (onHide)="cerrarModalDevolucion()"
     styleClass="devolucion-dialog"
@@ -191,7 +195,7 @@
                 Selecciona los ejemplares a devolver
             </h4>
 
-            <p-table [value]="detallesDevolucion" [loading]="loadingDevolucion" styleClass="devolucion-table">
+            <p-table [value]="detallesDevolucion" [loading]="loadingDevolucion" styleClass="devolucion-table" responsiveLayout="scroll">
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 50px;">
@@ -249,14 +253,14 @@
             <p-button 
                 label="Cancelar" 
                 icon="pi pi-times" 
-                styleClass="p-button-text p-button-secondary" 
+                styleClass="p-button-text p-button-secondary w-full-mobile" 
                 (onClick)="cerrarModalDevolucion()"
                 [disabled]="procesandoDevolucion"
             ></p-button>
             <p-button 
                 [label]="getCantidadSeleccionados() > 0 ? 'Devolver ' + getCantidadSeleccionados() + ' ejemplar(es)' : 'Devolver Seleccionados'" 
                 icon="pi pi-check" 
-                styleClass="p-button-wine" 
+                styleClass="p-button-wine w-full-mobile" 
                 (onClick)="procesarDevolucion()"
                 [loading]="procesandoDevolucion"
                 [disabled]="!algunoSeleccionado()"
@@ -278,12 +282,14 @@
         styleClass="p-datatable-striped p-datatable-gridlines custom-table"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} préstamos" 
         [showCurrentPageReport]="true"
+        responsiveLayout="stack" 
+        breakpoint="960px"
     >
         <ng-template pTemplate="caption">
             <div class="table-header">
                 <span>Lista de Préstamos</span>
                 <div class="filter-container">
-                    <span class="p-input-icon-left">
+                    <span class="p-input-icon-left w-full-mobile">
                         <i class="pi pi-search"></i>
                         <input 
                             pInputText 
@@ -291,7 +297,7 @@
                             [(ngModel)]="globalFilter" 
                             (input)="applyFilterGlobal(dtPrestamos, $event)" 
                             placeholder="Buscar..." 
-                            class="table-search-input" 
+                            class="table-search-input w-full-mobile" 
                         />
                     </span>
                     <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dtPrestamos)" pTooltip="Limpiar filtro"></p-button>
@@ -312,16 +318,28 @@
 
         <ng-template pTemplate="body" let-prestamo>
             <tr>
-                <td>{{ prestamo.lector?.nombre }} {{ prestamo.lector?.apPaterno }}</td>
-                <td>{{ prestamo.bibliotecario?.nombre }} {{ prestamo.bibliotecario?.apPaterno }}</td>
-                <td>{{ prestamo.fechaPrestamo | date:'dd/MM/yyyy' }}</td>
-                <td>{{ prestamo.fechaLimite | date:'dd/MM/yyyy' }}</td>
                 <td>
+                    <span class="p-column-title">Lector</span>
+                    {{ prestamo.lector?.nombre }} {{ prestamo.lector?.apPaterno }}
+                </td>
+                <td>
+                    <span class="p-column-title">Bibliotecario</span>
+                    {{ prestamo.bibliotecario?.nombre }} {{ prestamo.bibliotecario?.apPaterno }}
+                </td>
+                <td>
+                    <span class="p-column-title">Fecha Préstamo</span>
+                    {{ prestamo.fechaPrestamo | date:'dd/MM/yyyy' }}
+                </td>
+                <td>
+                    <span class="p-column-title">Fecha Límite</span>
+                    {{ prestamo.fechaLimite | date:'dd/MM/yyyy' }}
+                </td>
+                <td class="col-estado">
                     <span class="user-role-badge" [ngClass]="getEstadoClass(prestamo.estadoPrestamo?.nombre)">
                         {{ prestamo.estadoPrestamo?.nombre || 'N/A' }}
                     </span>
                 </td>
-                <td>
+                <td class="col-acciones">
                     <div class="table-actions">
                         <button 
                             pButton 

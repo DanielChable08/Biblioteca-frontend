@@ -93,10 +93,13 @@
         <button pButton [label]="mostrarStats ? 'Ocultar estadísticas' : 'Mostrar estadísticas'" [icon]="mostrarStats ? 'pi pi-eye-slash' : 'pi pi-eye'" class="btn-secondary outlined ani-one mr-2" (click)="toggleStats()" pTooltip="Mostrar u ocultar estadísticas" tooltipPosition="bottom"></button>
         <button pButton label="Agregar Libro" icon="pi pi-plus" class="btn-primary ani-one" pTooltip="Registrar libros" (click)="agregarLibro()" tooltipPosition="bottom"></button>
         <button pButton label="Prestamos" icon="pi pi-book" class="btn-primary outlined ani-one" (click)="PrestamosList()" pTooltip="Apartado de prestamos" tooltipPosition="bottom"></button>
-        <button pButton label="Usuarios" icon="pi pi-address-book" class="btn-primary outlined ani-one" (click)="UsuariosList()" pTooltip="Gestion de usuarios" tooltipPosition="bottom"></button>
-        <button pButton label="Personas" icon="pi pi-users" class="btn-primary outlined ani-one" (click)="PersonasList()" pTooltip="Gestionar personas" tooltipPosition="bottom"></button>
+        
+        <button *ngIf="isAdmin" pButton label="Usuarios" icon="pi pi-address-book" class="btn-primary outlined ani-one" (click)="UsuariosList()" pTooltip="Gestion de usuarios" tooltipPosition="bottom"></button>
+        <button *ngIf="isAdmin" pButton label="Personas" icon="pi pi-users" class="btn-primary outlined ani-one" (click)="PersonasList()" pTooltip="Gestionar personas" tooltipPosition="bottom"></button>
+        
         <button pButton label="Impresiones" icon="pi pi-print" class="btn-primary outlined ani-one" (click)="Impresiones()" pTooltip="Apartado de impresiones" tooltipPosition="bottom"></button>
-        <button pButton label="Políticas" icon="pi pi-chart-bar" class="btn-secondary outlined ani-one" (click)="irAPoliticas()" pTooltip="Ir a las politicas de multas" tooltipPosition="bottom"></button>
+        
+        <button *ngIf="isAdmin" pButton label="Políticas" icon="pi pi-chart-bar" class="btn-secondary outlined ani-one" (click)="irAPoliticas()" pTooltip="Ir a las politicas de multas" tooltipPosition="bottom"></button>
       </div>
     </div>
 
@@ -161,107 +164,119 @@
     <i class="pi pi-spin pi-spinner" style="font-size: 2.5rem; color: var(--wine)"></i>
   </div>
 
-  <div *ngIf="!loading && libros.length > 0" class="catalog-grid">
-    <p-card *ngFor="let libro of libros" class="book-card-compact" [class.inactive-card]="libro['activo'] === false">
-      <ng-template pTemplate="header">
-        <div class="book-image-container">
-          <img
-           [src]="(libro.imagen | secureImage | async) || 'assets/img/placeholder.png'"
-            alt="portada"
-            class="book-img-compact"
-          />
-          
-          <div class="book-status-badges" *ngIf="libro['activo'] !== false">
-            <span 
-              [class]="'status-badge ' + getEstadoPrincipal(libro).clase"
-              [pTooltip]="getTooltipEstados(libro)"
-              [escape]="false"
-              tooltipPosition="bottom"
-              [showDelay]="200"
-            >
-              <i [class]="'pi ' + getEstadoPrincipal(libro).icono"></i>
-              {{ getEstadoPrincipal(libro).cantidad }}
+  <div *ngIf="!loading && libros.length > 0">
+    <div class="catalog-grid">
+      <p-card *ngFor="let libro of libros.slice(first, first + rows)" class="book-card-compact" [class.inactive-card]="libro['activo'] === false">
+        <ng-template pTemplate="header">
+          <div class="book-image-container">
+            <img
+             [src]="(libro.imagen | secureImage | async)"
+              alt="portada"
+              class="book-img-compact"
+            />
+            
+            <div class="book-status-badges" *ngIf="libro['activo'] !== false">
+              <span 
+                [class]="'status-badge ' + getEstadoPrincipal(libro).clase"
+                [pTooltip]="getTooltipEstados(libro)"
+                [escape]="false"
+                tooltipPosition="bottom"
+                [showDelay]="200"
+              >
+                <i [class]="'pi ' + getEstadoPrincipal(libro).icono"></i>
+                {{ getEstadoPrincipal(libro).cantidad }}
+              </span>
+            </div>
+
+            <div class="inactive-overlay" *ngIf="libro['activo'] === false">
+              <span>DESACTIVADO</span>
+            </div>
+          </div>
+        </ng-template>
+
+        <div class="book-info-compact">
+          <h4 class="book-title-compact">{{ libro.titulo }}</h4>
+          <p class="book-author-compact">
+            {{ getAutoresAsString(libro.autores) }}
+          </p>
+          <span class="book-category-compact" [title]="libro.categoria?.nombre">
+            {{ libro.categoria?.nombre | slice : 0 : 22 }}{{ (libro.categoria?.nombre?.length || 0) > 22 ? '...' : '' }}
+          </span>
+
+          <div class="book-details-compact">
+            <span class="detail-item-compact">
+              <i class="pi pi-barcode"></i> {{ libro.ejemplares?.[0]?.codigo || 'Sin código' }}
+            </span>
+            <span class="detail-item-compact">
+              <i class="pi pi-tag"></i> {{ formatearISBN(libro.isbn) }}
+            </span>
+            <span class="detail-item-compact">
+              <i class="pi pi-calendar"></i> {{ libro.anho }}
+            </span>
+            <span class="detail-item-compact">
+              <i class="pi pi-file"></i> {{ libro.paginas }} páginas
             </span>
           </div>
-
-          <div class="inactive-overlay" *ngIf="libro['activo'] === false">
-            <span>DESACTIVADO</span>
-          </div>
         </div>
-      </ng-template>
 
-      <div class="book-info-compact">
-        <h4 class="book-title-compact">{{ libro.titulo }}</h4>
-        <p class="book-author-compact">
-          {{ getAutoresAsString(libro.autores) }}
-        </p>
-        <span class="book-category-compact" [title]="libro.categoria?.nombre">
-          {{ libro.categoria?.nombre | slice : 0 : 22 }}{{ (libro.categoria?.nombre?.length || 0) > 22 ? '...' : '' }}
-        </span>
+        <div class="book-actions-compact">
+          <button
+            pButton
+            icon="pi pi-align-left"
+            class="action-btn-compact view-btn"
+            pTooltip="Ver Detalles"
+            (click)="verLibro(libro)"
+          ></button>
 
-        <div class="book-details-compact">
-          <span class="detail-item-compact">
-            <i class="pi pi-barcode"></i> {{ libro.ejemplares?.[0]?.codigo || 'Sin código' }}
-          </span>
-          <span class="detail-item-compact">
-            <i class="pi pi-tag"></i> {{ formatearISBN(libro.isbn) }}
-          </span>
-          <span class="detail-item-compact">
-            <i class="pi pi-calendar"></i> {{ libro.anho }}
-          </span>
-          <span class="detail-item-compact">
-            <i class="pi pi-file"></i> {{ libro.paginas }} páginas
-          </span>
+          <button
+            pButton
+            icon="pi pi-pen-to-square"
+            class="action-btn-compact edit-btn"
+            pTooltip="Editar"
+            [disabled]="libro['activo'] === false"
+            (click)="editarLibro(libro)"
+          ></button>
+
+          <button
+            *ngIf="libro['activo'] !== false && isAdmin"
+            pButton
+            icon="pi pi-trash"
+            class="action-btn-compact delete-btn"
+            pTooltip="Eliminar / Desactivar"
+            (click)="eliminarLibro(libro)"
+          ></button>
+
+          <button
+            *ngIf="libro['activo'] === false && isAdmin"
+            pButton
+            icon="pi pi-refresh"
+            class="action-btn-compact reactivate-btn"
+            pTooltip="Reactivar Libro"
+            style="background-color: #27ae60; color: white; border-color: #27ae60;"
+            (click)="reactivarLibro(libro)"
+          ></button>
+
+          <button
+            pButton
+            icon="pi pi-file-plus"
+            class="action-btn-compact edit-btn"
+            pTooltip="Agregar Ejemplar"
+            [disabled]="libro['activo'] === false"
+            (click)="abrirModalAgregarEjemplar(libro)"
+          ></button>
         </div>
-      </div>
-
-      <div class="book-actions-compact">
-        <button
-          pButton
-          icon="pi pi-align-left"
-          class="action-btn-compact view-btn"
-          pTooltip="Ver Detalles"
-          (click)="verLibro(libro)"
-        ></button>
-
-        <button
-          pButton
-          icon="pi pi-pen-to-square"
-          class="action-btn-compact edit-btn"
-          pTooltip="Editar"
-          [disabled]="libro['activo'] === false"
-          (click)="editarLibro(libro)"
-        ></button>
-
-        <button
-          *ngIf="libro['activo'] !== false"
-          pButton
-          icon="pi pi-trash"
-          class="action-btn-compact delete-btn"
-          pTooltip="Eliminar / Desactivar"
-          (click)="eliminarLibro(libro)"
-        ></button>
-
-        <button
-          *ngIf="libro['activo'] === false"
-          pButton
-          icon="pi pi-refresh"
-          class="action-btn-compact reactivate-btn"
-          pTooltip="Reactivar Libro"
-          style="background-color: #27ae60; color: white; border-color: #27ae60;"
-          (click)="reactivarLibro(libro)"
-        ></button>
-
-        <button
-          pButton
-          icon="pi pi-file-plus"
-          class="action-btn-compact edit-btn"
-          pTooltip="Agregar Ejemplar"
-          [disabled]="libro['activo'] === false"
-          (click)="abrirModalAgregarEjemplar(libro)"
-        ></button>
-      </div>
-    </p-card>
+      </p-card>
+    </div> 
+    <div class="paginator-container">
+      <p-paginator 
+        [first]="first" 
+        [rows]="rows" 
+        [totalRecords]="libros.length" 
+        (onPageChange)="onPageChange($event)"
+        [rowsPerPageOptions]="[10, 15, 25, 50]"
+        styleClass="custom-paginator-transparent">
+      </p-paginator>
+    </div>
   </div>
 
   <p-confirmDialog>

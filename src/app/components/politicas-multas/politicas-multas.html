@@ -1,15 +1,15 @@
 <p-toast></p-toast>
-<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+<p-confirmDialog [style]="{width: '450px'}" [breakpoints]="{'960px': '75vw', '640px': '90vw'}"></p-confirmDialog>
 
 <div class="header-container">
     <div class="form-header-container">
         <div class="form-header page-header-layout">
             <div class="header-left">
-                <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar"></button>
+                <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="regresar()" pTooltip="Regresar" tooltipPosition="bottom"></button>
                 <h2><i class="pi pi-sliders-h user-icon"></i> Políticas de Multas</h2>
             </div>
             <div class="header-right flex gap-2">
-                <p-button label="Nueva Política" icon="pi pi-plus" styleClass="p-button-wine" (click)="abrirModalCrear()"></p-button>
+                <p-button label="Nueva Política" icon="pi pi-plus" styleClass="p-button-wine w-full-mobile" (click)="abrirModalCrear()"></p-button>
             </div>
         </div>
     </div>
@@ -24,17 +24,25 @@
         [rows]="10" 
         [rowsPerPageOptions]="[10, 25, 50]"
         [globalFilterFields]="['diasGracia', 'multaDiaria']" 
-        styleClass="p-datatable-striped p-datatable-gridlines custom-table">
+        styleClass="p-datatable-striped p-datatable-gridlines custom-table"
+        responsiveLayout="stack" 
+        breakpoint="960px">
 
         <ng-template pTemplate="caption">
             <div class="table-header">
                 <span>Listado de Configuraciones</span>
                 <div class="filter-container">
-                    <span class="p-input-icon-left">
+                    <span class="p-input-icon-left w-full-mobile">
                         <i class="pi pi-search"></i>
-                        <input pInputText type="text" (input)="applyFilterGlobal(dt, $event)" placeholder="Buscar..." class="table-search-input" />
+                        <input 
+                            pInputText 
+                            type="text" 
+                            (input)="applyFilterGlobal(dt, $event)" 
+                            placeholder="Buscar..." 
+                            class="table-search-input w-full-mobile" 
+                        />
                     </span>
-                    <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dt)"></p-button>
+                    <p-button icon="pi pi-filter-slash" styleClass="p-button-outlined clear-filter-button" (click)="clearFilter(dt)" pTooltip="Limpiar Filtros" tooltipPosition="top"></p-button>
                 </div>
             </div>
         </ng-template>
@@ -52,18 +60,27 @@
         <ng-template pTemplate="body" let-p>
             <tr>
                 <td>
+                    <span class="p-column-title">Días de Gracia</span>
                     <span class="codigo-ejemplar">
                         <i class="pi pi-clock"></i> {{ p.diasGracia }} días
                     </span>
                 </td>
-                <td style="color: var(--wine); font-weight: 700;">{{ p.multaDiaria | currency }}</td>
-                <td>{{ p.multaMaxima ? (p.multaMaxima | currency) : 'Sin límite' }}</td>
-                <td class="text-center">
+                <td>
+                    <span class="p-column-title">Multa Diaria</span>
+                    <span style="color: var(--wine); font-weight: 700;">{{ p.multaDiaria | currency }}</span>
+                </td>
+                <td>
+                    <span class="p-column-title">Multa Máxima</span>
+                    {{ p.multaMaxima ? (p.multaMaxima | currency) : 'Sin límite' }}
+                </td>
+                <td class="text-center col-estado">
+                    <span class="p-column-title">Estado</span>
                     <span class="user-role-badge" [ngClass]="p.vigente ? 'status-activo' : 'status-devuelto'">
                         {{ p.vigente ? 'VIGENTE' : 'HISTÓRICA' }}
                     </span>
                 </td>
-                <td>
+                <td class="col-acciones">
+                    <span class="p-column-title">Acciones</span>
                     <div class="table-actions">
                         <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" 
                                 pTooltip="Editar" tooltipPosition="top" (click)="abrirModalEditar(p)">
@@ -82,7 +99,15 @@
     </p-table>
 </div>
 
-<p-dialog [header]="esEdicion ? 'Editar Política' : 'Nueva Política'" [(visible)]="mostrarDialogo" [modal]="true" [style]="{width: '40vw', minWidth: '450px'}" [closable]="true" styleClass="detalle-prestamo-dialog">
+<p-dialog 
+    [header]="esEdicion ? 'Editar Política' : 'Nueva Política'" 
+    [(visible)]="mostrarDialogo" 
+    [modal]="true" 
+    [style]="{width: '40vw', minWidth: '450px'}" 
+    [breakpoints]="{'960px': '75vw', '640px': '95vw'}"
+    [closable]="true" 
+    styleClass="detalle-prestamo-dialog">
+    
     <div class="prestamo-info-section">
         <div class="info-grid">
             <div class="info-item full-width">
@@ -116,8 +141,8 @@
     </div>
     <ng-template pTemplate="footer">
         <div class="dialog-footer flex justify-content-end gap-2 mt-3">
-            <p-button label="Cancelar" icon="pi pi-times" styleClass="p-button-text p-button-secondary" (click)="mostrarDialogo = false"></p-button>
-            <p-button [label]="esEdicion ? 'Guardar' : 'Crear'" icon="pi pi-check" styleClass="p-button-wine" (click)="guardar()" [loading]="guardando"></p-button>
+            <p-button label="Cancelar" icon="pi pi-times" styleClass="p-button-text p-button-secondary w-full-mobile" (click)="mostrarDialogo = false"></p-button>
+            <p-button [label]="esEdicion ? 'Guardar' : 'Crear'" icon="pi pi-check" styleClass="p-button-wine w-full-mobile" (click)="guardar()" [loading]="guardando"></p-button>
         </div>
     </ng-template>
 </p-dialog>

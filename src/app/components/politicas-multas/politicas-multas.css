@@ -6,9 +6,13 @@
     --gray: #C4C4C4;
     --brown: #8B4513;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: block;
 }
 
-/* --- HEADER SUPERIOR --- */
+:host ::ng-deep .p-column-title {
+    display: none;
+}
+
 .header-container {
     background-color: white;
     margin-bottom: 2rem;
@@ -27,6 +31,8 @@
     align-items: center;
     padding-bottom: 1rem;
     border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .header-left {
@@ -53,24 +59,21 @@
 .back-button {
     color: var(--wine) !important;
     margin-right: 0.5rem; 
+    font-size: 1.2rem;
 }
 
 .back-button:hover {
     background-color: rgba(92, 43, 46, 0.1) !important;
 }
 
-.user-icon {
-    font-size: 2rem;
-}
+.user-icon { font-size: 2rem; }
 
-/* --- CONTENEDOR PRINCIPAL --- */
 .admin-page-container {
     padding: 2rem;
     background-color: var(--beige);
     min-height: calc(100vh - 4rem); 
 }
 
-/* --- TABLA CUSTOMIZADA (Estilo Biblioteca Ratzinger) --- */
 :host ::ng-deep .custom-table.p-datatable { 
     border-radius: 12px;
     overflow: hidden;
@@ -90,6 +93,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .table-header > span {
@@ -104,12 +109,12 @@
     gap: 0.8rem; 
 }
 
-/* Inputs de búsqueda */
 :host ::ng-deep .table-search-input.p-inputtext {
     border: 1px solid var(--gray) !important;
     border-radius: 8px !important; 
     padding-left: 2.5rem !important; 
     height: 40px;
+    min-width: 300px;
 }
 
 :host ::ng-deep .table-search-input.p-inputtext:enabled:focus {
@@ -130,12 +135,12 @@
     color: var(--wine) !important;
 }
 
-/* Encabezados y Celdas de Tabla */
 :host ::ng-deep .custom-table .p-datatable-thead > tr > th {
     background-color: #f8f6f2; 
     color: var(--wine);
     font-weight: 600;
     border-color: var(--gray) !important;
+    white-space: nowrap;
 }
 
 :host ::ng-deep .custom-table .p-datatable-tbody > tr > td {
@@ -148,7 +153,6 @@
     background-color: #f4ecd7 !important; 
 }
 
-/* Paginador */
 :host ::ng-deep .custom-table .p-paginator {
     background-color: var(--white);
     border-top: 1px solid var(--gray);
@@ -161,7 +165,6 @@
     color: var(--white);
 }
 
-/* --- BADGES DE ESTADO --- */
 .user-role-badge {
     background: var(--gold);
     color: var(--wine);
@@ -173,17 +176,9 @@
     text-transform: capitalize;
 }
 
-.user-role-badge.status-activo {
-    background-color: #bbf7d0;
-    color: #166534;
-}
+.user-role-badge.status-activo { background-color: #bbf7d0; color: #166534; }
+.user-role-badge.status-devuelto { background-color: #e5e7eb; color: #4b5563; }
 
-.user-role-badge.status-devuelto {
-    background-color: #e5e7eb;
-    color: #4b5563;
-}
-
-/* --- ACCIONES DE TABLA --- */
 .table-actions {
     display: flex;
     justify-content: center;
@@ -211,7 +206,6 @@
     transform: scale(1.15);
 }
 
-/* --- DIALOGS STYLES (Copiado de Detalle Prestamo) --- */
 :host ::ng-deep .detalle-prestamo-dialog .p-dialog-header {
     background: var(--white);
     color: var(--wine);
@@ -219,21 +213,15 @@
     border-radius: 12px 12px 0 0;
 }
 
-:host ::ng-deep .detalle-prestamo-dialog .p-dialog-header .p-dialog-title {
-    font-size: 1.4rem;
-    font-weight: 600;
-}
-
 :host ::ng-deep .detalle-prestamo-dialog .p-dialog-content {
     background-color: var(--white);
     padding: 1.5rem;
 }
 
-/* Información dentro del dialog */
 .prestamo-info-section {
     background: white;
     border-radius: 10px;
-    padding: 1.5rem;
+    padding: 1rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
@@ -267,7 +255,6 @@
 
 .icon-fecha, .icon-limite, .icon-estado { color: var(--gold); font-size: 1.5rem; margin-top: 0.2rem; }
 
-/* Botón Wine Específico (Requerido en Header) */
 :host ::ng-deep .p-button-wine {
     background: var(--wine) !important;
     border-color: var(--wine) !important;
@@ -279,7 +266,6 @@
 :host ::ng-deep .p-button-wine:hover {
     background: #4a2224 !important;
     border-color: #4a2224 !important;
-    transform: translateY(-1px); 
 }
 
 .empty-message {
@@ -298,10 +284,83 @@
 }
 .codigo-ejemplar i { color: var(--gold); }
 
-/* Para responsivo en móviles */
-@media (max-width: 768px) {
-    .form-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
-    .table-header { flex-direction: column; align-items: stretch; gap: 1rem; }
-    .filter-container { width: 100%; }
-    .admin-page-container { padding: 1rem; }
+@media (max-width: 960px) {
+    .admin-page-container {
+        padding: 1rem;
+    }
+
+    .form-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .header-left {
+        justify-content: center;
+    }
+
+    .table-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .filter-container {
+        width: 100%;
+    }
+
+    .w-full-mobile {
+        width: 100% !important;
+    }
+
+    :host ::ng-deep .table-search-input.p-inputtext {
+        width: 100%;
+        min-width: unset;
+    }
+
+    :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-thead > tr > th,
+    :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tfoot > tr > td {
+        display: none !important;
+    }
+
+    :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tbody > tr {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--gray);
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tbody > tr > td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: right;
+        width: 100% !important;
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 1rem;
+    }
+
+    :host ::ng-deep .p-column-title {
+        font-weight: 700;
+        color: #666;
+        min-width: 30%;
+        text-align: left;
+        display: block !important;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+
+    :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tbody > tr > td.col-estado {
+        justify-content: space-between; 
+    }
+
+    :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tbody > tr > td.col-acciones {
+        justify-content: space-between;
+        background-color: #f9fafb;
+        border-top: 1px solid #eee;
+    }
 }

@@ -1,10 +1,4 @@
 :host {
-  --wine: #5C2B2E;
-  --gold: #D4AF37;
-  --beige: #EDE6D7;
-  --white: #FFFFFF;
-  --gray: #C4C4C4;
-  --brown: #8B4513;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -26,12 +20,20 @@
   align-items: center;
   padding-bottom: 1rem;
   border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+  flex-wrap: wrap; 
+  gap: 1rem;
 }
 
 .header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
 }
 
 .form-header h2 {
@@ -62,6 +64,7 @@
   font-size: 2rem;
 }
 
+/* DIALOG STYLES */
 :host ::ng-deep .detalle-prestamo-dialog .p-dialog-header {
   background: var(--white);
   color: var(--wine);
@@ -132,6 +135,7 @@
   font-size: 1rem;
   color: var(--wine);
   font-weight: 400;
+  word-break: break-word;
 }
 
 .estado-badge {
@@ -182,6 +186,7 @@
   font-size: 0.9rem;
   padding: 0.8rem;
   border: none;
+  white-space: nowrap;
 }
 
 :host ::ng-deep .detalle-table .p-datatable-tbody > tr > td {
@@ -230,7 +235,7 @@
   font-weight: 600;
 }
 
-.empty-message {
+.empty-message, .loading-message {
   color: var(--gray);
   font-style: italic;
   padding: 2rem;
@@ -275,6 +280,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap; 
+  gap: 1rem;
 }
 
 .table-header > span {
@@ -348,13 +355,6 @@
   color: var(--white);
 }
 
-.empty-message, .loading-message {
-  color: var(--gray);
-  font-style: italic;
-  padding: 2rem;
-  text-align: center;
-}
-
 .user-role-badge {
   background: var(--gold);
   color: var(--wine);
@@ -390,44 +390,18 @@
 .action-btn-compact.edit-btn { color: var(--wine) !important; }
 .action-btn-compact.delete-btn { color: var(--wine) !important; }
 .action-btn-compact.view-btn { color: var(--wine) !important; }
-.action-btn-compact.return-btn { 
-  color: var(--wine) !important;
-}
+.action-btn-compact.return-btn { color: var(--wine) !important; }
 
 .action-btn-compact:hover {
   background: var(--beige) !important;
   transform: scale(1.15);
 }
 
-.user-role-badge.status-activo {
-  background-color: #bbf7d0;
-  color: #166534;
-}
-
-.user-role-badge.status-devuelto {
-  background-color: #e5e7eb;
-  color: #4b5563;
-}
-
-.user-role-badge.status-atrasado {
-  background-color: #fecaca;
-  color: #b91c1c;
-}
-
-.user-role-badge.status-parcial {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.user-role-badge.status-completado {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.user-role-badge.status-desconocido {
-  background-color: var(--gray);
-  color: var(--white);
-}
+.user-role-badge.status-activo { background-color: #bbf7d0; color: #166534; }
+.user-role-badge.status-atrasado { background-color: #fecaca; color: #b91c1c; }
+.user-role-badge.status-parcial { background-color: #fef3c7; color: #92400e; }
+.user-role-badge.status-devuelto { background-color: #dbeafe; color: #1e40af; }
+.user-role-badge.status-desconocido { background-color: var(--gray); color: var(--white); }
 
 :host ::ng-deep .devolucion-dialog .p-dialog-header {
   background: var(--white);
@@ -464,63 +438,6 @@
   margin-top: 20px;
 }
 
-/* SELECTOR DE ESTADO */
-.estado-selector-section {
-  background: white;
-  border-radius: 10px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.estado-selector-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  margin-top: 1rem;
-}
-
-.estado-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--wine);
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.estado-label::after {
-  content: '*';
-  color: #dc2626;
-  margin-left: 2px;
-}
-
-.estado-hint {
-  color: var(--gray);
-  font-size: 0.85rem;
-  font-style: italic;
-}
-
-:host ::ng-deep .devolucion-dialog .estado-dropdown .p-select {
-  border: 2px solid var(--gray);
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-:host ::ng-deep .devolucion-dialog .estado-dropdown .p-select:hover {
-  border-color: var(--gold);
-}
-
-:host ::ng-deep .devolucion-dialog .estado-dropdown .p-select:focus,
-:host ::ng-deep .devolucion-dialog .estado-dropdown .p-select.p-focus {
-  border-color: var(--gold) !important;
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
-}
-
-:host ::ng-deep .devolucion-dialog .estado-dropdown .p-select .p-select-label {
-  color: var(--wine);
-  font-weight: 500;
-}
-
 :host ::ng-deep .devolucion-table {
   border-radius: 8px;
   overflow: hidden;
@@ -532,6 +449,7 @@
   font-weight: 600;
   font-size: 0.9rem;
   padding: 0.8rem;
+  white-space: nowrap;
 }
 
 :host ::ng-deep .devolucion-table .p-datatable-tbody > tr > td {
@@ -587,19 +505,27 @@
   background: var(--beige) !important;
 }
 
-@media (max-width: 768px) {
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  :host ::ng-deep .detalle-prestamo-dialog {
-    width: 95vw !important;
-    min-width: auto !important;
+
+
+@media (max-width: 960px) {
+  .form-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.2rem;
   }
 
-  :host ::ng-deep .devolucion-dialog {
-    width: 95vw !important;
-    min-width: auto !important;
+  .header-left {
+    justify-content: center;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .w-full-mobile {
+    width: 100% !important;
   }
 
   .admin-page-container {
@@ -607,13 +533,54 @@
   }
 
   .form-header-container {
-    padding: 0 1rem;
+    padding: 20px 16px;
   }
 
-  .form-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+  :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-thead > tr > th,
+  :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tfoot > tr > td {
+      display: none !important;
+  }
+
+  :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tbody > tr {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--gray);
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      background: white;
+  }
+
+  :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tbody > tr > td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: right;
+      width: 100% !important;
+      border: none;
+      border-bottom: 1px solid #f0f0f0;
+      padding: 0.8rem;
+  }
+
+  :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tbody > tr > td.col-estado {
+      justify-content: flex-end; 
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+  }
+
+  :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tbody > tr > td:last-child {
+      border-bottom: none;
+      justify-content: center; 
+      padding: 1rem;
+      background-color: #fafafa;
+      border-top: 1px solid #eee;
+  }
+
+  :host ::ng-deep .p-column-title {
+      font-weight: 700;
+      color: var(--wine);
+      min-width: 30%;
+      text-align: left;
+      display: block !important; 
   }
 
   .table-header {
@@ -625,14 +592,28 @@
   .filter-container {
     width: 100%;
   }
+}
 
-  :host ::ng-deep .custom-table .p-datatable-thead > tr > th,
-  :host ::ng-deep .custom-table .p-datatable-tbody > tr > td {
-    font-size: 0.9rem; 
-    padding: 0.6rem 0.5rem; 
+@media (max-width: 768px) {
+  :host ::ng-deep .detalle-prestamo-dialog,
+  :host ::ng-deep .devolucion-dialog {
+    width: 95vw !important;
+    min-width: 0 !important; 
+    max-height: 90vh;
   }
 
-  .table-actions {
-    gap: 0.2rem;
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .dialog-footer, .devolucion-footer {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .dialog-footer button, .devolucion-footer button {
+    width: 100%;
+    margin: 0 0 0.5rem 0 !important;
   }
 }

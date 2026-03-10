@@ -4,7 +4,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { DialogService } from 'primeng/dynamicdialog'; // Importar
+import { DialogService } from 'primeng/dynamicdialog'; 
 import Aura from '@primeuix/themes/aura';
 
 import { routes } from './app.routes';

@@ -7,7 +7,6 @@ import JsBarcode from 'jsbarcode';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-// PrimeNG Imports
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -58,13 +57,12 @@ export default class ImpresionesComponent implements OnInit {
   ejemplaresFiltrados: EjemplarExtendido[] = [];
   ejemplaresSeleccionados: EjemplarExtendido[] = [];
 
-  // Opciones de modo
   modoImpresion: 'barras' | 'lomo' | 'horizontal' = 'barras';
   
   opcionesModo = [
     { label: 'Código de Barras', value: 'barras', icon: 'pi pi-barcode' },
-    { label: 'Lomo Vertical', value: 'lomo', icon: 'pi pi-bookmark' }, // Texto apilado
-    { label: 'Identificador Horiz.', value: 'horizontal', icon: 'pi pi-arrows-v' } // Texto rotado
+    { label: 'Identificador Vertical', value: 'lomo', icon: 'pi pi-bookmark' }, 
+    { label: 'Identificador Horiz.', value: 'horizontal', icon: 'pi pi-arrows-v' } 
   ];
 
   tamanosBarras = [
@@ -73,11 +71,10 @@ export default class ImpresionesComponent implements OnInit {
     { label: 'Grande (6cm x 4cm)', value: 'grande' }
   ];
 
-  // Tamaños para Lomo (Se usan para Vertical y Horizontal Rotado)
   tamanosLomo = [
-    { label: 'Delgado (2cm x 5cm)', value: 'lomo-delgado' },
-    { label: 'Estándar (3cm x 5cm)', value: 'lomo-estandar' },
-    { label: 'Ancho (4cm x 5cm)', value: 'lomo-ancho' }
+    { label: 'Chico (1.5cm x 5cm)', value: 'lomo-delgado' },
+    { label: 'Mediano (2.0cm x 5cm)', value: 'lomo-estandar' },
+    { label: 'Grande (2.5cm x 5cm)', value: 'lomo-ancho' }
   ];
 
   tamanosDisponibles = this.tamanosBarras;
@@ -101,7 +98,6 @@ export default class ImpresionesComponent implements OnInit {
       this.tamanosDisponibles = this.tamanosBarras;
       this.tamanoEtiqueta = 'mediana';
     } else {
-      // Tanto para 'lomo' como para 'horizontal' usamos los tamaños verticales (tiritas)
       this.tamanosDisponibles = this.tamanosLomo;
       this.tamanoEtiqueta = 'lomo-estandar';
     }
@@ -216,7 +212,6 @@ export default class ImpresionesComponent implements OnInit {
     this.ejemplaresSeleccionados = [];
   }
 
-  // --- VISTA PREVIA ---
   verVistaPrevia(): void {
     if (this.ejemplaresSeleccionados.length === 0) {
       this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Selecciona al menos un ejemplar' });
@@ -225,7 +220,7 @@ export default class ImpresionesComponent implements OnInit {
     this.vistaPrevia = true;
     
     if (this.modoImpresion === 'barras') {
-        setTimeout(() => this.generarCodigosBarras('preview'), 100);
+       setTimeout(() => this.generarCodigosBarras('preview'), 100);
     }
   }
 
@@ -233,7 +228,6 @@ export default class ImpresionesComponent implements OnInit {
     this.vistaPrevia = false;
   }
 
-  // IMPRESIÓN DIRECTA 
   imprimirDirecto(): void {
     if (this.ejemplaresSeleccionados.length === 0) return;
 
@@ -255,12 +249,11 @@ export default class ImpresionesComponent implements OnInit {
     this.imprimirDirecto();
   }
 
-  // DESCARGAR PDF
   descargarPDF(): void {
     if (this.ejemplaresSeleccionados.length === 0) return;
 
     this.preparandoPDF = true;
-    this.messageService.add({ severity: 'info', summary: 'Generando PDF', detail: 'Por favor espere...' });
+    this.messageService.add({ severity: 'info', summary: 'Generando PDF', detail: 'Por favor espere... Esto mejorará la nitidez.' });
     this.cdr.detectChanges(); 
     setTimeout(() => {
       if (this.modoImpresion === 'barras') {
@@ -276,13 +269,14 @@ export default class ImpresionesComponent implements OnInit {
         }
 
         html2canvas(element, { 
-          scale: 2,
+          scale: 4, 
           useCORS: true, 
           logging: false,
           backgroundColor: '#ffffff' 
         }).then(canvas => {
           const imgData = canvas.toDataURL('image/png');
           const pdf = new jsPDF('p', 'mm', 'letter');
+          
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const imgProps = pdf.getImageProperties(imgData);
           const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
@@ -290,10 +284,10 @@ export default class ImpresionesComponent implements OnInit {
           pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
           
           const fecha = new Date().toISOString().slice(0, 10);
-          pdf.save(`Etiquetas_${this.modoImpresion}_${fecha}.pdf`);
+          pdf.save(`Etiquetas_HD_${this.modoImpresion}_${fecha}.pdf`);
           
           this.preparandoPDF = false;
-          this.messageService.add({ severity: 'success', summary: 'Listo', detail: 'PDF descargado' });
+          this.messageService.add({ severity: 'success', summary: 'Listo', detail: 'PDF de alta calidad descargado' });
         }).catch(err => {
           console.error(err);
           this.preparandoPDF = false;
@@ -316,15 +310,21 @@ export default class ImpresionesComponent implements OnInit {
             format: 'CODE128', 
             displayValue: false, 
             margin: 0,
-            textMargin: 0
+            textMargin: 0,
+            fontSize: 14, 
+            background: '#ffffff' 
           };
           
+
           if (this.tamanoEtiqueta === 'pequena') {
-             config.width = 1.5; config.height = 25;
+             config.width = 1.7; 
+             config.height = 25;
           } else if (this.tamanoEtiqueta === 'mediana') {
-             config.width = 1.8; config.height = 35;
+             config.width = 2.0; 
+             config.height = 35;
           } else {
-             config.width = 2; config.height = 40;
+             config.width = 2.2; 
+             config.height = 40;
           }
           
           JsBarcode(svgElement, ejemplar.codigo, config);

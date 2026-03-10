@@ -37,19 +37,20 @@
     [rowsPerPageOptions]="[10, 25, 50]"
     currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} personas"
     [globalFilterFields]="['nombre', 'apPaterno', 'apMaterno', 'telefono']"
-    responsiveLayout="scroll"
+    responsiveLayout="stack"
+    breakpoint="960px"
     styleClass="custom-table"
   >
     <ng-template pTemplate="caption">
       <div class="table-header">
         <span>Lista de Personas del Sistema</span>
         <div class="filter-container">
-          <span class="p-input-icon-left">
+          <span class="p-input-icon-left w-full-mobile">
             <i class="pi pi-search"></i>
             <input
               pInputText
               type="text"
-              class="table-search-input"
+              class="table-search-input w-full-mobile"
               [(ngModel)]="searchValue"
               (input)="dt.filterGlobal($any($event.target).value, 'contains')"
               placeholder="Buscar por nombre, apellido o teléfono..."
@@ -85,18 +86,21 @@
     <ng-template pTemplate="body" let-persona>
       <tr>
         <td>
+          <span class="p-column-title">Nombre</span>
           <div class="persona-info">
             <i class="pi pi-user persona-avatar-icon"></i>
             <span class="persona-name">{{ getNombreCompleto(persona) }}</span>
           </div>
         </td>
         <td>
+          <span class="p-column-title">Teléfono</span>
           <div class="phone-cell">
             <i class="pi pi-phone phone-icon"></i>
             {{ persona.telefono }}
           </div>
         </td>
         <td>
+          <span class="p-column-title">Tipo</span>
           <span
             class="tipo-badge"
             [ngClass]="{
@@ -109,6 +113,7 @@
           </span>
         </td>
         <td>
+          <span class="p-column-title">Acciones</span>
           <div class="table-actions">
             <button
               pButton
@@ -126,14 +131,6 @@
               pTooltip="Eliminar"
               tooltipPosition="top"
             ></button>
-            <!--<button
-              pButton
-              icon="pi pi-wallet"
-              class="p-button-rounded p-button-text action-btn-compact"
-              (click)="verHistorialPagos(persona.id)"
-              pTooltip="Ver Historial de Pagos"
-              tooltipPosition="top">
-            </button>-->
           </div>
         </td>
       </tr>
@@ -141,7 +138,7 @@
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="5">
+        <td colspan="4">
           <div class="empty-message">
             <i class="pi pi-users empty-icon"></i>
             <p>No se encontraron personas</p>
@@ -155,7 +152,7 @@
 
     <ng-template pTemplate="loadingbody">
       <tr>
-        <td colspan="5">
+        <td colspan="4">
           <div class="loading-message">
             <i class="pi pi-spin pi-spinner loading-icon"></i>
             <p>Cargando personas...</p>

@@ -83,7 +83,7 @@
           <div>
             <div class="fields-row">
               <div>
-                <label for="isbn">ISBN <label class="text red">*</label></label>
+                <label for="isbn">ISBN</label>
                 <input id="isbn" class="form-comp full-w" pInputText maxlength="17" formControlName="isbnDisplay" placeholder="Ej: '978-607-453-611-9' o '0-123-45678-9'" />
               </div>
               <div>
@@ -97,13 +97,16 @@
             </div>
             
             <div class="text red mt-2" [@dropIn]
-              *ngIf="((libroForm.get('isbnDisplay')?.dirty || isSubmitting) && libroForm.get('isbnDisplay')?.invalid) ||
+              *ngIf="((libroForm.get('isbn')?.dirty) && libroForm.get('isbn')?.invalid) ||
                      ((libroForm.get('anho')?.dirty || isSubmitting) && libroForm.get('anho')?.invalid) ||
                      ((libroForm.get('paginas')?.dirty || isSubmitting) && libroForm.get('paginas')?.invalid)">
               
-              <small *ngIf="(libroForm.get('isbnDisplay')?.errors?.['required']) || (libroForm.get('anho')?.errors?.['required']) || (libroForm.get('paginas')?.errors?.['required'])">
-                El ISBN, el año y las páginas son campos obligatorios. 
-              </small><br />
+              <small *ngIf="(libroForm.get('anho')?.errors?.['required']) || (libroForm.get('paginas')?.errors?.['required'])">
+                El año y las páginas son campos obligatorios. 
+              </small>
+              
+              <br *ngIf="((libroForm.get('anho')?.invalid || libroForm.get('paginas')?.invalid) && libroForm.get('isbn')?.invalid)" />
+
               <small *ngIf="libroForm.get('isbn')?.errors?.['pattern']">
                 El ISBN debe tener exactamente 10 o 13 dígitos.
               </small>
@@ -113,8 +116,8 @@
           <div class="field">
             <label for="tipoLibro">Facultad<label class="text red">*</label></label>
             <div class="p-inputgroup">
-              <p-select id="tipoLibro" [options]="tiposLibro" class="form-comp full-w" formControlName="idTipoLibro" optionLabel="nombre" optionValue="id" placeholder="Seleccionar tipo"></p-select>
-              <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('tipoLibro')" pTooltip="Agregar tipo" tooltipPosition="top"></button>
+              <p-select id="tipoLibro" [options]="tiposLibro" class="form-comp full-w" formControlName="idTipoLibro" optionLabel="nombre" optionValue="id" placeholder="Seleccionar facultad"></p-select>
+              <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('tipoLibro')" pTooltip="Agregar Facultad" tooltipPosition="top"></button>
             </div>
             <div class="error-msg text red" *ngIf="(libroForm.get('idTipoLibro')?.dirty || isSubmitting) && libroForm.get('idTipoLibro')?.invalid">
                 <small>Campo obligatorio.</small>

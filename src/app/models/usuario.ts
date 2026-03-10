@@ -42,7 +42,7 @@ export interface UsuarioCompleto {
   lastAccess: string;
   rolNombre: string;
 
-  idPersona: number | null;   // <- agrégalo si no está
+  idPersona: number | null;  
   personaUuid: string;
 
   nombre: string;
@@ -51,7 +51,7 @@ export interface UsuarioCompleto {
   telefono: string;
   idTipoPersona: number;
 
-  roles: number[];            // <- requerido por el error
+  roles: number[];           
 }
 
 
