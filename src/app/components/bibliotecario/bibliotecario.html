@@ -39,7 +39,7 @@
           placeholder="Buscar libros, autores, temas..."
           class="searchbar full-w"
           [(ngModel)]="terminoBusqueda"
-          (keyup.enter)="buscar()"
+          (input)="buscar()" 
         />
       </div>
       <div class="custom-filter-dropdown-container" (click)="toggleDropdown()">

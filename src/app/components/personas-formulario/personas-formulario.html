@@ -1,9 +1,16 @@
 <p-toast></p-toast>
 
-<div class="header-container">
+<div *ngIf="!isModal" class="header-container">
   <div class="form-header-container">
     <div class="form-header">
       <h2>
+        <button 
+          pButton 
+          icon="pi pi-arrow-left" 
+          class="p-button-text back-button"
+          (click)="cancelar()"
+          pTooltip="Volver"
+        ></button>
         <i class="pi" [ngClass]="isEditMode ? 'pi-pencil' : 'pi-user-plus'"></i>
         {{ isEditMode ? 'Editar Persona' : 'Agregar Nueva Persona' }}
       </h2>
@@ -12,7 +19,7 @@
   </div>
 </div>
 
-<div class="form-page-container">
+<div [ngClass]="{'form-page-container': !isModal}">
   <form [formGroup]="personaForm" (ngSubmit)="onSubmit()" class="form-container">
     <div class="form-grid">
       <div class="form-column">
@@ -25,6 +32,7 @@
             class="form-comp"
             formControlName="nombre"
             placeholder="Ej: Juan Carlos"
+            [autofocus]="isModal"
           />
           <div
             class="error-msg"
@@ -64,25 +72,23 @@
             pInputText
             class="form-comp"
             formControlName="apMaterno"
-            placeholder="Ej: López"
+            placeholder="Ej: López (Opcional)"
           />
         </div>
       </div>
 
       <div class="form-column">
-        <!-- Teléfono -->
         <div class="field">
           <label for="telefono">Teléfono <span class="text red">*</span></label>
           <div class="p-inputgroup">
             <span class="p-inputgroup-addon">
-              <i class="pi pi-phone"></i>
             </span>
             <p-inputMask
               id="telefono"
               formControlName="telefono"
               mask="(999) 999-9999"
               placeholder="(999) 999-9999"
-              styleClass="form-comp"
+              styleClass="form-comp w-full"
               [autoClear]="false"
             ></p-inputMask>
           </div>
@@ -108,7 +114,8 @@
             optionLabel="nombre"
             optionValue="id"
             placeholder="Seleccionar tipo"
-            styleClass="form-comp"
+            styleClass="form-comp w-full"
+            appendTo="body"
           ></p-select>
           <div
             class="error-msg"
@@ -122,21 +129,23 @@
       </div>
     </div>
 
-    <div class="form-footer">
+    <div class="form-footer" [ngStyle]="isModal ? {'display': 'flex', 'justify-content': 'flex-end', 'gap': '1rem', 'margin-top': '2rem'} : {}">
       <button
         pButton
         type="button"
         label="Cancelar"
         class="btn-info text"
         (click)="cancelar()"
+        [disabled]="isSubmitting"
       ></button>
       <button
         pButton
         type="submit"
-        [label]="isEditMode ? 'Actualizar Persona' : 'Guardar Persona'"
+        [label]="isEditMode ? 'Actualizar' : 'Guardar'"
         icon="pi pi-check"
         class="btn-primary"
         [loading]="isSubmitting"
+        [disabled]="personaForm.invalid || isSubmitting"
       ></button>
     </div>
   </form>

@@ -91,7 +91,11 @@ export default class PrestamoListaComponent implements OnInit {
       finalize(() => this.loading = false)
     ).subscribe({
       next: (prestamosMapeados) => {
-        this.prestamos = prestamosMapeados;
+        this.prestamos = prestamosMapeados.sort((a, b) => {
+            const dateA = new Date(a.fechaPrestamo).getTime();
+            const dateB = new Date(b.fechaPrestamo).getTime();
+            return dateB - dateA;
+        });
       },
       error: (err: any) => {
         this.messageService.add({ 
@@ -274,7 +278,17 @@ export default class PrestamoListaComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error al devolver ejemplares:', err);
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron devolver los ejemplares.' });
+          
+          const backendMsg = err.error?.message || (typeof err.error === 'string' ? err.error : '');
+          let msgUsuario = 'No se pudieron devolver los ejemplares.';
+
+          if (backendMsg.includes('Devolvió a tiempo') || backendMsg.includes('no aplica multa')) {
+             msgUsuario = 'Error del Servidor: El sistema falló al procesar una devolución puntual (Bug Reportado).';
+          } else if (backendMsg) {
+             msgUsuario = backendMsg;
+          }
+
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: msgUsuario });
         }
       });
   }

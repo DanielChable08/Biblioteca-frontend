@@ -219,7 +219,12 @@ export default class EjemplarFormularioComponent implements OnInit {
     }
 
     this.isSubmitting = true;
-    const ejemplarPayload = this.ejemplarForm.value;
+    const rawValues = this.ejemplarForm.value;
+
+    const ejemplarPayload = {
+      ...rawValues,
+      ubicacion: (rawValues.ubicacion && rawValues.ubicacion.trim() !== '') ? rawValues.ubicacion.trim() : null
+    };
 
     const request$ = this.isEditMode && this.ejemplarUuid
       ? this.bookService.updateEjemplar(this.ejemplarUuid, ejemplarPayload)

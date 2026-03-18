@@ -14,249 +14,76 @@
         <i class="pi" [ngClass]="isEditMode ? 'pi-user-edit' : 'pi-user-plus'"></i>
         {{ isEditMode ? 'Editar Usuario' : 'Registrar Nuevo Usuario' }}
       </h2>
-      <p *ngIf="!isEditMode">
-        Selecciona una persona existente o crea una nueva. 
+      <p>
+        {{ isEditMode ? 'Modifica el correo, contraseña o rol del usuario seleccionado.' : 'Selecciona una persona existente o registra una nueva para darle acceso al sistema.' }}
         Los campos marcados con <span style="color: #e74c3c; font-weight: bold;">*</span> son obligatorios.
-      </p>
-      <p *ngIf="isEditMode">
-        Modifica los datos del usuario. Puedes actualizar su información personal, 
-        email o contraseña (dejar en blanco para mantener la actual).
       </p>
     </div>
   </div>
 </div>
 
 <div class="form-page-container">
+  
   <form [formGroup]="usuarioForm" (ngSubmit)="onSubmit()" class="form-container">
     
-    <div *ngIf="!isEditMode">
-      <h3 style="color: var(--wine); font-size: 1.3rem; margin: 0 0 1rem 0; border-bottom: 2px solid var(--gold); padding-bottom: 0.5rem;">
-        <i class="pi pi-user-plus" style="color: var(--gold);"></i> Seleccionar Persona
-      </h3>
+    <h3 style="color: var(--wine); font-size: 1.3rem; margin: 0 0 1rem 0; border-bottom: 2px solid var(--gold); padding-bottom: 0.5rem;">
+      <i class="pi pi-user" style="color: var(--gold);"></i> Persona Asociada
+    </h3>
 
-      <div class="field">
-        <label for="personaExistente">
-          Persona <span style="color: #e74c3c;">*</span>
-        </label>
-        <div class="p-inputgroup">
-          <p-select
-            inputId="personaExistente"
-            [options]="personas"
-            formControlName="personaExistente"
-            optionLabel="nombre"
-            optionValue="id"
-            placeholder="Buscar persona..."
-            [showClear]="true"
-            [filter]="true"
-            filterBy="nombre,apPaterno,apMaterno"
-            emptyFilterMessage="No se encontraron personas"
-            styleClass="w-full"
-            (onChange)="onPersonaSeleccionada($event)"
-          >
-            <ng-template let-persona pTemplate="item">
-              <div class="persona-item">
+    <div class="field">
+      <label for="personaExistente">
+        Nombre de la Persona <span style="color: #e74c3c;">*</span>
+      </label>
+      <div class="p-inputgroup">
+        <p-select
+          inputId="personaExistente"
+          [options]="personas"
+          formControlName="personaExistente"
+          optionLabel="nombre"
+          optionValue="id"
+          [placeholder]="isEditMode ? 'Cargando persona...' : 'Buscar persona...'"
+          [showClear]="!isEditMode"
+          [filter]="true"
+          filterBy="nombre,apPaterno,apMaterno"
+          emptyFilterMessage="No se encontraron personas"
+          styleClass="w-full"
+          [readonly]="isEditMode" 
+          appendTo="body"
+        >
+          <ng-template let-persona pTemplate="item">
+            <div class="persona-item">
+              <i class="pi pi-user" style="margin-right: 8px; color: var(--wine);"></i>
+              <span>{{ getPersonaNombreCompleto(persona) }}</span>
+            </div>
+          </ng-template>
+          <ng-template let-persona pTemplate="selectedItem">
+            <div class="persona-item" *ngIf="persona">
                 <i class="pi pi-user" style="margin-right: 8px; color: var(--wine);"></i>
                 <span>{{ getPersonaNombreCompleto(persona) }}</span>
-              </div>
-            </ng-template>
-          </p-select>
-          <button
-            type="button"
-            pButton
-            icon="pi pi-plus"
-            class="btn-primary"
-            (click)="activarModoCrearPersona()"
-            pTooltip="Crear nueva persona"
-            tooltipPosition="top"
-          ></button>
-        </div>
-        <small style="color: #6b5e5f; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
-          Busca y selecciona una persona registrada o créala con el botón "+"
-        </small>
+            </div>
+          </ng-template>
+        </p-select>
+        
+        <button
+          *ngIf="!isEditMode"
+          type="button"
+          pButton
+          icon="pi pi-plus"
+          class="btn-primary"
+          (click)="abrirModalPersona()"
+          pTooltip="Agregar nueva persona"
+          tooltipPosition="top"
+        ></button>
       </div>
-
-      <div style="height: 1px; background: linear-gradient(to right, transparent, var(--gold), transparent); margin: 1.5rem 0;"></div>
+      <div class="error-msg" *ngIf="isFieldInvalid(usuarioForm, 'personaExistente')">
+        <small>Debes asociar una persona al usuario.</small>
+      </div>
+      <small style="color: #6b5e5f; font-size: 0.85rem; margin-top: 0.25rem; display: block;" *ngIf="isEditMode">
+        Para cambiar los datos personales de este usuario, ve al módulo de Personas.
+      </small>
     </div>
 
-    <div *ngIf="modoCrearPersona || isEditMode">
-      <h3 style="color: var(--wine); font-size: 1.3rem; margin: 0 0 1rem 0; border-bottom: 2px solid var(--gold); padding-bottom: 0.5rem;">
-        <i class="pi pi-id-card" style="color: var(--gold);"></i> Información Personal
-      </h3>
-
-      <div class="form-grid">
-        <div class="form-column">
-          <div class="field">
-            <label for="nombre">
-              Nombre(s) <span style="color: #e74c3c;">*</span>
-            </label>
-            <div class="p-inputgroup">
-              <span class="p-inputgroup-addon"><i class="pi pi-user"></i></span>
-              <input
-                id="nombre"
-                type="text"
-                pInputText
-                formControlName="nombre"
-                placeholder="Ej: Juan Carlos"
-                class="form-comp"
-              />
-            </div>
-            <div class="error-msg" *ngIf="isFieldInvalid('nombre')">
-              <small>El nombre es obligatorio.</small>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="apPaterno">
-              Apellido Paterno <span style="color: #e74c3c;">*</span>
-            </label>
-            <input
-              id="apPaterno"
-              type="text"
-              pInputText
-              formControlName="apPaterno"
-              placeholder="Ej: García"
-              class="form-comp"
-            />
-            <div class="error-msg" *ngIf="isFieldInvalid('apPaterno')">
-              <small>El apellido paterno es obligatorio.</small>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="apMaterno">Apellido Materno</label>
-            <input
-              id="apMaterno"
-              type="text"
-              pInputText
-              formControlName="apMaterno"
-              placeholder="Ej: López (opcional)"
-              class="form-comp"
-            />
-          </div>
-        </div>
-
-        <div class="form-column">
-          <div class="field">
-            <label for="telefono">
-              Teléfono <span style="color: #e74c3c;">*</span>
-            </label>
-            <div class="p-inputgroup">
-              <span class="p-inputgroup-addon"><i class="pi pi-phone"></i></span>
-              <input
-                id="telefono"
-                type="text"
-                pInputText
-                formControlName="telefono"
-                placeholder="10 dígitos: 9991234567"
-                maxlength="10"
-                (input)="soloNumeros($event)"
-                class="form-comp"
-              />
-            </div>
-            <div class="error-msg" *ngIf="isFieldInvalid('telefono')">
-              <small>Ingresa un teléfono válido de 10 dígitos.</small>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="tipoPersona">
-              Tipo de Persona <span style="color: #e74c3c;">*</span>
-            </label>
-            <div class="p-inputgroup">
-              <span class="p-inputgroup-addon"><i class="pi pi-users"></i></span>
-              <p-select
-                inputId="tipoPersona"
-                [options]="tiposPersona"
-                formControlName="idTipoPersona"
-                optionLabel="nombre"
-                optionValue="id"
-                placeholder="Selecciona un tipo"
-                [showClear]="false"
-                styleClass="w-full"
-              ></p-select>
-            </div>
-            <div class="error-msg" *ngIf="isFieldInvalid('idTipoPersona')">
-              <small>Debes seleccionar un tipo de persona.</small>
-            </div>
-            <small style="color: #6b5e5f; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
-              Clasificación: Docente, Estudiante, Externo, etc.
-            </small>
-          </div>
-
-          <div class="field">
-            <label for="rol">
-              Rol de Acceso <span style="color: #e74c3c;">*</span>
-            </label>
-            <div class="p-inputgroup">
-              <span class="p-inputgroup-addon"><i class="pi pi-shield"></i></span>
-              <p-select
-                inputId="rol"
-                [options]="roles"
-                formControlName="rol"
-                optionLabel="name"
-                optionValue="id"
-                placeholder="Selecciona un rol"
-                [showClear]="false"
-                styleClass="w-full"
-              ></p-select>
-            </div>
-            <div class="error-msg" *ngIf="isFieldInvalid('rol')">
-              <small>Debes seleccionar un rol de acceso.</small>
-            </div>
-            <small style="color: #6b5e5f; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
-              Define los permisos del usuario en el sistema
-            </small>
-          </div>
-        </div>
-      </div>
-
-      <div style="height: 1px; background: linear-gradient(to right, transparent, var(--gold), transparent); margin: 1.5rem 0;"></div>
-    </div>
-
-    <div *ngIf="!isEditMode && personaSeleccionadaUuid && !modoCrearPersona">
-      <h3 style="color: var(--wine); font-size: 1.3rem; margin: 0 0 1rem 0; border-bottom: 2px solid var(--gold); padding-bottom: 0.5rem;">
-        <i class="pi pi-user-edit" style="color: var(--gold);"></i> Datos de la Persona Seleccionada
-      </h3>
-
-      <div class="persona-info-box">
-        <div class="info-row">
-          <span class="info-label"><i class="pi pi-user"></i> Nombre completo:</span>
-          <span class="info-value">{{ usuarioForm.getRawValue().nombre }} {{ usuarioForm.getRawValue().apPaterno }} {{ usuarioForm.getRawValue().apMaterno }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label"><i class="pi pi-phone"></i> Teléfono:</span>
-          <span class="info-value">{{ usuarioForm.getRawValue().telefono }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label"><i class="pi pi-tag"></i> Tipo:</span>
-          <span class="info-value">{{ getTipoPersonaNombre() }}</span>
-        </div>
-      </div>
-
-      <div class="field" style="margin-top: 1.5rem;">
-        <label for="rol">
-          Rol de Acceso <span style="color: #e74c3c;">*</span>
-        </label>
-        <div class="p-inputgroup">
-          <span class="p-inputgroup-addon"><i class="pi pi-shield"></i></span>
-          <p-select
-            inputId="rol"
-            [options]="roles"
-            formControlName="rol"
-            optionLabel="name"
-            optionValue="id"
-            placeholder="Selecciona un rol"
-            [showClear]="false"
-            styleClass="w-full"
-          ></p-select>
-        </div>
-        <div class="error-msg" *ngIf="isFieldInvalid('rol')">
-          <small>Debes seleccionar un rol de acceso.</small>
-        </div>
-      </div>
-
-      <div style="height: 1px; background: linear-gradient(to right, transparent, var(--gold), transparent); margin: 1.5rem 0;"></div>
-    </div>
+    <div style="height: 1px; background: linear-gradient(to right, transparent, var(--gold), transparent); margin: 2rem 0;"></div>
 
     <h3 style="color: var(--wine); font-size: 1.3rem; margin: 0 0 1rem 0; border-bottom: 2px solid var(--gold); padding-bottom: 0.5rem;">
       <i class="pi pi-lock" style="color: var(--gold);"></i> Credenciales de Acceso
@@ -269,7 +96,6 @@
             Correo Electrónico <span style="color: #e74c3c;">*</span>
           </label>
           <div class="p-inputgroup">
-            <span class="p-inputgroup-addon"><i class="pi pi-envelope"></i></span>
             <input
               id="email"
               type="email"
@@ -277,12 +103,34 @@
               formControlName="email"
               placeholder="usuario@ejemplo.com"
               class="form-comp"
-              [attr.autocomplete]="isEditMode ? 'off' : 'email'"
+              autocomplete="off"
             />
           </div>
-          <div class="error-msg" *ngIf="isFieldInvalid('email')">
+          <div class="error-msg" *ngIf="isFieldInvalid(usuarioForm, 'email')">
             <small>Ingresa un correo electrónico válido.</small>
           </div>
+        </div>
+
+        <div class="field">
+            <label for="rol">
+              Rol de Acceso <span style="color: #e74c3c;">*</span>
+            </label>
+            <div class="p-inputgroup">
+              <p-select
+                inputId="rol"
+                [options]="roles"
+                formControlName="rol"
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Selecciona un rol"
+                [showClear]="false"
+                styleClass="w-full"
+                appendTo="body"
+              ></p-select>
+            </div>
+            <div class="error-msg" *ngIf="isFieldInvalid(usuarioForm, 'rol')">
+              <small>Debes seleccionar un rol de acceso.</small>
+            </div>
         </div>
       </div>
 
@@ -304,11 +152,11 @@
             [mediumLabel]="'Media'"
             [strongLabel]="'Fuerte'"
             styleClass="w-full"
+            autocomplete="new-password"
+            appendTo="body"
           >
             <ng-template pTemplate="header" *ngIf="!isEditMode">
-              <h6 style="margin: 0; padding-bottom: 0.5rem; font-size: 0.9rem; color: var(--wine);">
-                Requisitos de la contraseña:
-              </h6>
+              <h6 style="margin: 0; padding-bottom: 0.5rem; font-size: 0.9rem; color: var(--wine);">Requisitos:</h6>
             </ng-template>
             <ng-template pTemplate="footer" *ngIf="!isEditMode">
               <p-divider></p-divider>
@@ -316,33 +164,30 @@
                 <li style="padding: 0.25rem 0; font-size: 0.85rem; color: #6b5e5f;">
                   <i class="pi pi-check" style="color: #27ae60; font-size: 0.75rem;"></i> Mínimo 6 caracteres
                 </li>
-                <li style="padding: 0.25rem 0; font-size: 0.85rem; color: #6b5e5f;">
-                  <i class="pi pi-check" style="color: #27ae60; font-size: 0.75rem;"></i> Recomendado: mayúsculas, minúsculas y números
-                </li>
               </ul>
             </ng-template>
           </p-password>
-          <div class="error-msg" *ngIf="isFieldInvalid('password')">
+          <div class="error-msg" *ngIf="isFieldInvalid(usuarioForm, 'password')">
             <small>La contraseña debe tener al menos 6 caracteres.</small>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="form-footer">
+    <div class="form-footer mt-4">
       <button
         pButton
         label="Cancelar"
         type="button"
         icon="pi pi-times"
-        class="btn-info"
+        class="btn-info text"
         (click)="cancelar()"
         [disabled]="isSubmitting"
       ></button>
 
       <button
         pButton
-        [label]="isEditMode ? 'Actualizar Usuario' : 'Guardar Usuario'"
+        [label]="isEditMode ? 'Actualizar Cuenta' : 'Crear Cuenta'"
         type="submit"
         icon="pi pi-check"
         class="btn-primary"
@@ -350,6 +195,76 @@
         [disabled]="usuarioForm.invalid"
       ></button>
     </div>
-
-  </form>
+  </form> 
 </div>
+
+<p-dialog 
+  header="Agregar Nueva Persona" 
+  [(visible)]="displayPersonaDialog" 
+  [modal]="true" 
+  [style]="{ width: '600px' }" 
+  [draggable]="false" 
+  [dismissableMask]="false"
+>
+  <div [formGroup]="nuevaPersonaForm" style="padding-top: 1rem;">
+    <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+      <div class="form-column" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="field">
+          <label for="nombreModal">Nombre(s) <span class="text red">*</span></label>
+          <input id="nombreModal" type="text" pInputText formControlName="nombre" class="w-full" autofocus />
+          <div class="error-msg" *ngIf="isFieldInvalid(nuevaPersonaForm, 'nombre')">
+            <small>Obligatorio.</small>
+          </div>
+        </div>
+        <div class="field">
+          <label for="apPaternoModal">Apellido Paterno <span class="text red">*</span></label>
+          <input id="apPaternoModal" type="text" pInputText formControlName="apPaterno" class="w-full" />
+          <div class="error-msg" *ngIf="isFieldInvalid(nuevaPersonaForm, 'apPaterno')">
+            <small>Obligatorio.</small>
+          </div>
+        </div>
+        <div class="field">
+          <label for="apMaternoModal">Apellido Materno</label>
+          <input id="apMaternoModal" type="text" pInputText formControlName="apMaterno" class="w-full" />
+        </div>
+      </div>
+      
+      <div class="form-column" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="field">
+          <label for="telefonoModal">Teléfono <span class="text red">*</span></label>
+          <p-inputMask 
+            id="telefonoModal" 
+            formControlName="telefono" 
+            mask="(999) 999-9999" 
+            placeholder="(999) 999-9999" 
+            styleClass="w-full" 
+            [autoClear]="false">
+          </p-inputMask>
+          <div class="error-msg" *ngIf="isFieldInvalid(nuevaPersonaForm, 'telefono')">
+            <small>Teléfono inválido.</small>
+          </div>
+        </div>
+        <div class="field">
+          <label for="tipoPersonaModal">Tipo de Persona <span class="text red">*</span></label>
+          <p-select 
+            id="tipoPersonaModal" 
+            [options]="tiposPersona" 
+            formControlName="idTipoPersona" 
+            optionLabel="nombre" 
+            optionValue="id" 
+            styleClass="w-full" 
+            appendTo="body">
+          </p-select>
+          <div class="error-msg" *ngIf="isFieldInvalid(nuevaPersonaForm, 'idTipoPersona')">
+            <small>Obligatorio.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-footer" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+      <button pButton type="button" label="Cancelar" class="p-button-text p-button-secondary" (click)="displayPersonaDialog = false"></button>
+      <button pButton type="button" label="Aceptar" icon="pi pi-check" class="btn-primary" (click)="guardarNuevaPersona()" [disabled]="nuevaPersonaForm.invalid"></button>
+    </div>
+  </div>
+</p-dialog>

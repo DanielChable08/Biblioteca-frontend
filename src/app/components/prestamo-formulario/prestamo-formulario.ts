@@ -160,7 +160,7 @@ export default class PrestamoFormularioComponent implements OnInit {
   }
 
   private setIdBibliotecario(): void {
-    const userData = localStorage.getItem('userData');
+    const userData = sessionStorage.getItem('userData');
     if (userData) {
       const user = JSON.parse(userData);
       this.idPersonaBibliotecario = user.idPersona || user.id;

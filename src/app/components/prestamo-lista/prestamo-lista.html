@@ -41,7 +41,7 @@
                 <div class="info-item">
                     <i class="pi pi-user icon-lector"></i>
                     <div class="info-content">
-                        <label>Lector</label>
+                        <label>Solicitante</label>
                         <span>{{ prestamoActual.lector?.nombre }} {{ prestamoActual.lector?.apPaterno }}</span>
                     </div>
                 </div>
@@ -49,7 +49,7 @@
                 <div class="info-item">
                     <i class="pi pi-id-card icon-bibliotecario"></i>
                     <div class="info-content">
-                        <label>Bibliotecario</label>
+                        <label>Responsable</label>
                         <span>{{ prestamoActual.bibliotecario?.nombre }} {{ prestamoActual.bibliotecario?.apPaterno }}</span>
                     </div>
                 </div>
@@ -174,7 +174,7 @@
             <div class="devolucion-info">
                 <div class="info-row">
                     <i class="pi pi-user"></i>
-                    <span><strong>Lector:</strong> {{ prestamoDevolucion.lector?.nombre }} {{ prestamoDevolucion.lector?.apPaterno }}</span>
+                    <span><strong>Solicitante:</strong> {{ prestamoDevolucion.lector?.nombre }} {{ prestamoDevolucion.lector?.apPaterno }}</span>
                 </div>
                 <div class="info-row">
                     <i class="pi pi-calendar"></i>
@@ -308,7 +308,7 @@
         <ng-template pTemplate="header">
             <tr>
                 <th pSortableColumn="lector.nombre">Lector <p-sortIcon field="lector.nombre"></p-sortIcon></th>
-                <th pSortableColumn="bibliotecario.nombre">Bibliotecario <p-sortIcon field="bibliotecario.nombre"></p-sortIcon></th>
+                <th pSortableColumn="bibliotecario.nombre">Responsable <p-sortIcon field="bibliotecario.nombre"></p-sortIcon></th>
                 <th pSortableColumn="fechaPrestamo">Fecha Préstamo <p-sortIcon field="fechaPrestamo"></p-sortIcon></th>
                 <th pSortableColumn="fechaLimite">Fecha Límite <p-sortIcon field="fechaLimite"></p-sortIcon></th>
                 <th pSortableColumn="estadoPrestamo.nombre">Estado <p-sortIcon field="estadoPrestamo.nombre"></p-sortIcon></th>
@@ -323,7 +323,7 @@
                     {{ prestamo.lector?.nombre }} {{ prestamo.lector?.apPaterno }}
                 </td>
                 <td>
-                    <span class="p-column-title">Bibliotecario</span>
+                    <span class="p-column-title">Responsable</span>
                     {{ prestamo.bibliotecario?.nombre }} {{ prestamo.bibliotecario?.apPaterno }}
                 </td>
                 <td>

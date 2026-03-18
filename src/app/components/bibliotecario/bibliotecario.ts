@@ -272,21 +272,24 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   logout(): void { this.authService.logout(); }
 
   filtrarLibros(): void {
-    let resultado = this.allLibros;
-    if (this.categoriaSeleccionada !== 'Todas') {
-      resultado = resultado.filter(libro => libro.categoria?.nombre === this.categoriaSeleccionada);
+      let resultado = this.allLibros;
+      
+      if (this.categoriaSeleccionada !== 'Todas') {
+        resultado = resultado.filter(libro => libro.categoria?.nombre === this.categoriaSeleccionada);
+      }
+      
+      if (this.terminoBusqueda) {
+        const termino = this.terminoBusqueda.toLowerCase().trim();
+        resultado = resultado.filter(libro =>
+          (libro.titulo || '').toLowerCase().includes(termino) ||
+          this.getAutoresAsString(libro.autores).toLowerCase().includes(termino) ||
+          (libro.isbn || '').toLowerCase().includes(termino)
+        );
+      }
+      
+      this.libros = resultado;
+      this.first = 0; 
     }
-    if (this.terminoBusqueda) {
-      const termino = this.terminoBusqueda.toLowerCase();
-      resultado = resultado.filter(libro =>
-        libro.titulo.toLowerCase().includes(termino) ||
-        this.getAutoresAsString(libro.autores).toLowerCase().includes(termino) ||
-        libro.isbn.toLowerCase().includes(termino)
-      );
-    }
-    this.libros = resultado;
-    this.first = 0; 
-  }
 
   buscar(): void { this.filtrarLibros(); }
   filtrarCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.filtrarLibros(); }

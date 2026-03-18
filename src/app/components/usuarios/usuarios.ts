@@ -58,10 +58,8 @@ export default class UsuariosListComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.usuarios = data;
-          console.log('Usuarios cargados:', this.usuarios);
         },
         error: (err) => {
-          console.error('Error al cargar usuarios:', err);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -124,7 +122,6 @@ export default class UsuariosListComponent implements OnInit {
               usuario.active = newStatus;
             },
             error: (err) => {
-              console.error(`Error al ${action}:`, err);
               this.messageService.add({
                 severity: 'error',
                 summary: 'Error',
@@ -165,7 +162,6 @@ export default class UsuariosListComponent implements OnInit {
               this.usuarios = this.usuarios.filter((u) => u.uuid !== usuario.uuid);
             },
             error: (err) => {
-              console.error('Error al eliminar:', err);
               this.messageService.add({
                 severity: 'error',
                 summary: 'Error',

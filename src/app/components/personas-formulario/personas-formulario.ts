@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { MessageService } from 'primeng/api';
 import { finalize, forkJoin } from 'rxjs';
 
@@ -9,7 +10,6 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
-import { CardModule } from 'primeng/card';
 import { InputMaskModule } from 'primeng/inputmask';
 
 import { PersonaService } from '../../services/persona.service';
@@ -26,7 +26,6 @@ import { Persona, TipoPersona } from '../../models/biblioteca';
     InputTextModule,
     SelectModule,
     ToastModule,
-    CardModule,
     InputMaskModule
   ],
   providers: [MessageService],
@@ -40,17 +39,29 @@ export default class PersonaFormularioComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private messageService = inject(MessageService);
+  
+  private dialogRef = inject(DynamicDialogRef, { optional: true });
+  private config = inject(DynamicDialogConfig, { optional: true });
 
   personaForm!: FormGroup;
   tiposPersona: TipoPersona[] = [];
 
   isSubmitting = false;
   isEditMode = false;
+  isModal = false;
   private personaUuid: string | null = null;
 
   ngOnInit(): void {
+    this.isModal = !!this.dialogRef;
+
     this.initForm();
-    this.personaUuid = this.route.snapshot.paramMap.get('uuid');
+
+    if (this.isModal) {
+      this.personaUuid = this.config?.data?.uuid || null;
+    } else {
+      this.personaUuid = this.route.snapshot.paramMap.get('uuid');
+    }
+
     this.isEditMode = !!this.personaUuid;
 
     this.loadData();
@@ -82,7 +93,11 @@ export default class PersonaFormularioComponent implements OnInit {
             summary: 'Error',
             detail: 'No se pudo cargar la persona.'
           });
-          console.error(err);
+          if (this.isModal) {
+            this.dialogRef?.close(false);
+          } else {
+            this.router.navigate(['/admin/personas']);
+          }
         }
       });
     } else {
@@ -96,7 +111,6 @@ export default class PersonaFormularioComponent implements OnInit {
             summary: 'Error',
             detail: 'No se pudieron cargar los tipos de persona.'
           });
-          console.error(err);
         }
       });
     }
@@ -150,13 +164,18 @@ export default class PersonaFormularioComponent implements OnInit {
     request$.pipe(
       finalize(() => this.isSubmitting = false)
     ).subscribe({
-      next: () => {
+      next: (nuevaPersona) => {
         this.messageService.add({
           severity: 'success',
           summary: 'Éxito',
           detail: `Persona ${this.isEditMode ? 'actualizada' : 'creada'} correctamente.`
         });
-        setTimeout(() => this.router.navigate(['/admin/personas']), 1500);
+        
+        if (this.isModal) {
+          setTimeout(() => this.dialogRef?.close(nuevaPersona || true), 1000);
+        } else {
+          setTimeout(() => this.router.navigate(['/admin/personas']), 1500);
+        }
       },
       error: (err) => {
         this.messageService.add({
@@ -164,12 +183,15 @@ export default class PersonaFormularioComponent implements OnInit {
           summary: 'Error',
           detail: `No se pudo ${this.isEditMode ? 'actualizar' : 'crear'} la persona.`
         });
-        console.error(err);
       }
     });
   }
 
   cancelar(): void {
-    this.router.navigate(['/admin/personas']);
+    if (this.isModal) {
+      this.dialogRef?.close(false);
+    } else {
+      this.router.navigate(['/admin/personas']);
+    }
   }
 }

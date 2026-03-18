@@ -390,6 +390,30 @@ input.form-comp:hover,
   color: var(--gold) !important;
 }
 
+
+
+
+:host ::ng-deep .clear-filter-button.p-button.p-button-outlined {
+  color: var(--wine) !important;
+  border-color: var(--wine) !important;
+  height: 40px; 
+  width: 40px;
+  border-radius: 8px !important;
+}
+
+:host ::ng-deep .clear-filter-button.p-button.p-button-outlined:enabled:hover {
+  background: var(--beige) !important;
+  color: var(--wine) !important;
+}
+
+:host ::ng-deep .clear-filter-button.p-button.p-button-outlined:enabled:focus {
+  box-shadow: 0 0 0 1px var(--gold) !important;
+  border-color: var(--wine) !important;
+}
+
+
+
+
 /* Animación Global */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -485,3 +509,4 @@ body .p-datepicker .p-timepicker span {
   color: #5C2B2E !important;
   font-weight: 600 !important;
 }
+
