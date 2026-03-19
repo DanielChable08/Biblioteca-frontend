@@ -120,7 +120,8 @@
                     [disabled]="multa.estadoMulta?.nombre === 'Pagada' || multa.estadoMulta?.nombre === 'Condonada'">
                 </button>
                 <button 
-                    pButton 
+                    pButton
+                    *ngIf="multa['activo'] !== false && isAdmin"
                     icon="pi pi-check" 
                     class="action-btn-compact condonar-btn" 
                     pTooltip="Condonar" 
