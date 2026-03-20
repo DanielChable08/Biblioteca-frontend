@@ -1,15 +1,16 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { Libro, LibroPayload, Autor, Ejemplar, EjemplarPayload } from '../models/biblioteca';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from '../../environments/enviroment';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BookService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/sdt/v1/libros';
-  private ejemplaresUrl = 'http://localhost:8080/sdt/v1/ejemplares';
+  private apiUrl = environment.apiURL + '/libros';
+  private ejemplaresUrl = environment.apiURL + '/ejemplares';
 
   getLibros(params?: any): Observable<Libro[]> {
     let httpParams = new HttpParams();

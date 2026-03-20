@@ -1,5 +1,6 @@
-import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../environments/enviroment';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { 
   Prestamo, 
@@ -15,7 +16,7 @@ import {
 })
 export class PrestamoService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/sdt/v1';
+  private apiUrl = environment.apiURL;
 
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('token');

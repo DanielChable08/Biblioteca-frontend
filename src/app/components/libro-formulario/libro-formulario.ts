@@ -19,6 +19,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
 import { Autor, Catalogo, Libro } from '../../models/biblioteca';
+import { environment } from '../../../environments/enviroment';
 
 type TipoCatalogo = 'autor' | 'categoria' | 'editorial' | 'idioma' | 'tipoLibro';
 
@@ -179,7 +180,7 @@ export default class LibroFormularioComponent implements OnInit {
       if (libro.imagen) {
          this.imagePreview = libro.imagen.startsWith('http') 
             ? libro.imagen 
-            : `http://localhost:8080/${libro.imagen}`; 
+            : `${environment.plainURL}/${libro.imagen}`; 
       }
       this.fillForm(libro, autores);
     });

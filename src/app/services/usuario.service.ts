@@ -1,7 +1,8 @@
+import { map, switchMap, catchError } from 'rxjs/operators';
+import { environment } from '../../environments/enviroment';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { map, switchMap, catchError } from 'rxjs/operators';
 import { 
   Usuario, 
   Persona, 
@@ -15,7 +16,7 @@ import {
 })
 export class UsuarioService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/sdt/v1';
+  private apiUrl = environment.apiURL;
 
   getUsuarios(): Observable<UsuarioCompleto[]> {
     return this.http.get<Usuario[]>(`${this.apiUrl}/usuarios`).pipe(

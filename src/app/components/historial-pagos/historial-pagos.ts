@@ -11,6 +11,7 @@ import { TagModule } from 'primeng/tag';
 import { CardModule } from 'primeng/card';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { environment } from '../../../environments/enviroment';
 
 interface Pago {
   id: number;
@@ -65,7 +66,7 @@ export default class HistorialPagosComponent implements OnInit {
   totalPagado = 0;
   totalPagos = 0;
 
-  private apiUrl = 'http://localhost:8080/sdt/v1';
+  private apiUrl = environment.apiURL;
 
   ngOnInit(): void {
     this.lectorId = Number(this.route.snapshot.params['idLector']);
