@@ -1,7 +1,8 @@
+import { Observable, tap, catchError, throwError, BehaviorSubject } from 'rxjs';
+import { environment } from '../../environments/enviroment';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +10,7 @@ import { Observable, tap, catchError, throwError, BehaviorSubject } from 'rxjs';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private apiUrl = 'http://localhost:8080/sdt/v1/auth';
+  private apiUrl = environment.apiURL + '/auth';
   
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(!!sessionStorage.getItem('token'));
   

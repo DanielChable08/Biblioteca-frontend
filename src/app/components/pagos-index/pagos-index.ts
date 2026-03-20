@@ -12,6 +12,7 @@ import { ToastModule } from 'primeng/toast';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
+import { environment } from '../../../environments/enviroment';
 
 interface Pago {
   id: number;
@@ -62,7 +63,7 @@ export default class PagosIndexComponent implements OnInit {
 
   pagos: Pago[] = [];
   loading = false;
-  apiUrl = 'http://localhost:8080/sdt/v1';
+  apiUrl = environment.apiURL;
 
   ngOnInit(): void {
     this.cargarPagos();
