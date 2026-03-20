@@ -618,6 +618,67 @@
     color: var(--wine);
 }
 
+
+
+:host ::ng-deep app-persona-formulario .header-container {
+  display: none !important;
+}
+
+:host ::ng-deep app-persona-formulario {
+  background-color: transparent !important;
+  min-height: auto !important;
+  display: block;
+}
+
+:host ::ng-deep app-persona-formulario .form-page-container {
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important;
+  animation: none !important;
+  background: transparent !important;
+}
+
+:host ::ng-deep app-persona-formulario .form-container {
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+:host ::ng-deep app-persona-formulario .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+:host ::ng-deep app-persona-formulario .form-footer {
+  margin-top: 1.5rem !important;
+  padding-top: 1.5rem !important;
+  padding-bottom: 0 !important;
+  border-top: 1px solid var(--slate-200) !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 1rem !important;
+}
+
+:host ::ng-deep .p-dialog {
+  border-radius: 16px !important;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header {
+  border-bottom: 1px solid var(--slate-200);
+  background-color: #f9f6f0;
+  color: var(--wine);
+}
+
+:host ::ng-deep .p-dialog .p-dialog-content {
+  background: var(--white);
+  padding: 1.5rem !important;
+  overflow-y: visible !important; 
+}
+
 @media (max-width: 900px) {
   .form-container {
     padding: 1.5rem;

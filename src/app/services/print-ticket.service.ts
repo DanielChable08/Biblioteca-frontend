@@ -133,7 +133,18 @@ export class PrintTicketService {
     doc.text('Gracias por usar nuestra biblioteca', 40, y, { align: 'center' });
 
     doc.autoPrint();
-    window.open(doc.output('bloburl'), '_blank');
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none'; 
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+      URL.revokeObjectURL(url);
+    }, 5000);
   }
 
   imprimirTicketPago(data: {
@@ -262,7 +273,18 @@ export class PrintTicketService {
     doc.text(this.formatDateTime(new Date()), 40, y, { align: 'center' });
 
     doc.autoPrint();
-    window.open(doc.output('bloburl'), '_blank');
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none'; 
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+      URL.revokeObjectURL(url);
+    }, 5000);
   }
 
   private drawLine(doc: jsPDF, y: number, style: 'solid' | 'dashed' | 'dotted' | 'double'): void {

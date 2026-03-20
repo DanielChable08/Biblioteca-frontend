@@ -104,7 +104,7 @@
               icon="pi pi-plus"
               class="p-button-wine btn-add-catalog"
               pTooltip="Agregar lector"
-              (click)="abrirModalAgregar('lector')">
+              (click)="abrirModalLector()">
             </button>
           </div>
           <small class="p-error" *ngIf="prestamoForm.get('idLector')?.invalid && prestamoForm.get('idLector')?.touched">
@@ -233,13 +233,12 @@
   [header]="modoReemplazo ? 'Cambiar Ejemplar' : 'Seleccionar Ejemplares'"
   [(visible)]="displayEjemplarModal"
   [modal]="true"
-  [style]="{ width: '900px', maxHeight: '80vh' }"
+  [style]="{ width: '900px', maxHeight: '93vh' }"
   [draggable]="false"
   [dismissableMask]="false"
   (onHide)="cerrarModalEjemplar()">
 
   <div class="ejemplar-modal-content">
-    
     <div class="reemplazo-banner" *ngIf="modoReemplazo">
         <i class="pi pi-info-circle"></i>
         <span>Selecciona el nuevo libro para reemplazar al actual.</span>
@@ -259,7 +258,7 @@
       </span>
     </div>
 
-    <div class="ejemplares-grid">
+    <div class="ejemplares-grid" style="max-height: 400px; overflow-y: auto;">
       <div
         class="ejemplar-item"
         *ngFor="let ejemplar of ejemplaresFiltrados"
@@ -297,28 +296,46 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <ng-template pTemplate="footer">
-    <button type="button" pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarModalEjemplar()"></button>
-    <button *ngIf="!modoReemplazo" type="button" pButton label="Confirmar" icon="pi pi-check" class="p-button-wine" (click)="confirmarEjemplares()"></button>
-  </ng-template>
+  <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
+          <button 
+            type="button" 
+            pButton 
+            label="Cancelar" 
+            icon="pi pi-times" 
+            class="p-button-text p-button-secondary" 
+            (click)="cerrarModalEjemplar()">
+          </button>
+          
+          <button 
+            *ngIf="!modoReemplazo" 
+            type="button" 
+            pButton 
+            label="Confirmar" 
+            icon="pi pi-check" 
+            class="p-button-wine btn-primary" 
+            [disabled]="ejemplaresSeleccionados.length === 0" 
+            (click)="confirmarEjemplares()">
+          </button>
+      </div>
+
+  </div>
 </p-dialog>
 
+
 <p-dialog
-  [header]="getTituloModal()"
-  [(visible)]="displayCatalogoModal"
+  header="Registrar Nuevo Lector"
+  [(visible)]="displayLectorModal"
   [modal]="true"
-  [style]="{ width: '400px' }"
-  [draggable]="false">
-  <form [formGroup]="catalogoForm" (ngSubmit)="guardarCatalogo()" class="modal-form">
-    <div class="field">
-      <label for="nombreCatalogo">Nombre <span class="required">*</span></label>
-      <input id="nombreCatalogo" pInputText formControlName="nombre" class="w-full"/>
-    </div>
-    <div class="modal-footer">
-      <button type="button" pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayCatalogoModal = false"></button>
-      <button type="submit" pButton label="Guardar" icon="pi pi-check" class="p-button-wine" [loading]="catalogoSubmitting" [disabled]="catalogoForm.invalid"></button>
-    </div>
-  </form>
+  [style]="{ width: '90%', maxWidth: '800px' }"
+  [draggable]="false"
+  [dismissableMask]="true">
+  
+  <div class="p-4" *ngIf="displayLectorModal">
+    <app-persona-formulario 
+      [esModalParaLector]="true"
+      (onGuardadoExitoso)="onLectorGuardado($event)"
+      (onCancelar)="displayLectorModal = false">
+    </app-persona-formulario>
+  </div>
 </p-dialog>
