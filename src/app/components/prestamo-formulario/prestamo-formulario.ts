@@ -558,7 +558,7 @@ createPrestamo(payload: PrestamoPayload) {
 
   getAutoresNombres(ejemplar: Ejemplar): string {
     if (!ejemplar?.libro?.autores || ejemplar.libro.autores.length === 0) return 'Autor no asignado';
-    return ejemplar.libro.autores.map(a => `${a.nombre} ${a.apPaterno}`).join(', ');
+    return ejemplar.libro.autores.map(a => `${a.nombre} ${a.apPaterno || ''}`).join(', ');
   }
 
   abrirModalLector() {
