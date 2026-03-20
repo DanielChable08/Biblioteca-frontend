@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -43,6 +43,10 @@ export default class PersonaFormularioComponent implements OnInit {
   private dialogRef = inject(DynamicDialogRef, { optional: true });
   private config = inject(DynamicDialogConfig, { optional: true });
 
+  @Input() esModalParaLector = false; 
+  @Output() onGuardadoExitoso = new EventEmitter<any>();
+  @Output() onCancelar = new EventEmitter<void>();
+
   personaForm!: FormGroup;
   tiposPersona: TipoPersona[] = [];
 
@@ -52,11 +56,11 @@ export default class PersonaFormularioComponent implements OnInit {
   private personaUuid: string | null = null;
 
   ngOnInit(): void {
-    this.isModal = !!this.dialogRef;
+    this.isModal = !!this.dialogRef || this.esModalParaLector;
 
     this.initForm();
 
-    if (this.isModal) {
+    if (this.dialogRef && this.config) {
       this.personaUuid = this.config?.data?.uuid || null;
     } else {
       this.personaUuid = this.route.snapshot.paramMap.get('uuid');
@@ -93,17 +97,20 @@ export default class PersonaFormularioComponent implements OnInit {
             summary: 'Error',
             detail: 'No se pudo cargar la persona.'
           });
-          if (this.isModal) {
-            this.dialogRef?.close(false);
-          } else {
-            this.router.navigate(['/admin/personas']);
-          }
+          this.cancelar();
         }
       });
     } else {
       this.catalogService.getTiposPersonas().subscribe({
         next: (tiposPersona) => {
           this.tiposPersona = tiposPersona;
+
+          if (this.esModalParaLector) {
+            const tipoLector = this.tiposPersona.find(t => t.nombre.toLowerCase().includes('lector'));
+            if (tipoLector) {
+              this.personaForm.patchValue({ idTipoPersona: tipoLector.id });
+            }
+          }
         },
         error: (err) => {
           this.messageService.add({
@@ -171,7 +178,9 @@ export default class PersonaFormularioComponent implements OnInit {
           detail: `Persona ${this.isEditMode ? 'actualizada' : 'creada'} correctamente.`
         });
         
-        if (this.isModal) {
+        if (this.esModalParaLector) {
+          setTimeout(() => this.onGuardadoExitoso.emit(nuevaPersona), 800);
+        } else if (this.dialogRef) {
           setTimeout(() => this.dialogRef?.close(nuevaPersona || true), 1000);
         } else {
           setTimeout(() => this.router.navigate(['/admin/personas']), 1500);
@@ -188,8 +197,10 @@ export default class PersonaFormularioComponent implements OnInit {
   }
 
   cancelar(): void {
-    if (this.isModal) {
-      this.dialogRef?.close(false);
+    if (this.esModalParaLector) {
+      this.onCancelar.emit();
+    } else if (this.dialogRef) {
+      this.dialogRef.close(false);
     } else {
       this.router.navigate(['/admin/personas']);
     }

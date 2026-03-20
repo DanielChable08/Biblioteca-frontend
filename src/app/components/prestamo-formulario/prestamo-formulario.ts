@@ -14,6 +14,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageService } from 'primeng/api';
 
+import PersonaFormularioComponent from '../personas-formulario/personas-formulario';
+
 import { PrestamoService } from '../../services/prestamo.service';
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
@@ -44,7 +46,8 @@ import {
     ToastModule,
     DialogModule,
     TooltipModule,
-    CheckboxModule
+    CheckboxModule,
+    PersonaFormularioComponent
   ],
   templateUrl: './prestamo-formulario.html',
   styleUrls: ['./prestamo-formulario.css'],
@@ -86,6 +89,8 @@ export default class PrestamoFormularioComponent implements OnInit {
 
   displayCatalogoModal = false;
   displayEjemplarModal = false;
+  displayLectorModal = false; 
+
   catalogoTipo: 'lector' | 'estadoPrestamo' | null = null;
   ejemplarFilter = '';
   
@@ -357,7 +362,6 @@ export default class PrestamoFormularioComponent implements OnInit {
       this.cargarAutoresParaEjemplares(ejemplaresEncontrados);
   }
 
-
   abrirModalEjemplar(): void {
     this.modoReemplazo = false;
     this.indiceReemplazo = -1;
@@ -469,7 +473,7 @@ export default class PrestamoFormularioComponent implements OnInit {
       fechaLimite: this.formatDate(formData.fechaLimite),
       idBibliotecario: this.idPersonaBibliotecario,
       idLector: formData.idLector,
-      idEstadoPrestamo: formData.idEstadoPrestamo || 1
+      idEstadoPrestamo: formData.idEstadoPrestamo || 7
     };
 
     if (this.isEditMode && this.prestamoUuid) {
@@ -479,34 +483,64 @@ export default class PrestamoFormularioComponent implements OnInit {
     }
   }
 
-  createPrestamo(payload: PrestamoPayload) {
-      this.prestamoService.createPrestamo(payload).pipe(finalize(() => this.isSubmitting = false))
-      .subscribe({
-        next: (p) => {
-          if (!p.uuid) return;
-          const detalles = this.ejemplaresSeleccionados.map(e => ({ idEjemplar: e.id, fechaDevolucion: null, idEstadoPrestamo: 1 }));
-          this.prestamoService.cargarDetallesEnMasiva(p.uuid, detalles).subscribe({
-            next: () => {
-              this.sharedDataService.notificarActualizacionEjemplares();
-              this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Préstamo creado.' });
-              this.router.navigate(['/admin/prestamos']);
+createPrestamo(payload: PrestamoPayload) {
+        this.prestamoService.createPrestamo(payload).pipe(finalize(() => this.isSubmitting = false))
+        .subscribe({
+          next: (p) => {
+            if (!p.uuid) return;
+            const detalles = this.ejemplaresSeleccionados.map(e => ({ idEjemplar: e.id, fechaDevolucion: null, idEstadoPrestamo: 1 }));
+            this.prestamoService.cargarDetallesEnMasiva(p.uuid, detalles).subscribe({
+              next: () => {
+                this.sharedDataService.notificarActualizacionEjemplares();
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Préstamo registrado correctamente.' });
+                this.cdr.detectChanges();
+                setTimeout(() => {
+                  this.router.navigate(['/admin/prestamos']);
+                }, 1500); 
+              },
+              error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Se guardó el préstamo pero fallaron los detalles.' });
+                this.cdr.detectChanges();
+              }
+            });
+          },
+          error: (err) => {
+            let detalleError = 'No se pudo registrar el préstamo (El backend lo rechazó).';
+            
+            if (err?.error) {
+               if (typeof err.error === 'string') {
+                  detalleError = err.error; 
+               } else if (err.error.message) {
+                  detalleError = err.error.message; 
+               } else if (err.error.error) {
+                  detalleError = err.error.error; 
+               }
             }
-          });
-        },
-        error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear.' })
-      });
-  }
+
+            this.messageService.add({ severity: 'error', summary: 'Préstamo Rechazado', detail: detalleError });
+            this.cdr.detectChanges();
+          }
+        });
+    }
 
   updatePrestamo(payload: PrestamoPayload) {
-      this.prestamoService.updatePrestamo(this.prestamoUuid!, payload).pipe(finalize(() => this.isSubmitting = false))
-      .subscribe({
-          next: () => {
-              this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Préstamo actualizado.' });
-              this.router.navigate(['/admin/prestamos']);
-          },
-          error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar.' })
-      });
-  }
+        this.prestamoService.updatePrestamo(this.prestamoUuid!, payload).pipe(finalize(() => this.isSubmitting = false))
+        .subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Préstamo actualizado correctamente.' });
+                this.cdr.detectChanges();
+                setTimeout(() => {
+                  this.router.navigate(['/admin/prestamos']);
+                }, 1500);
+            },
+            error: (err) => {
+                const msjBackend = err?.error?.message || err?.error;
+                const detailStr = typeof msjBackend === 'string' ? msjBackend : 'No se pudo actualizar el préstamo.';
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: detailStr });
+                this.cdr.detectChanges();
+            }
+        });
+    }
 
   formatDate(date: Date): string {
     const year = date.getFullYear();
@@ -526,8 +560,30 @@ export default class PrestamoFormularioComponent implements OnInit {
     if (!ejemplar?.libro?.autores || ejemplar.libro.autores.length === 0) return 'Autor no asignado';
     return ejemplar.libro.autores.map(a => `${a.nombre} ${a.apPaterno}`).join(', ');
   }
-  
-  abrirModalAgregar(tipo: any) {}
+
+  abrirModalLector() {
+      this.displayLectorModal = true;
+    }
+
+  onLectorGuardado(nuevaPersona: any): void {
+    this.displayLectorModal = false;
+    
+    this.prestamoService.getPersonas().subscribe(lectores => {
+      this.lectores = lectores
+        .filter(p => p.idTipoPersona === 1) 
+        .map(p => ({
+          ...p,
+          nombreCompleto: `${p.nombre} ${p.apPaterno} ${p.apMaterno || ''}`.trim()
+        }));
+
+      if (nuevaPersona && nuevaPersona.id) {
+        this.prestamoForm.patchValue({ idLector: nuevaPersona.id });
+        this.messageService.add({ severity: 'success', summary: 'Lector listo', detail: 'Seleccionado automáticamente.' });
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   guardarCatalogo() { this.displayCatalogoModal = false; }
   getTituloModal() { return ''; }
 }
