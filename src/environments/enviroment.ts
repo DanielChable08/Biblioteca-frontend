@@ -1,4 +1,4 @@
 export const environment = {
-    apiURL: 'http://localhost:8080/sdt/v1',
-    plainURL: 'http://localhost:8080',
+    apiURL: 'https://biblioteca-seminario-backend.onrender.com/sdt/v1',
+    plainURL: 'https://biblioteca-seminario-backend.onrender.com',
 }
