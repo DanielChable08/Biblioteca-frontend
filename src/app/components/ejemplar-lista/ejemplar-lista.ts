@@ -18,6 +18,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { BookService } from '../../services/book.service';
 import { CatalogService } from '../../services/catalog.service';
 import { Ejemplar } from '../../models/biblioteca';
+import { environment } from '../../../environments/enviroment';
 import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
 import LibroDetalleComponent from '../libro-detalle/libro-detalle';
 
@@ -53,9 +54,7 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
   globalFilter: string = '';
   private dialogRef?: DynamicDialogRef;
 
-  // COPIADO DE BIBLIOTECARIO.TS (Asegura que apunte a donde el otro componente apunta)
-  private readonly IMAGES_BASE_URL = 'http://localhost:8080/assets/img/'; 
-  // Si tu backend usa /sdt/v1/uploads/img/, cambia la línea de arriba por esa ruta.
+  private readonly IMAGES_BASE_URL = environment.plainURL + '/assets/img/'; 
 
   ngOnInit(): void {
     this.loadData();

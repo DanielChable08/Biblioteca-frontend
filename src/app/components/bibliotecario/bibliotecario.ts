@@ -31,6 +31,7 @@ import { Libro, Catalogo, Autor, Ejemplar } from '../../models/biblioteca';
 import LibroFormularioComponent from '../libro-formulario/libro-formulario';
 import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
 import LibroDetalleComponent from '../libro-detalle/libro-detalle';
+import { environment } from '../../../environments/enviroment';
 
 type CategoriaKey = 'Todas' | string;
 
@@ -78,7 +79,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
 
   private ejemplaresSubscription?: Subscription;
   private routerSubscription?: Subscription;
-  private readonly IMAGES_BASE_URL = 'http://localhost:8080/assets/img/';
+  private readonly IMAGES_BASE_URL = environment.plainURL + '/assets/img/';
 
   get isAdmin(): boolean {
       return this.authService.isAdmin();

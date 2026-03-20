@@ -1,7 +1,8 @@
+import { environment } from '../../environments/enviroment';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { Ejemplar } from '../models/biblioteca'; 
+import { Observable } from 'rxjs';
 
 
 @Injectable({
@@ -9,7 +10,7 @@ import { Ejemplar } from '../models/biblioteca';
 })
 export class EjemplarService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/sdt/v1/ejemplares';
+  private apiUrl = environment.apiURL + '/ejemplares';
 
   getEjemplares(): Observable<Ejemplar[]> {
     return this.http.get<Ejemplar[]>(this.apiUrl);

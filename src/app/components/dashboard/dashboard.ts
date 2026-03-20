@@ -21,6 +21,7 @@ import { EjemplarService } from '../../services/ejemplar.service';
 import { AuthService } from '../../services/auth.service';
 import { SecureImagePipe } from '../../pipes/secure-image.pipe';
 import { Libro, Catalogo, Autor } from '../../models/biblioteca';
+import { environment } from '../../../environments/enviroment';
 
 import LibroDetalleComponent from '../libro-detalle/libro-detalle';
 
@@ -71,7 +72,7 @@ export default class DashboardComponent implements OnInit, OnDestroy {
 
   mostrarStats = true;
 
-  private readonly IMAGES_BASE_URL = 'http://localhost:8080/assets/img/';
+  private readonly IMAGES_BASE_URL = environment.plainURL + '/assets/img/';
 
   ngOnInit(): void {
     this.loadUserInfo();
