@@ -208,7 +208,8 @@
       </div>
       <div class="form-footer">
         <button type="button" pButton label="Cancelar" class="btn-info text" (click)="displayCatalogoDialog = false"></button>
-        <button type="submit" pButton label="Guardar" icon="pi pi-check" class="btn-primary"></button>
+        <button type="submit" pButton label="Guardar" icon="pi pi-check" class="btn-primary" [loading]="isSubmitting" 
+        [disabled]="catalogoForm.invalid"></button>
       </div>
   </form>
 </p-dialog>

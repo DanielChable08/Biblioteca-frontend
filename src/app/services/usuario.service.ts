@@ -166,4 +166,10 @@ export class UsuarioService {
   getTiposPersona(): Observable<TipoPersona[]> {
     return this.http.get<TipoPersona[]>(`${this.apiUrl}/tipos-persona`);
   }
+
+  getRoles(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/roles`).pipe(
+      catchError((error: any) => throwError(() => error))
+    );
+  }
 }

@@ -1,0 +1,160 @@
+<p-toast></p-toast>
+
+<div class="header-container">
+  <div class="form-header-container">
+    <div class="form-header">
+      <div class="header-left">
+        <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="volver()" pTooltip="Volver a la lista" tooltipPosition="bottom"></button>
+        <h2><i class="pi pi-id-card"></i> Perfil del Usuario</h2>
+      </div>
+      <button pButton label="Editar Persona" icon="pi pi-pencil" class="p-button-outlined-wine" (click)="volver()"></button>
+    </div>
+  </div>
+</div>
+
+<div class="admin-page-container" *ngIf="!loading && persona">
+  
+  <div class="profile-card">
+    <div class="profile-avatar">{{ getIniciales() }}</div>
+    <div class="profile-info-main">
+      <h3>{{ getNombreCompleto() }}</h3>
+      <div class="contact-badges">
+        <span class="info-badge"><i class="pi pi-phone"></i> {{ persona.telefono || 'Sin teléfono' }}</span>
+        <span class="info-badge"><i class="pi pi-id-card"></i> Tipo: {{ getTipoPersonaNombre(persona.idTipoPersona) }}</span>
+      </div>
+    </div>
+    
+    <div class="profile-stats">
+      <div class="stat-item">
+        <span class="stat-value text-wine">{{ prestamos.length }}</span>
+        <span class="stat-label">Préstamos</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value text-gray">{{ multas.length }}</span>
+        <span class="stat-label">Multas</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value text-gold">{{ pagos.length }}</span>
+        <span class="stat-label">Pagos</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="custom-tabs">
+    <button class="tab-btn" [class.active]="activeTab === 'prestamos'" (click)="activeTab = 'prestamos'">
+      <i class="pi pi-book"></i> Historial de Préstamos
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'multas'" (click)="activeTab = 'multas'">
+      <i class="pi pi-receipt"></i> Multas Generadas
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'pagos'" (click)="activeTab = 'pagos'">
+      <i class="pi pi-wallet"></i> Historial de Pagos
+    </button>
+  </div>
+
+  <div class="tab-content-container">
+
+    <div *ngIf="activeTab === 'prestamos'">
+      <p-table [value]="prestamos" styleClass="custom-table" [paginator]="true" [rows]="10">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Libro / Ejemplar</th>
+            <th>Fecha Préstamo</th>
+            <th>Fecha Devolución</th>
+            <th>Estado</th>
+            <th style="text-align: center;">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <i class="pi pi-book"></i>
+                <p>Este usuario no tiene préstamos registrados.</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <div *ngIf="activeTab === 'multas'">
+      <p-table [value]="multas" styleClass="custom-table" [paginator]="true" [rows]="10">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Motivo</th>
+            <th>Fecha</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th style="text-align: center;">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5">
+              <div class="empty-state text-green">
+                <i class="pi pi-check-circle"></i>
+                <p>Este usuario tiene un historial impecable. Cero multas.</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <div *ngIf="activeTab === 'pagos'">
+      <p-table 
+        [value]="pagos" 
+        styleClass="custom-table p-datatable-striped" 
+        [paginator]="true" 
+        [rows]="10"
+        [loading]="loadingPagos">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Fecha</th>
+            <th>Folio</th>
+            <th>Método</th>
+            <th class="text-right">Total</th>
+            <th class="text-right">Monto recibido</th>
+            <th class="text-right">Cambio</th>
+            <th class="text-center">Estado</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-pago>
+          <tr>
+            <td>{{ formatearFecha(pago.fechaPago) }}</td>
+            <td style="font-weight: 600; color: var(--wine);">{{ pago.folio }}</td>
+            <td>
+              <span class="metodo-badge"><i class="pi pi-money-bill"></i> {{ pago.metodoPago }}</span>
+            </td>
+            <td class="text-right font-bold text-wine">{{ formatearMoneda(pago.total) }}</td>
+            <td class="text-right">{{ formatearMoneda(pago.montoRecibido) }}</td>
+            <td class="text-right">{{ formatearMoneda(pago.cambio) }}</td>
+            <td class="text-center">
+              <p-tag 
+                [value]="getEstadoTexto(pago.anulado)" 
+                [severity]="getEstadoSeverity(pago.anulado)">
+              </p-tag>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <i class="pi pi-wallet"></i>
+                <p>No hay registros de pagos para este usuario.</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+  </div>
+</div>
+
+<div *ngIf="loading" style="text-align: center; padding: 5rem">
+  <i class="pi pi-spin pi-spinner" style="font-size: 3rem; color: var(--wine)"></i>
+  <p style="color: var(--wine); margin-top: 1rem; font-weight: 600;">Cargando perfil...</p>
+</div>

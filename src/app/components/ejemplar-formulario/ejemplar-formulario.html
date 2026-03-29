@@ -169,6 +169,7 @@
         pButton 
         icon="pi pi-check" 
         class="btn-primary"
+        [loading]="isSubmitting"
         [disabled]="catalogoForm.invalid"
       >
         Guardar

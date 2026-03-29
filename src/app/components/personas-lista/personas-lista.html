@@ -117,6 +117,15 @@
           <div class="table-actions">
             <button
               pButton
+              icon="pi pi-id-card"
+              class="p-button-rounded p-button-text action-btn-compact profile-btn"
+              (click)="abrirPerfil(persona)"
+              pTooltip="Ver Perfil"
+              tooltipPosition="top"
+            ></button>
+            
+            <button
+              pButton
               icon="pi pi-pencil"
               class="p-button-rounded p-button-text action-btn-compact edit-btn"
               (click)="editarPersona(persona.uuid)"

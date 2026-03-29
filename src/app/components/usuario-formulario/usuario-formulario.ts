@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -94,33 +95,35 @@ export default class UsuarioFormularioComponent implements OnInit {
 
   private loadCatalogs(): void {
     forkJoin({
-      tiposPersona: this.catalogService.getTiposPersona(),
-      usuarios: this.usuarioService.getUsuarios(),
-      personas: this.usuarioService.getPersonas()
+      tiposPersona: this.catalogService.getTiposPersona().pipe(catchError(() => of([]))),
+      personas: this.usuarioService.getPersonas().pipe(catchError(() => of([]))),
+      roles: this.usuarioService.getRoles().pipe(catchError((err) => {
+          console.error('El backend rechazó la petición de roles:', err);
+          return of([]); 
+      }))
     }).subscribe({
       next: (data) => {
         this.tiposPersona = data.tiposPersona;
         this.personas = data.personas;
 
-        const rolesMap = new Map<number, string>();
-        data.usuarios.forEach((usuario: UsuarioCompleto) => {
-          if (usuario.roles && usuario.roles.length > 0 && usuario.rolNombre) {
-            usuario.roles.forEach((rolId) => {
-              rolesMap.set(rolId, usuario.rolNombre!);
-            });
-          }
-        });
+        const responseData: any = data.roles; 
+        let rolesExtraidos: any[] = [];
+        
+        if (Array.isArray(responseData)) {
+            rolesExtraidos = responseData;
+        } else if (responseData && responseData['content']) {
+            rolesExtraidos = responseData['content'];
+        } else if (responseData && responseData['_embedded'] && responseData['_embedded']['roles']) {
+            rolesExtraidos = responseData['_embedded']['roles'];
+        }
 
-        this.roles = Array.from(rolesMap.entries())
-          .map(([id, name]) => ({ id, name }))
-          .sort((a, b) => a.id - b.id);
+        this.roles = rolesExtraidos.map((rol: any) => ({
+          id: rol.id,
+          name: rol.name || rol.nombre || rol.authority || 'Desconocido'
+        }));
 
-        if (this.roles.length === 0) {
-          this.roles = [
-            { id: 1, name: 'ADMINISTRADOR' },
-            { id: 2, name: 'BIBLIOTECARIO' },
-            { id: 3, name: 'SEMINARISTA' }
-          ];
+        if (this.roles.length === 0 && !this.isEditMode) {
+          this.messageService.add({ severity: 'warn', summary: 'Sin roles', detail: 'No se encontraron roles en el servidor.' });
         }
       }
     });

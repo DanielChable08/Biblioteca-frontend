@@ -1,0 +1,120 @@
+:host {
+  --wine: #5C2B2E;
+  --gold: #D4AF37;
+  --beige: #EDE6D7;
+  --white: #FFFFFF;
+  --gray: #C4C4C4;
+  --brown: #8B4513;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: block;
+}
+
+.header-container { background-color: var(--white); margin-bottom: 2rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+.form-header-container { max-width: 1400px; margin: 0 auto; padding: 38px 24px; }
+.form-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 2px solid rgba(212, 175, 55, 0.4); }
+.header-left { display: flex; align-items: center; gap: 1rem; }
+.form-header h2 { font-size: 2rem; font-weight: 700; color: var(--wine); display: flex; align-items: center; gap: 0.8rem; margin: 0; }
+.form-header h2 i { color: var(--gold); font-size: 2.5rem; }
+
+.back-button { color: var(--wine) !important; font-size: 1.2rem; transition: color 0.3s; margin-right: 0.5rem; }
+.back-button:hover { color: var(--gold) !important; background-color: rgba(92, 43, 46, 0.1) !important; }
+
+.p-button-outlined-wine { background: transparent !important; color: var(--wine) !important; border: 2px solid var(--wine) !important; font-weight: 600; border-radius: 8px; }
+.p-button-outlined-wine:hover { background: var(--beige) !important; }
+
+.admin-page-container { padding: 0 2rem 2rem 2rem; min-height: calc(100vh - 4rem); max-width: 1400px; margin: 0 auto; }
+
+.profile-card {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  box-shadow: 0 4px 15px rgba(92, 43, 46, 0.08);
+  border: 1px solid var(--gray);
+  margin-bottom: 2.5rem;
+}
+
+.profile-avatar {
+  width: 90px;
+  height: 90px;
+  background: var(--wine);
+  color: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(92, 43, 46, 0.3);
+  flex-shrink: 0;
+}
+
+.profile-info-main { flex: 1; }
+.profile-info-main h3 { margin: 0 0 0.8rem 0; font-size: 1.8rem; color: var(--wine); font-weight: 700; }
+
+.contact-badges { display: flex; gap: 1rem; flex-wrap: wrap; }
+.info-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: #f8f6f2; color: var(--brown);
+  padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: 500;
+  border: 1px solid #e0d8c5;
+}
+.info-badge i { color: var(--gold); }
+
+.profile-stats { display: flex; gap: 2rem; padding-left: 2rem; border-left: 1px solid #e0d8c5; }
+.stat-item { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.stat-value { font-size: 2.2rem; font-weight: 700; line-height: 1; }
+.stat-label { font-size: 0.85rem; color: var(--gray); margin-top: 0.3rem; font-weight: 600; text-transform: uppercase; }
+
+
+
+.custom-tabs {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 2px solid #e0d8c5;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-bottom: 4px solid transparent;
+  margin-bottom: -2px; /* Superponer el borde inferior */
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  white-space: nowrap;
+}
+
+.tab-btn i { font-size: 1.2rem; }
+.tab-btn:hover { color: var(--gold); }
+.tab-btn.active { color: var(--wine); border-bottom-color: var(--wine); }
+
+:host ::ng-deep .custom-table.p-datatable { border-radius: 12px; overflow: hidden; box-shadow: 0 3px 12px rgba(92, 43, 46, 0.05); border: 1px solid var(--gray); }
+:host ::ng-deep .custom-table .p-datatable-header { background-color: var(--white); border-bottom: 1px solid var(--gray); padding: 1rem; }
+:host ::ng-deep .custom-table .p-datatable-thead > tr > th { background-color: #f8f6f2; color: var(--wine); font-weight: 600; border-color: var(--gray) !important; padding: 1rem; }
+:host ::ng-deep .custom-table .p-datatable-tbody > tr > td { border-color: #e0d8c5 !important; color: var(--brown); padding: 1rem; }
+:host ::ng-deep .custom-table .p-paginator { background-color: var(--white); border-top: 1px solid var(--gray); border-radius: 0 0 12px 12px; }
+
+.empty-state { text-align: center; padding: 4rem 2rem; color: #9ca3af; }
+.empty-state i { font-size: 3.5rem; margin-bottom: 1rem; color: var(--gray); opacity: 0.5; }
+.empty-state p { font-size: 1.1rem; margin: 0; font-weight: 500; }
+.text-green i { color: #27ae60; opacity: 0.8; }
+.text-green p { color: #27ae60; }
+
+@media (max-width: 768px) {
+  .profile-card { flex-direction: column; text-align: center; gap: 1rem; }
+  .profile-stats { border-left: none; border-top: 1px solid #e0d8c5; padding-left: 0; padding-top: 1.5rem; width: 100%; justify-content: space-around; }
+  .contact-badges { justify-content: center; }
+  .custom-tabs { padding-bottom: 5px; }
+  .tab-btn { padding: 0.8rem 1rem; font-size: 0.95rem; }
+}
