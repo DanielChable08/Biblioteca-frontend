@@ -205,9 +205,15 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
               };
             });
 
-            librosCompletos.sort((a, b) => b.id - a.id); 
+            // 🔥 MAGIA AQUÍ: Filtramos si el usuario NO es admin
+            let librosPermitidos = librosCompletos;
+            if (!this.isAdmin) {
+                librosPermitidos = librosCompletos.filter(libro => libro.activo === true);
+            }
 
-            return { libros: librosCompletos, categorias };
+            librosPermitidos.sort((a, b) => b.id - a.id); 
+
+            return { libros: librosPermitidos, categorias };
           })
         );
       }),

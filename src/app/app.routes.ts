@@ -153,6 +153,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/historial-pagos/historial-pagos').then(m => m.default),
     canActivate: [authGuard, adminGuard]
   },
+  {
+    path: 'admin/personas/detalle/:uuid',
+    loadComponent: () => import('./components/persona-detalle/persona-detalle').then(m => m.default),
+    canActivate: [authGuard, roleGuard]
+  },
   { 
     path: '**', 
     redirectTo: '/login' 

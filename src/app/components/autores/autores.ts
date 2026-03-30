@@ -150,7 +150,7 @@ export default class AutoresComponent implements OnInit {
 
   eliminar(autor: Autor): void {
     this.confirmationService.confirm({
-      message: `¿Estás seguro de eliminar al autor "${autor.nombre} ${autor.apPaterno}"?`,
+      message: `¿Estás seguro de eliminar al autor "${autor.nombre} ${autor.apPaterno || ''}"?`,
       header: 'Confirmar eliminación',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, eliminar',

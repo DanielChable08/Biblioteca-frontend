@@ -195,6 +195,10 @@ button.ani-one:hover {
   font-weight: 600;
 }
 
+.text-wine { color:var(--wine); }
+.text-gold { color:var(--gold); }
+.text-gray { color: var(--gray); }
+
 /*Estilos Dialog*/
 .p-dialog .p-dialog-header {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;

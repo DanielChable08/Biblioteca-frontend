@@ -8,7 +8,6 @@
   </ng-template>
 </p-confirmDialog>
 
-<!-- HEADER -->
 <div class="header-container">
   <div class="form-header-container">
     <div class="form-header page-header">
@@ -37,7 +36,6 @@
   </div>
 </div>
 
-<!-- CONTENIDO PRINCIPAL -->
 <div class="admin-page-container">
   <p-table 
     #dtAutores 
@@ -51,7 +49,6 @@
     currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} autores" 
     [showCurrentPageReport]="true">
 
-    <!-- CAPTION -->
     <ng-template pTemplate="caption">
       <div class="table-header">
         <span>Lista de Autores</span>
@@ -76,7 +73,6 @@
       </div>
     </ng-template>
 
-    <!-- HEADER -->
     <ng-template pTemplate="header">
       <tr>
         <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre"></p-sortIcon></th>
@@ -86,7 +82,6 @@
       </tr>
     </ng-template>
 
-    <!-- BODY -->
     <ng-template pTemplate="body" let-autor>
       <tr>
         <td>{{ autor.nombre }}</td>
@@ -113,14 +108,12 @@
       </tr>
     </ng-template>
 
-    <!-- EMPTY -->
     <ng-template pTemplate="emptymessage">
       <tr>
         <td colspan="4" class="text-center empty-message">No se encontraron autores.</td>
       </tr>
     </ng-template>
 
-    <!-- LOADING -->
     <ng-template pTemplate="loadingbody">
       <tr>
         <td colspan="4" class="text-center loading-message">Cargando autores...</td>
@@ -129,7 +122,6 @@
   </p-table>
 </div>
 
-<!-- MODAL FORMULARIO -->
 <p-dialog
   [header]="isEditMode ? 'Editar Autor' : 'Agregar Nuevo Autor'"
   [(visible)]="displayModal"
@@ -140,7 +132,6 @@
   [focusOnShow]="false">
   
   <form [formGroup]="autorForm" (ngSubmit)="onSubmit()" class="form-container">
-    <!-- NOMBRE -->
     <div class="field">
       <label for="nombre">
         <i class="pi pi-user"></i> Nombre <span class="text.red">*</span>
@@ -156,7 +147,6 @@
       </small>
     </div>
 
-    <!-- APELLIDO PATERNO -->
     <div class="field">
       <label for="apPaterno">
         <i class="pi pi-id-card"></i> Apellido Paterno <span class="text.red">*</span>
@@ -172,7 +162,6 @@
       </small>
     </div>
 
-    <!-- APELLIDO MATERNO -->
     <div class="field">
       <label for="apMaterno">
         <i class="pi pi-id-card"></i> Apellido Materno
