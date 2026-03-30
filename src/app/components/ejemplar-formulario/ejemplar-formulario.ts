@@ -67,12 +67,12 @@ export default class EjemplarFormularioComponent implements OnInit {
 
   ngOnInit(): void {
     this.messageService = this.config.data?.messageService;
-    
+
     if (!this.messageService) {
       console.error('MessageService no fue proporcionado');
       return;
     }
-    
+
     this.idLibro = this.config.data?.idLibro;
     this.ejemplarUuid = this.config.data?.ejemplarUuid;
     this.isEditMode = !!this.ejemplarUuid;
@@ -83,7 +83,7 @@ export default class EjemplarFormularioComponent implements OnInit {
     }
 
     this.loadCatalogs();
-    
+
     if (this.mostrarSelectorLibro) {
       this.loadLibros();
     }
@@ -246,11 +246,18 @@ export default class EjemplarFormularioComponent implements OnInit {
       },
       error: (err) => {
         let errorDetail = 'No se pudo guardar el ejemplar';
-        
+
         if (err.status === 409) {
           errorDetail = 'Ya existe un ejemplar con ese código de barras';
         } else if (err.status === 404) {
           errorDetail = 'Libro no encontrado';
+        } else if (err.status === 400) {
+          if (err.error && typeof err.error === 'object') {
+            const errores = Object.values(err.error).join(', ');
+            errorDetail = errores;
+          } else {
+            errorDetail = err.error?.message || 'Datos inválidos';
+          }
         } else if (err.error?.message) {
           errorDetail = err.error.message;
         }

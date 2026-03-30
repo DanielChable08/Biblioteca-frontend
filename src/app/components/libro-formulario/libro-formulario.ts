@@ -90,7 +90,7 @@ export default class LibroFormularioComponent implements OnInit {
       isbnDisplay: [''],
       anho: [new Date().getFullYear(), [Validators.required, Validators.pattern('^[0-9]{4}$')]],
       paginas: [null, [Validators.required, Validators.min(1)]],
-      edicion: [''], 
+      edicion: [''],
       pasta: [''],
       idCategoria: [null, Validators.required],
       idEditorial: [null, Validators.required],
@@ -178,9 +178,9 @@ export default class LibroFormularioComponent implements OnInit {
       autores: this.bookService.getAutoresForLibro(uuid)
     }).subscribe(({ libro, autores }) => {
       if (libro.imagen) {
-         this.imagePreview = libro.imagen.startsWith('http') 
-            ? libro.imagen 
-            : `${environment.plainURL}/${libro.imagen}`; 
+        this.imagePreview = libro.imagen.startsWith('http')
+          ? libro.imagen
+          : `${environment.plainURL}/${libro.imagen}`;
       }
       this.fillForm(libro, autores);
     });
@@ -241,41 +241,70 @@ export default class LibroFormularioComponent implements OnInit {
         apMaterno: payload.apMaterno
       });
     } else {
-       const serviceMap: any = {
-         'categoria': this.catalogService.createCategoria.bind(this.catalogService),
-         'editorial': this.catalogService.createEditorial.bind(this.catalogService),
-         'idioma': this.catalogService.createIdioma.bind(this.catalogService),
-         'tipoLibro': this.catalogService.createTipoLibro.bind(this.catalogService)
-       };
-       request$ = serviceMap[tipo]({ nombre: payload.nombre });
+      const serviceMap: any = {
+        'categoria': this.catalogService.createCategoria.bind(this.catalogService),
+        'editorial': this.catalogService.createEditorial.bind(this.catalogService),
+        'idioma': this.catalogService.createIdioma.bind(this.catalogService),
+        'tipoLibro': this.catalogService.createTipoLibro.bind(this.catalogService)
+      };
+      request$ = serviceMap[tipo]({ nombre: payload.nombre });
     }
 
     request$.subscribe({
       next: (nuevoItem: any) => {
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Agregado correctamente.' });
         this.displayCatalogoDialog = false;
-        
+
         if (tipo === 'autor') {
-           const nuevoAutor: Autor = { ...nuevoItem, displayName: `${nuevoItem.nombre} ${nuevoItem.apPaterno||''} ${nuevoItem.apMaterno||''}`.trim() };
-           this.autores = [...this.autores, nuevoAutor];
-           const current = this.libroForm.get('idAutores')?.value || [];
-           this.libroForm.get('idAutores')?.setValue([...current, nuevoAutor.id]);
+          const nuevoAutor: Autor = { ...nuevoItem, displayName: `${nuevoItem.nombre} ${nuevoItem.apPaterno || ''} ${nuevoItem.apMaterno || ''}`.trim() };
+          this.autores = [...this.autores, nuevoAutor];
+          const current = this.libroForm.get('idAutores')?.value || [];
+          this.libroForm.get('idAutores')?.setValue([...current, nuevoAutor.id]);
         } else if (tipo === 'categoria') {
-           this.categorias = [...this.categorias, nuevoItem];
-           this.libroForm.get('idCategoria')?.setValue(nuevoItem.id);
+          this.categorias = [...this.categorias, nuevoItem];
+          this.libroForm.get('idCategoria')?.setValue(nuevoItem.id);
         } else if (tipo === 'editorial') {
-           this.editoriales = [...this.editoriales, nuevoItem];
-           this.libroForm.get('idEditorial')?.setValue(nuevoItem.id);
+          this.editoriales = [...this.editoriales, nuevoItem];
+          this.libroForm.get('idEditorial')?.setValue(nuevoItem.id);
         } else if (tipo === 'idioma') {
-           this.idiomas = [...this.idiomas, nuevoItem];
-           this.libroForm.get('idIdioma')?.setValue(nuevoItem.id);
+          this.idiomas = [...this.idiomas, nuevoItem];
+          this.libroForm.get('idIdioma')?.setValue(nuevoItem.id);
         } else if (tipo === 'tipoLibro') {
-           this.tiposLibro = [...this.tiposLibro, nuevoItem];
-           this.libroForm.get('idTipoLibro')?.setValue(nuevoItem.id);
+          this.tiposLibro = [...this.tiposLibro, nuevoItem];
+          this.libroForm.get('idTipoLibro')?.setValue(nuevoItem.id);
         }
         this.cdr.detectChanges();
       },
-      error: (err: any) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar catálogo.' })
+      error: (err: any) => {
+        let tipoString;
+        switch (tipo) {
+          case 'autor': tipoString = 'el autor'; break;
+          case 'categoria': tipoString = 'la categoría'; break;
+          case 'editorial': tipoString = 'la editorial'; break;
+          case 'idioma': tipoString = 'el idioma'; break;
+          case 'tipoLibro': tipoString = 'la facultad'; break;
+          default: tipoString = 'el dato';
+        }
+        let errorDetail = 'No se pudo guardar ' + tipoString + '. Verifica los datos.';
+        let errorSummary = 'Error';
+
+        if (err.status === 400) {
+          if (err.error && typeof err.error === 'object') {
+            const errores = Object.values(err.error).join(', ');
+            errorDetail = errores;
+          }
+          errorSummary = 'Conflicto';
+        } else if (err.status === 409) {
+          errorSummary = 'Conflicto';
+          errorDetail = err.error.error;
+        }
+
+        this.messageService?.add({
+          severity: 'error',
+          summary: errorSummary,
+          detail: errorDetail
+        });
+      }
     });
   }
 
@@ -289,7 +318,7 @@ export default class LibroFormularioComponent implements OnInit {
     this.isSubmitting = true;
     const fv = this.libroForm.value;
 
-    const edicionSegura = (fv.edicion && fv.edicion.trim() !== '') ? fv.edicion : 'S/E'; 
+    const edicionSegura = (fv.edicion && fv.edicion.trim() !== '') ? fv.edicion : 'S/E';
     const pastaSegura = fv.pasta || '';
 
     const libroPayload = {
@@ -310,17 +339,17 @@ export default class LibroFormularioComponent implements OnInit {
 
     let operacionLibro$;
     if (this.isEditMode && this.libroUuid) {
-        operacionLibro$ = this.bookService.updateLibroConImagen(
-            this.libroUuid, 
-            libroPayload, 
-            archivoParaEnviar
-        );
-    } 
+      operacionLibro$ = this.bookService.updateLibroConImagen(
+        this.libroUuid,
+        libroPayload,
+        archivoParaEnviar
+      );
+    }
     else {
-        operacionLibro$ = this.bookService.createLibroConImagen(
-            libroPayload, 
-            archivoParaEnviar
-        );
+      operacionLibro$ = this.bookService.createLibroConImagen(
+        libroPayload,
+        archivoParaEnviar
+      );
     }
 
     operacionLibro$.pipe(
@@ -335,29 +364,25 @@ export default class LibroFormularioComponent implements OnInit {
         setTimeout(() => this.router.navigate(['/admin']), 1500);
       },
       error: (err) => {
-        console.error('Error al guardar:', err);
-        
-        const backendMessage = err.error?.message || (typeof err.error === 'string' ? err.error : null);
-        
-        if (backendMessage) {
-            this.messageService.add({ 
-                severity: 'error', 
-                summary: 'Atención', 
-                detail: backendMessage 
-            });
+        let errorDetail = 'No se pudo guardar el ejemplar. Verifica los datos.';
+        let errorSummary = 'Error';
+
+        if (err.status === 400) {
+          if (err.error && typeof err.error === 'object') {
+            const errores = Object.values(err.error).join(', ');
+            errorDetail = errores;
+          }
+          errorSummary = 'Conflicto';
         } else if (err.status === 409) {
-            this.messageService.add({ 
-                severity: 'error', 
-                summary: 'Conflicto', 
-                detail: 'Ya existe un libro registrado con este ISBN o Título.' 
-            });
-        } else {
-            this.messageService.add({ 
-                severity: 'error', 
-                summary: 'Error', 
-                detail: 'No se pudo guardar el libro. Verifica los datos.' 
-            });
+          errorSummary = 'Conflicto';
+          errorDetail = err.error.error;
         }
+
+        this.messageService?.add({
+          severity: 'error',
+          summary: errorSummary,
+          detail: errorDetail
+        });
       }
     });
   }
