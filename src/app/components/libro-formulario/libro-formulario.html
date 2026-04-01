@@ -23,7 +23,7 @@
           <div class="field">
             <label for="titulo">Título del Libro <label class="text red">*</label></label>
             <input class="form-comp" id="titulo" pInputText formControlName="titulo" placeholder="Ej: 'Demian'" />
-            <div class="error-msg text red" [@dropIn] *ngIf="(libroForm.get('titulo')?.dirty || isSubmitting) && libroForm.get('titulo')?.invalid">
+            <div class="error-msg text red text-sm" [@dropIn] *ngIf="(libroForm.get('titulo')?.dirty || isSubmitting) && libroForm.get('titulo')?.invalid">
               <small *ngIf="libroForm.get('titulo')?.errors?.['required']">El título es obligatorio.</small>
             </div>
           </div>
@@ -46,7 +46,7 @@
               ></p-multiSelect>
               <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('autor')" pTooltip="Agregar autor" tooltipPosition="top"></button>
             </div>
-            <div class="error-msg text red" [@dropIn] *ngIf="(libroForm.get('idAutores')?.dirty || isSubmitting) && libroForm.get('idAutores')?.invalid">
+            <div class="error-msg text red text-sm" [@dropIn] *ngIf="(libroForm.get('idAutores')?.dirty || isSubmitting) && libroForm.get('idAutores')?.invalid">
               <small *ngIf="libroForm.get('idAutores')?.errors?.['required']">Seleccionar al menos un autor es obligatorio.</small>
             </div>
           </div>
@@ -79,33 +79,29 @@
         </div>
 
         <div class="form-column">
-          <div>
+          <div class="mb-3">
             <div class="fields-row">
               <div>
                 <label for="isbn">ISBN</label>
-                <input id="isbn" class="form-comp full-w" pInputText maxlength="17" formControlName="isbnDisplay" placeholder="Ej: '978-607-453-611-9' o '0-123-45678-9'" />
+                <input id="isbn" class="form-comp full-w mb-0" pInputText maxlength="17" formControlName="isbnDisplay" placeholder="Ej: '978-607-453-611-9' o '0-123-45678-9'" />
               </div>
               <div>
                 <label for="anho">Año <label class="text red">*</label></label>
-                <input id="anho" class="form-comp full-w" pInputText formControlName="anho" placeholder="Ej: '2019'" maxlength="4" (input)="soloNumeros($event)" />
+                <input id="anho" class="form-comp full-w mb-0" pInputText formControlName="anho" placeholder="Ej: '2019'" maxlength="4" (input)="soloNumeros($event)" />
               </div>
               <div>
                 <label for="paginas">Páginas <label class="text red">*</label></label>
-                <input id="paginas" class="form-comp full-w" pInputText formControlName="paginas" placeholder="Ej: '183'" maxlength="4" (input)="soloNumeros($event)" />
+                <input id="paginas" class="form-comp full-w mb-0" pInputText formControlName="paginas" placeholder="Ej: '183'" maxlength="4" (input)="soloNumeros($event)" />
               </div>
             </div>
             
-            <div class="text red mt-2" [@dropIn]
-              *ngIf="((libroForm.get('isbn')?.dirty) && libroForm.get('isbn')?.invalid) ||
+            <div class="text red mt-2 text-sm" [@dropIn]
+              *ngIf="((libroForm.get('isbnDisplay')?.dirty) && libroForm.get('isbn')?.invalid) ||
                      ((libroForm.get('anho')?.dirty || isSubmitting) && libroForm.get('anho')?.invalid) ||
                      ((libroForm.get('paginas')?.dirty || isSubmitting) && libroForm.get('paginas')?.invalid)">
-              
               <small *ngIf="(libroForm.get('anho')?.errors?.['required']) || (libroForm.get('paginas')?.errors?.['required'])">
                 El año y las páginas son campos obligatorios. 
               </small>
-              
-              <br *ngIf="((libroForm.get('anho')?.invalid || libroForm.get('paginas')?.invalid) && libroForm.get('isbn')?.invalid)" />
-
               <small *ngIf="libroForm.get('isbn')?.errors?.['pattern']">
                 El ISBN debe tener exactamente 10 o 13 dígitos.
               </small>
@@ -178,7 +174,8 @@
           (click)="onSubmit()" 
           [loading]="isSubmitting" 
           icon="pi pi-check" 
-          styleClass="btn-primary">
+          styleClass="btn-primary"
+          [disabled]="libroForm.invalid">
         </p-button>
       </div>
     </form>
@@ -191,19 +188,55 @@
         <div class="field">
           <label for="nombreAutor" class="m-0">Nombre(s) <label class="text red">*</label></label>
           <input id="nombreAutor" class="form-comp" pInputText formControlName="nombre" />
+          <div
+            class="error-msg text red text-xs flex flex-column"
+            [@dropIn]
+            *ngIf="(catalogoForm.get('nombre')?.dirty || isSubmitting) && catalogoForm.get('nombre')?.invalid"
+          >
+            <small *ngIf="catalogoForm.get('nombre')?.errors?.['required']"
+              >El nombre es obligatorio.</small
+            >
+          </div>
         </div>
         <div class="field">
           <label for="apPaterno" class="m-0">Apellido Paterno</label>
           <input id="apPaterno" class="form-comp" pInputText formControlName="apPaterno" />
+          <div
+            class="error-msg text red text-xs flex flex-column"
+            [@dropIn]
+            *ngIf="(catalogoForm.get('apPaterno')?.dirty || isSubmitting) && catalogoForm.get('apPaterno')?.invalid"
+          >
+            <small *ngIf="catalogoForm.get('apPaterno')?.errors?.['minlength']"
+              >El apellido paterno debe tener al menos 2 caracteres.</small
+            >
+          </div>
         </div>
         <div class="field">
           <label for="apMaterno" class="m-0">Apellido Materno</label>
           <input id="apMaterno" class="form-comp" pInputText formControlName="apMaterno" />
+          <div
+            class="error-msg text red text-xs flex flex-column"
+            [@dropIn]
+            *ngIf="(catalogoForm.get('apMaterno')?.dirty || isSubmitting) && catalogoForm.get('apMaterno')?.invalid"
+          >
+            <small *ngIf="catalogoForm.get('apMaterno')?.errors?.['minlength']"
+              >El apellido materno debe tener al menos 2 caracteres.</small
+            >
+          </div>
         </div>
       </div>
       <div *ngIf="catalogoSiendoAgregado !== 'autor'" class="field">
         <label for="nombreCatalogo" class="m-0">Nombre <label class="text red">*</label></label>
         <input id="nombreCatalogo" class="form-comp" pInputText formControlName="nombre" autofocus />
+          <div
+            class="error-msg text red text-xs flex flex-column"
+            [@dropIn]
+            *ngIf="(catalogoForm.get('nombre')?.dirty || isSubmitting) && catalogoForm.get('nombre')?.invalid"
+          >
+            <small *ngIf="catalogoForm.get('nombre')?.errors?.['required']"
+              >El nombre es obligatorio.</small
+            >
+          </div>
       </div>
       <div class="form-footer">
         <button type="button" pButton label="Cancelar" class="btn-info text" (click)="displayCatalogoDialog = false"></button>

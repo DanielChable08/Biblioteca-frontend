@@ -100,8 +100,8 @@ export default class LibroFormularioComponent implements OnInit {
 
     this.catalogoForm = this.fb.group({
       nombre: ['', Validators.required],
-      apPaterno: [''],
-      apMaterno: ['']
+      apPaterno: ['', Validators.minLength(2)],
+      apMaterno: ['', Validators.minLength(2)]
     });
 
     this.libroForm.get('isbnDisplay')!.valueChanges.subscribe((val: string) => {
@@ -237,8 +237,8 @@ export default class LibroFormularioComponent implements OnInit {
     if (tipo === 'autor') {
       request$ = this.catalogService.createAutor({
         nombre: payload.nombre,
-        apPaterno: payload.apPaterno,
-        apMaterno: payload.apMaterno
+        apPaterno: payload.apPaterno?.trim() || null,
+        apMaterno: payload.apMaterno?.trim() || null
       });
     } else {
       const serviceMap: any = {
@@ -290,7 +290,7 @@ export default class LibroFormularioComponent implements OnInit {
 
         if (err.status === 400) {
           if (err.error && typeof err.error === 'object') {
-            const errores = Object.values(err.error).join(', ');
+            const errores = Object.values(err.error).join(' ');
             errorDetail = errores;
           }
           errorSummary = 'Conflicto';
@@ -369,7 +369,7 @@ export default class LibroFormularioComponent implements OnInit {
 
         if (err.status === 400) {
           if (err.error && typeof err.error === 'object') {
-            const errores = Object.values(err.error).join(', ');
+            const errores = Object.values(err.error).join(' ');
             errorDetail = errores;
           }
           errorSummary = 'Conflicto';

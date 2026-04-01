@@ -107,15 +107,6 @@ label {
   color: var(--wine);
 }
 
-.text.red {
-    color: #e24c4c;
-}
-
-.error-msg {
-    margin-top: 4px;
-    font-size: 0.85rem;
-}
-
 .fields-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
