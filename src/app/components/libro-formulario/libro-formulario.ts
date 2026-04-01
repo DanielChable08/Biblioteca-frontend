@@ -318,7 +318,7 @@ export default class LibroFormularioComponent implements OnInit {
     this.isSubmitting = true;
     const fv = this.libroForm.value;
 
-    const edicionSegura = (fv.edicion && fv.edicion.trim() !== '') ? fv.edicion : 'S/E';
+    const edicionSegura = (fv.edicion && fv.edicion.trim() !== '') ? fv.edicion : 'Sin edición';
     const pastaSegura = fv.pasta || '';
 
     const libroPayload = {
