@@ -1,18 +1,19 @@
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DialogModule } from 'primeng/dialog';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { ToastModule } from 'primeng/toast';
 
 import { CatalogService } from '../../services/catalog.service';
 import { Idioma } from '../../models/biblioteca';
@@ -33,7 +34,18 @@ import { Idioma } from '../../models/biblioteca';
     InputTextModule
   ],
   templateUrl: './idiomas.html',
-  styleUrls: ['./idiomas.css']
+  styleUrls: ['./idiomas.css'],
+  animations: [
+    trigger('dropIn', [
+      transition(':enter', [
+        style({ transform: 'translateY(-10px)', opacity: 0 }),
+        animate('250ms ease-out', style({ transform: 'translateY(0)', opacity: 1 })),
+      ]),
+      transition(':leave', [
+        animate('150ms ease-in', style({ transform: 'translateY(-10px)', opacity: 0 })),
+      ]),
+    ]),
+  ],
 })
 export default class IdiomasComponent implements OnInit {
   private catalogService = inject(CatalogService);
@@ -129,12 +141,25 @@ export default class IdiomasComponent implements OnInit {
         this.loadData();
       },
       error: (err: any) => {
-        this.messageService.add({
+        let errorDetail = `No se pudo ${this.isEditMode ? 'actualizar' : 'crear'} el idioma.`;
+        let errorSummary = 'Error';
+
+        if (err.status === 400) {
+          if (err.error && typeof err.error === 'object') {
+            const errores = Object.values(err.error).join(' ');
+            errorDetail = errores;
+          }
+          errorSummary = 'Conflicto';
+        } else if (err.status === 409) {
+          errorSummary = 'Conflicto';
+          errorDetail = err.error.error;
+        }
+
+        this.messageService?.add({
           severity: 'error',
-          summary: 'Error',
-          detail: `No se pudo ${this.isEditMode ? 'actualizar' : 'crear'} el idioma.`
+          summary: errorSummary,
+          detail: errorDetail
         });
-        console.error(err);
       }
     });
   }
@@ -166,12 +191,25 @@ export default class IdiomasComponent implements OnInit {
             this.idiomas = this.idiomas.filter(i => i.id !== idioma.id);
           },
           error: (err: any) => {
-            this.messageService.add({
+            let errorDetail = 'No se pudo eliminar el idioma.';
+            let errorSummary = 'Error';
+
+            if (err.status === 400) {
+              if (err.error && typeof err.error === 'object') {
+                const errores = Object.values(err.error).join(' ');
+                errorDetail = errores;
+              }
+              errorSummary = 'Conflicto';
+            } else if (err.status === 409) {
+              errorSummary = 'Conflicto';
+              errorDetail = err.error.error;
+            }
+
+            this.messageService?.add({
               severity: 'error',
-              summary: 'Error',
-              detail: 'No se pudo eliminar el idioma.'
+              summary: errorSummary,
+              detail: errorDetail
             });
-            console.error(err);
           }
         });
       }
