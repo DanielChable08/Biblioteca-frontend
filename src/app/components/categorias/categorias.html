@@ -1,4 +1,3 @@
-<p-toast></p-toast>
 <p-confirmDialog>
   <ng-template pTemplate="message" let-message>
     <div class="flex flex-column align-items-center text-center gap-3">
@@ -18,8 +17,8 @@
           class="p-button-text back-button"
           (click)="regresar()"
           pTooltip="Regresar al Panel"
-          tooltipPosition="bottom">
-        </button>
+          tooltipPosition="bottom"
+        ></button>
         <h2><i class="pi pi-tags user-icon"></i> Gestión de Categorías</h2>
       </div>
 
@@ -28,7 +27,8 @@
           label="Agregar Categoría"
           icon="pi pi-plus"
           styleClass="p-button-wine"
-          (click)="abrirModalAgregar()">
+          (click)="abrirModalAgregar()"
+        >
         </p-button>
       </div>
     </div>
@@ -36,37 +36,39 @@
 </div>
 
 <div class="admin-page-container">
-  <p-table 
-    #dtCategorias 
-    [value]="categorias" 
-    [loading]="loading" 
-    [paginator]="true" 
-    [rows]="10" 
+  <p-table
+    #dtCategorias
+    [value]="categorias"
+    [loading]="loading"
+    [paginator]="true"
+    [rows]="10"
     [rowsPerPageOptions]="[10, 25, 50]"
-    [globalFilterFields]="['nombre']" 
+    [globalFilterFields]="['nombre']"
     styleClass="p-datatable-striped p-datatable-gridlines custom-table"
-    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} categorías" 
-    [showCurrentPageReport]="true">
-
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} categorías"
+    [showCurrentPageReport]="true"
+  >
     <ng-template pTemplate="caption">
       <div class="table-header">
         <span>Lista de Categorías</span>
         <div class="filter-container">
           <span class="p-input-icon-left">
             <i class="pi pi-search"></i>
-            <input 
-              pInputText 
-              type="text" 
-              [(ngModel)]="globalFilter" 
-              (input)="applyFilterGlobal(dtCategorias, $event)" 
-              placeholder="Buscar..." 
-              class="table-search-input" />
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="globalFilter"
+              (input)="applyFilterGlobal(dtCategorias, $event)"
+              placeholder="Buscar..."
+              class="table-search-input"
+            />
           </span>
-          <p-button 
-            icon="pi pi-filter-slash" 
-            styleClass="p-button-outlined clear-filter-button" 
-            (click)="clearFilter(dtCategorias)" 
-            pTooltip="Limpiar filtro">
+          <p-button
+            icon="pi pi-filter-slash"
+            styleClass="p-button-outlined clear-filter-button"
+            (click)="clearFilter(dtCategorias)"
+            pTooltip="Limpiar filtro"
+          >
           </p-button>
         </div>
       </div>
@@ -74,8 +76,10 @@
 
     <ng-template pTemplate="header">
       <tr>
-        <th pSortableColumn="nombre">Nombre de la Categoría <p-sortIcon field="nombre"></p-sortIcon></th>
-        <th style="width: 10rem;">Acciones</th>
+        <th pSortableColumn="nombre">
+          Nombre de la Categoría <p-sortIcon field="nombre"></p-sortIcon>
+        </th>
+        <th style="width: 10rem">Acciones</th>
       </tr>
     </ng-template>
 
@@ -84,20 +88,20 @@
         <td>{{ categoria.nombre }}</td>
         <td>
           <div class="table-actions">
-            <button 
-              pButton 
-              icon="pi pi-pencil" 
-              class="action-btn-compact edit-btn" 
-              pTooltip="Editar" 
-              (click)="abrirModalEditar(categoria)">
-            </button>
-            <button 
-              pButton 
-              icon="pi pi-trash" 
-              class="action-btn-compact delete-btn" 
-              pTooltip="Eliminar" 
-              (click)="eliminar(categoria)">
-            </button>
+            <button
+              pButton
+              icon="pi pi-pencil"
+              class="action-btn-compact edit-btn"
+              pTooltip="Editar"
+              (click)="abrirModalEditar(categoria)"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-trash"
+              class="action-btn-compact delete-btn"
+              pTooltip="Eliminar"
+              (click)="eliminar(categoria)"
+            ></button>
           </div>
         </td>
       </tr>
@@ -125,34 +129,44 @@
   [style]="{ width: '500px' }"
   [draggable]="false"
   [dismissableMask]="false"
-  [focusOnShow]="false">
-  
+  [focusOnShow]="false"
+>
   <form [formGroup]="categoriaForm" (ngSubmit)="onSubmit()" class="form-container">
     <div class="field">
       <label for="nombre">
-        <i class="pi pi-tag"></i> Nombre de la Categoría <span class="text red">*</span>
+        <i class="pi pi-tag"></i> <span>Nombre de la Categoría<span class="text red">*</span></span>
       </label>
-      <input 
-        id="nombre" 
-        pInputText 
-        formControlName="nombre" 
-        placeholder="Ej: Teología, Historia, Filosofía" 
+      <input
+        id="nombre"
+        pInputText
+        formControlName="nombre"
+        placeholder="Ej: Gredos, Grandes Filósofos"
+        class="form-comp"
+        maxlength="75"
       />
-      <small class="p-error" *ngIf="categoriaForm.get('nombre')?.invalid && categoriaForm.get('nombre')?.touched">
-        El nombre es requerido
-      </small>
+      <div
+        class="error-msg text red text-sm flex flex-column"
+        [@dropIn]
+        *ngIf="(categoriaForm.get('nombre')?.dirty || isSubmitting) && categoriaForm.get('nombre')?.invalid"
+      >
+        <small *ngIf="categoriaForm.get('nombre')?.errors?.['required']"
+          >El nombre es obligatorio.</small
+        >
+        <small *ngIf="categoriaForm.get('nombre')?.errors?.['minlength']"
+          >El nombre debe tener al menos 4 caracteres.</small
+        >
+      </div>
     </div>
     <div class="form-footer">
-      <button type="button" pButton class="btn-info text" (click)="cerrarModal()">
-        Cancelar
-      </button>
-      <button 
-        type="submit" 
-        pButton 
-        icon="pi pi-check" 
-        class="btn-primary" 
-        [loading]="isSubmitting" 
-        [disabled]="categoriaForm.invalid">
+      <button type="button" pButton class="btn-info text" (click)="cerrarModal()">Cancelar</button>
+      <button
+        type="submit"
+        pButton
+        icon="pi pi-check"
+        class="btn-primary"
+        [loading]="isSubmitting"
+        [disabled]="categoriaForm.invalid"
+      >
         Guardar
       </button>
     </div>
