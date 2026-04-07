@@ -1,4 +1,3 @@
-<p-toast></p-toast>
 <p-confirmDialog>
   <ng-template pTemplate="message" let-message>
     <div class="flex flex-column align-items-center text-center gap-3">
@@ -45,7 +44,7 @@
     [rowsPerPageOptions]="[10, 25, 50]"
     [globalFilterFields]="['nombre']" 
     styleClass="p-datatable-striped p-datatable-gridlines custom-table"
-    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} tipos" 
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} facultades" 
     [showCurrentPageReport]="true">
 
     <ng-template pTemplate="caption">
@@ -105,13 +104,13 @@
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="2" class="text-center empty-message">No se encontraron tipos de libros.</td>
+        <td colspan="2" class="text-center empty-message">No se encontraron facultades.</td>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="loadingbody">
       <tr>
-        <td colspan="2" class="text-center loading-message">Cargando tipos...</td>
+        <td colspan="2" class="text-center loading-message">Cargando facultades...</td>
       </tr>
     </ng-template>
   </p-table>
@@ -134,12 +133,23 @@
       <input 
         id="nombre" 
         pInputText 
+        maxlength="75"
+        class="form-comp"
         formControlName="nombre" 
-        placeholder="Ej: Físico, Digital, Audiolibro" 
+        placeholder="Ej: Filosofía, Teología" 
       />
-      <small class="p-error" *ngIf="tipoForm.get('nombre')?.invalid && tipoForm.get('nombre')?.touched">
-        El nombre es requerido
-      </small>
+      <div
+        class="error-msg text red text-sm flex flex-column"
+        [@dropIn]
+        *ngIf="(tipoForm.get('nombre')?.dirty || isSubmitting) && tipoForm.get('nombre')?.invalid"
+      >
+        <small *ngIf="tipoForm.get('nombre')?.errors?.['required']"
+          >El nombre es obligatorio.</small
+        >
+        <small *ngIf="tipoForm.get('nombre')?.errors?.['minlength']"
+          >El nombre debe tener al menos 3 caracteres.</small
+        >
+      </div>
     </div>
     <div class="form-footer">
       <button type="button" pButton class="btn-info text" (click)="cerrarModal()">
