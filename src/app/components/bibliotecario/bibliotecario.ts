@@ -17,6 +17,7 @@ import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { MenuModule } from 'primeng/menu';
 import { PaginatorModule } from 'primeng/paginator';
+import { TableModule } from 'primeng/table';
 import { Router, NavigationEnd } from '@angular/router';
 import { finalize, forkJoin, map, switchMap, of, Subscription, filter, catchError } from 'rxjs';
 import { SecureImagePipe } from '../../pipes/secure-image.pipe';
@@ -42,7 +43,8 @@ type CategoriaKey = 'Todas' | string;
     CommonModule, FormsModule, CardModule, ButtonModule, InputTextModule,
     TooltipModule, PopoverModule, ToastModule, ConfirmPopupModule,
     ConfirmDialogModule, DynamicDialogModule, DividerModule, ChipModule,
-    DialogModule, SelectModule, MenuModule, SecureImagePipe, PaginatorModule
+    DialogModule, SelectModule, MenuModule, SecureImagePipe, PaginatorModule,
+    TableModule
   ],
   providers: [DialogService, ConfirmationService, MessageService],
   templateUrl: './bibliotecario.html',
@@ -62,7 +64,9 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   libros: Libro[] = [];
   allLibros: Libro[] = [];
   categorias: Catalogo[] = [];
+  librosSeleccionados: Libro[] = [];
 
+  vistaActual: 'cards' | 'tabla' = 'cards';
   categoriaSeleccionada: CategoriaKey = 'Todas';
   terminoBusqueda = '';
   loading = true;
@@ -135,7 +139,6 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     ];
 
     const logoutItem: MenuItem = { label: 'Cerrar Sesión', icon: 'pi pi-sign-out', styleClass: 'logout-menu-item', command: () => this.logout() };
-
     this.catalogMenuItems = [...items, logoutItem];
   }
 
@@ -160,16 +163,10 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       estados: this.catalogService.getEstadosEjemplares().pipe(catchError(() => of([])))
     }).pipe(
       switchMap(({ libros, categorias, ejemplares, estados }) => {
-        if (libros.length === 0) {
-          return of({ libros: [], categorias });
-        }
+        if (libros.length === 0) return of({ libros: [], categorias });
 
         const autorRequests = libros.map(libro =>
-          this.bookService.getAutoresForLibro(libro.uuid).pipe(
-            catchError(() => {
-                return of([]); 
-            })
-          )
+          this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([])))
         );
 
         return forkJoin(autorRequests).pipe(
@@ -190,10 +187,6 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
                 });
 
               const estadoDesdeBack = (libro as any).activo;
-              
-              if (estadoDesdeBack === undefined) {
-                 console.warn(`Alerta Frontend: El libro "${libro.titulo}" no trae el campo 'activo' del backend.`);
-              }
 
               return {
                 ...libro,
@@ -205,7 +198,6 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
               };
             });
 
-            // 🔥 MAGIA AQUÍ: Filtramos si el usuario NO es admin
             let librosPermitidos = librosCompletos;
             if (!this.isAdmin) {
                 librosPermitidos = librosCompletos.filter(libro => libro.activo === true);
@@ -224,14 +216,10 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
         this.categorias = categorias;
         this.actualizarContadores();
         this.filtrarLibros();
+        this.librosSeleccionados = [];
       },
       error: (err: any) => {
-        console.error('Error general:', err);
-        this.messageService.add({ 
-          severity: 'error', 
-          summary: 'Error', 
-          detail: 'No se pudieron cargar los datos.' 
-        });
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos.' });
       }
     });
   }
@@ -253,19 +241,22 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     return { estado: 'No disponible', cantidad: 0, clase: 'unavailable', icono: 'pi-times-circle' };
   }
 
-  getDetalleEstados(libro: Libro): { estado: string; cantidad: number; clase: string; icono: string }[] {
-    const detalles = [];
+  getTooltipEstados(libro: Libro): string {
     const disponibles = this.getEjemplaresDisponibles(libro);
     const prestados = this.getEjemplaresPrestados(libro);
     const reparacion = this.getEjemplaresReparacion(libro);
-
-    if (disponibles > 0) detalles.push({ estado: 'Disponibles', cantidad: disponibles, clase: 'available', icono: 'pi-check-circle' });
-    if (prestados > 0) detalles.push({ estado: 'Prestados', cantidad: prestados, clase: 'borrowed', icono: 'pi-arrow-right-arrow-left' });
-    if (reparacion > 0) detalles.push({ estado: 'En reparación', cantidad: reparacion, clase: 'repair', icono: 'pi-wrench' });
-    return detalles;
+    const total = libro.ejemplares?.length || 0;
+    if (total === 0) return 'Sin ejemplares';
+    
+    let html = '<div style="text-align: left; font-size: 13px;">';
+    html += '<strong style="display: block; margin-bottom: 8px; color: #D4AF37;">Desglose de ejemplares</strong>';
+    if (disponibles > 0) html += `<div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;"><i class="pi pi-check-circle" style="color: #27ae60; font-size: 14px;"></i><span style="flex: 1;">Disponibles:</span><strong>${disponibles}</strong></div>`;
+    if (prestados > 0) html += `<div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;"><i class="pi pi-arrow-right-arrow-left" style="color: #3498db; font-size: 14px;"></i><span style="flex: 1;">Prestados:</span><strong>${prestados}</strong></div>`;
+    if (reparacion > 0) html += `<div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;"><i class="pi pi-wrench" style="color: #e74c3c; font-size: 14px;"></i><span style="flex: 1;">En reparación:</span><strong>${reparacion}</strong></div>`;
+    html += '</div>';
+    return html;
   }
 
-  tieneDetallesEstados(libro: Libro): boolean { return this.getDetalleEstados(libro).length > 1; }
   getTotalEjemplaresDisponibles(): number { return this.allLibros.reduce((total, libro) => total + this.getEjemplaresDisponibles(libro), 0); }
   getTotalEjemplaresPrestados(): number { return this.allLibros.reduce((total, libro) => total + this.getEjemplaresPrestados(libro), 0); }
   getTotalEjemplaresReparacion(): number { return this.allLibros.reduce((total, libro) => total + this.getEjemplaresReparacion(libro), 0); }
@@ -296,6 +287,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       
       this.libros = resultado;
       this.first = 0; 
+      this.librosSeleccionados = [];
     }
 
   buscar(): void { this.filtrarLibros(); }
@@ -313,35 +305,14 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   formatearISBN(isbn: string | undefined): string {
     if (!isbn) return 'Sin ISBN';
     const limpio = isbn.replace(/[^0-9X]/gi, '');
-    if (limpio.length === 10) {
-      return `${limpio.substring(0, 1)}-${limpio.substring(1, 4)}-${limpio.substring(4, 9)}-${limpio.substring(9, 10)}`;
-    }
-    if (limpio.length === 13) {
-      return `${limpio.substring(0, 3)}-${limpio.substring(3, 4)}-${limpio.substring(4, 8)}-${limpio.substring(8, 12)}-${limpio.substring(12, 13)}`;
-    }
+    if (limpio.length === 10) return `${limpio.substring(0, 1)}-${limpio.substring(1, 4)}-${limpio.substring(4, 9)}-${limpio.substring(9, 10)}`;
+    if (limpio.length === 13) return `${limpio.substring(0, 3)}-${limpio.substring(3, 4)}-${limpio.substring(4, 8)}-${limpio.substring(8, 12)}-${limpio.substring(12, 13)}`;
     return isbn;
   }
 
   getAutoresAsString(autores?: Autor[]): string {
     if (!autores || autores.length === 0) return 'Autor no asignado';
     return autores.map(a => `${a.nombre} ${a.apPaterno || ''}`).join(', ');
-  }
-
-  getTooltipEstados(libro: Libro): string {
-    const disponibles = this.getEjemplaresDisponibles(libro);
-    const prestados = this.getEjemplaresPrestados(libro);
-    const reparacion = this.getEjemplaresReparacion(libro);
-    const total = libro.ejemplares?.length || 0;
-    if (total === 0) return 'Sin ejemplares';
-    const noDisponibles = total - disponibles - prestados - reparacion;
-    let html = '<div style="text-align: left; font-size: 13px;">';
-    html += '<strong style="display: block; margin-bottom: 8px; color: #D4AF37;">Desglose de ejemplares</strong>';
-    if (disponibles > 0) html += `<div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;"><i class="pi pi-check-circle" style="color: #27ae60; font-size: 14px;"></i><span style="flex: 1;">Disponibles:</span><strong>${disponibles}</strong></div>`;
-    if (prestados > 0) html += `<div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;"><i class="pi pi-arrow-right-arrow-left" style="color: #3498db; font-size: 14px;"></i><span style="flex: 1;">Prestados:</span><strong>${prestados}</strong></div>`;
-    if (noDisponibles > 0) html += `<div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;"><i class="pi pi-times-circle" style="color: #e67e22; font-size: 14px;"></i><span style="flex: 1;">No disponibles:</span><strong>${noDisponibles}</strong></div>`;
-    if (reparacion > 0) html += `<div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;"><i class="pi pi-wrench" style="color: #e74c3c; font-size: 14px;"></i><span style="flex: 1;">En reparación:</span><strong>${reparacion}</strong></div>`;
-    html += '</div>';
-    return html;
   }
 
   private actualizarContadores(): void {
@@ -360,7 +331,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       width: '75%',
       contentStyle: { "max-height": "90vh", "overflow": "auto" },
       baseZIndex: 10000,
-      data: { uuid: libro.uuid, imagenUrl: libro.imagen,estaActivo: libro.activo},
+      data: { uuid: libro.uuid, imagenUrl: libro.imagen, estaActivo: libro.activo},
       modal: true,
       closable: true,
     });
@@ -397,9 +368,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
         ).subscribe({
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Libro desactivado correctamente.' });
-            const libroEnLista = this.allLibros.find(l => l.id === libro.id);
-            if (libroEnLista) (libroEnLista as any).activo = false;
-            this.filtrarLibros();
+            this.loadInitialData();
           },
           error: (err: any) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo desactivar el libro.' })
         });
@@ -424,11 +393,49 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
         ).subscribe({
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Libro reactivado correctamente.' });
-            const libroEnLista = this.allLibros.find(l => l.id === libro.id);
-            if (libroEnLista) (libroEnLista as any).activo = true;
-            this.filtrarLibros();
+            this.loadInitialData();
           },
           error: (err: any) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo reactivar el libro.' })
+        });
+      }
+    });
+  }
+
+  procesarMultiples(activar: boolean): void {
+    if (!this.librosSeleccionados || this.librosSeleccionados.length === 0) return;
+    
+    const mensaje = activar 
+        ? `¿Desea reactivar los ${this.librosSeleccionados.length} libros seleccionados?` 
+        : `¿Desea desactivar los ${this.librosSeleccionados.length} libros seleccionados?`;
+    const icon = activar ? 'pi pi-refresh text-green-500' : 'pi pi-exclamation-triangle text-red-500';
+    const acceptClass = activar ? 'p-button-success' : 'p-button-danger';
+
+    this.confirmationService.confirm({
+      key: 'deleteDialog',
+      message: mensaje,
+      header: 'Confirmar acción múltiple',
+      icon: icon,
+      acceptLabel: 'Sí, continuar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: acceptClass,
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.loading = true;
+        const peticiones = this.librosSeleccionados.map(libro => 
+          activar ? this.bookService.reactivarLibro(libro.uuid) : this.bookService.deleteLibro(libro.uuid)
+        );
+
+        forkJoin(peticiones).pipe(
+          finalize(() => {
+            this.loading = false;
+            this.librosSeleccionados = [];
+          })
+        ).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Libros procesados correctamente.' });
+            this.loadInitialData();
+          },
+          error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Ocurrió un error al procesar los libros.' })
         });
       }
     });
