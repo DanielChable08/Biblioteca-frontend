@@ -483,6 +483,16 @@
   font-weight: 600;
 }
 
+.book-areas-compact {
+  background: var(--beige);
+  color: var(--wine);
+  padding: 0.2rem 0.6rem;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right:5px;
+}
+
 .book-details-compact {
   margin-top: 0.8rem;
   display: flex;

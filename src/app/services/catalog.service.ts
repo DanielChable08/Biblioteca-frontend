@@ -5,6 +5,7 @@ import { Rol } from '../models/usuario';
 import { Observable } from 'rxjs';
 import {
   Autor,
+  Areas,
   Catalogo,
   TipoPersona,
   EstadoEjemplar,
@@ -218,4 +219,28 @@ export class CatalogService {
   deleteEstadoPrestamo(uuid: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/estados-prestamos/${uuid}`);
   }
+
+
+  //Areas
+
+  getAreas(): Observable<Areas[]> {
+    return this.http.get<Areas[]>(`${this.apiUrl}/areas`);
+  }
+
+  getAreasByUuid(uuid: string): Observable<Areas> {
+    return this.http.get<Areas>(`${this.apiUrl}/areas/${uuid}`);
+  }
+
+  createAreas(areasData: { nombre: string;}): Observable<Areas> {
+    return this.http.post<Areas>(`${this.apiUrl}/areas`, areasData);
+  }
+
+  updateAreas(uuid: string, areasData: { nombre: string;}): Observable<Areas> {
+    return this.http.put<Areas>(`${this.apiUrl}/areas/${uuid}`, areasData);
+  }
+
+  deleteAreas(uuid: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/areas/${uuid}`);
+  }
+
 }

@@ -1,6 +1,6 @@
 <p-toast></p-toast>
 
-<div class="full-container">
+<div class="full-container" (click)="dropdownOpen = false; areasDropdownOpen = false">
   <div class="main-header">
     <div class="header-brand">
       <img src="assets/img/Logo-Dorado.png" class="brand-logo" alt="logo" />
@@ -30,19 +30,43 @@
   <p-menu #menu [model]="catalogMenuItems" [popup]="true" [appendTo]="'body'"></p-menu>
 
   <div class="search-and-stats-wrapper">
-    <div class="search-section">
-      <div class="search-container">
+    <div class="search-section" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div class="search-container" style="flex: 1; min-width: 250px;">
         <i class="pi pi-search search-icon"></i>
         <input
           type="text"
           pInputText
-          placeholder="Buscar libros, autores, temas..."
+          placeholder="Buscar libros, autores, áreas, temas..."
           class="searchbar full-w"
           [(ngModel)]="terminoBusqueda"
           (input)="buscar()" 
         />
       </div>
-      <div class="custom-filter-dropdown-container" (click)="toggleDropdown()">
+
+      <div class="custom-filter-dropdown-container" (click)="toggleAreasDropdown($event)">
+        <div class="custom-filter-dropdown-trigger">
+          <i class="pi pi-th-large"></i>
+          <span>{{ getAreasDropdownText() }}</span>
+          <i class="pi pi-chevron-down" [class.rotated]="areasDropdownOpen"></i>
+        </div>
+        <div class="custom-filter-dropdown-panel" *ngIf="areasDropdownOpen" (click)="$event.stopPropagation()">
+          <div class="filter-dropdown-option" (click)="clearAreas($event)">
+            <i class="pi pi-filter-slash"></i>
+            <span>Limpiar áreas</span>
+          </div>
+          <div
+            *ngFor="let area of areasCat"
+            class="filter-dropdown-option"
+            [class.selected]="esAreaSeleccionada(area)"
+            (click)="toggleArea(area, $event)"
+          >
+            <i class="pi" [class.pi-check-square]="esAreaSeleccionada(area)" [class.pi-stop]="!esAreaSeleccionada(area)"></i>
+            <span>{{ area.nombre }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="custom-filter-dropdown-container" (click)="toggleDropdown($event)">
         <div class="custom-filter-dropdown-trigger">
           <i class="pi pi-filter"></i>
           <span>{{ getDropdownText() }}</span>
@@ -210,9 +234,16 @@
 
         <div class="book-info-compact">
           <h4 class="book-title-compact">{{ libro.titulo }}</h4>
-          <p class="book-author-compact">
+          
+          <p class="book-author-compact" style="margin-bottom: 0.2rem;">
             {{ getAutoresAsString(libro.autores) }}
           </p>
+          
+          <span class="book-areas-compact">
+            <i class="pi pi-th-large" style="font-size: 0.7rem; margin-right: 3px;"></i> 
+            {{ getAreasAsString($any(libro).areas) }}
+          </span>
+              
           <span class="book-category-compact" [title]="libro.categoria?.nombre">
             {{ libro.categoria?.nombre | slice : 0 : 22 }}{{ (libro.categoria?.nombre?.length || 0) > 22 ? '...' : '' }}
           </span>
@@ -298,7 +329,7 @@
           </th>
           <th style="width: 80px">Portada</th>
           <th pSortableColumn="titulo">Título <p-sortIcon field="titulo"></p-sortIcon></th>
-          <th>Autor(es)</th>
+          <th>Autores y Áreas</th>
           <th pSortableColumn="categoria.nombre">Categoría <p-sortIcon field="categoria.nombre"></p-sortIcon></th>
           <th>Estado</th>
           <th style="width: 14rem; text-align: center;">Acciones</th>
@@ -320,8 +351,11 @@
             <small style="color: var(--gray);"><i class="pi pi-tag"></i> {{ formatearISBN(libro.isbn) }}</small>
           </td>
           <td>
-            <span class="p-column-title">Autor(es)</span>
-            {{ getAutoresAsString(libro.autores) }}
+            <span class="p-column-title">Autores y Áreas</span>
+            <div style="font-weight: 500;">{{ getAutoresAsString(libro.autores) }}</div>
+            <div style="font-size: 0.8rem; color: #7f8c8d; font-style: italic;">
+              <i class="pi pi-th-large" style="font-size: 0.7rem; margin-right: 3px;"></i>{{ getAreasAsString($any(libro).areas) }}
+            </div>
           </td>
           <td>
             <span class="p-column-title">Categoría</span>
