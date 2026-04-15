@@ -31,13 +31,12 @@ export default class LibroDetalleComponent implements OnInit {
   libro: Libro | null = null;
   loading = true;
   error = false;
-  mensajeError = ''; // Para mostrar mensaje específico
+  mensajeError = ''; 
   imagenUrl?: string;
 
   ngOnInit(): void {
     const uuid = this.dialogConfig.data.uuid;
     this.imagenUrl = this.dialogConfig.data.imagenUrl;
-    // Recibimos el estado que mandaste desde BibliotecarioComponent
     const estaActivo = this.dialogConfig.data.estaActivo; 
 
     if (uuid) {
@@ -46,8 +45,7 @@ export default class LibroDetalleComponent implements OnInit {
   }
 
   loadBookDetails(uuid: string, estaActivo: boolean): void {
-    // Lógica inteligente: Si sabemos que está desactivado, vamos directo a la ruta especial
-    // Si estaActivo es undefined (null), asumimos true por defecto.
+
     const usarRutaDesactivado = estaActivo === false;
 
     const peticionLibro$ = usarRutaDesactivado 
@@ -58,20 +56,17 @@ export default class LibroDetalleComponent implements OnInit {
       catchError((err: any) => {
         console.error("Fallo al obtener el libro base", err);
         
-        // Manejo específico del error de permisos (403)
         if (err.status === 403) {
             this.mensajeError = 'No tienes permisos (ELIMINAR_LIBRO) para ver detalles de libros desactivados.';
         } else if (err.status === 404 && !usarRutaDesactivado) {
-            // Si falló el normal con 404, intentamos el desactivado como último recurso
             return this.bookService.getLibroDesactivadoByUuid(uuid);
         }
         
         this.error = true;
         this.loading = false;
-        throw err; // Cortamos la cadena aquí si es error crítico
+        throw err; 
       }),
       switchMap((libroObtenido: Libro) => {
-        // Si llegamos aquí, ya tenemos el libro. Cargamos el resto.
         return forkJoin({
           libro: of(libroObtenido),
           autores: this.bookService.getAutoresForLibro(uuid).pipe(catchError(() => of([]))),
@@ -101,13 +96,11 @@ export default class LibroDetalleComponent implements OnInit {
         this.error = false;
       },
       error: (err: any) => {
-        // El error ya se manejó arriba, pero aseguramos el estado visual
         this.error = true;
       }
     });
   }
 
-  // ... (Tus métodos de formato ISBN, Autores, etc. se quedan igual)
   formatIsbn(isbn: string | undefined): string {
     if (!isbn || isbn.length !== 13) return isbn || 'N/A';
     return [isbn.slice(0, 3), isbn.slice(3, 6), isbn.slice(6, 9), isbn.slice(9, 12), isbn.slice(12, 13)].join('-');

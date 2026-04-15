@@ -226,3 +226,11 @@
 
   </div>
 </div>
+
+<div *ngIf="preparandoPDF" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #ffffff; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    <i class="pi pi-spin pi-spinner" style="font-size: 5rem; color: #722f37;"></i>
+    <h2 style="color: #722f37; margin-top: 2rem; font-family: sans-serif;">{{ progresoPDF }}</h2>
+    <p style="color: #6b5e5f; font-size: 1.1rem; text-align: center; max-width: 500px; margin-top: 1rem; font-family: sans-serif;">
+        Optimizando calidad de impresión. Por favor, no cierre esta ventana.
+    </p>
+</div>

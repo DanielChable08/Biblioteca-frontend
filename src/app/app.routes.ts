@@ -89,6 +89,11 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard]
   },
   { 
+    path: 'admin/areas', 
+    loadComponent: () => import('./components/areas/areas').then(m => m.default),
+    canActivate: [authGuard, roleGuard]
+  },
+  { 
     path: 'admin/editoriales', 
     loadComponent: () => import('./components/editoriales/editoriales').then(m => m.default),
     canActivate: [authGuard, roleGuard]
@@ -152,6 +157,11 @@ export const routes: Routes = [
     path: 'admin/pagos/lector/:idLector',
     loadComponent: () => import('./components/historial-pagos/historial-pagos').then(m => m.default),
     canActivate: [authGuard, adminGuard]
+  },
+  {
+    path: 'admin/personas/detalle/:uuid',
+    loadComponent: () => import('./components/persona-detalle/persona-detalle').then(m => m.default),
+    canActivate: [authGuard, roleGuard]
   },
   { 
     path: '**', 

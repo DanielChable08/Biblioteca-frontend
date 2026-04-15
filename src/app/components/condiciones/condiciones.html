@@ -1,4 +1,3 @@
-<p-toast></p-toast>
 <p-confirmDialog>
   <ng-template pTemplate="message" let-message>
     <div class="flex flex-column align-items-center text-center gap-3">
@@ -135,12 +134,20 @@
       <input 
         id="nombre" 
         pInputText 
+        maxlength="75"
+        class="form-comp"
         formControlName="nombre" 
         placeholder="Ej: Excelente, Bueno, Regular, Malo" 
       />
-      <small class="p-error" *ngIf="condicionForm.get('nombre')?.invalid && condicionForm.get('nombre')?.touched">
-        El nombre es requerido
-      </small>
+      <div
+        class="error-msg text red text-sm flex flex-column"
+        [@dropIn]
+        *ngIf="(condicionForm.get('nombre')?.dirty || isSubmitting) && condicionForm.get('nombre')?.invalid"
+      >
+        <small *ngIf="condicionForm.get('nombre')?.errors?.['required']"
+          >El nombre es obligatorio.</small
+        >
+      </div>
     </div>
 
     <div class="form-footer">

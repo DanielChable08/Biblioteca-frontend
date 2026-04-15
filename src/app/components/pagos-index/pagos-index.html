@@ -2,20 +2,21 @@
 
 <div class="header-container">
   <div class="form-header-container">
-    <div class="form-header">
+    <div class="form-header page-header-layout">
       <div class="header-left">
         <h2>
           <i class="pi pi-credit-card user-icon"></i>
           Gestión de Pagos
         </h2>
       </div>
-      <button
-        pButton
-        label="Registrar pago de multas"
-        icon="pi pi-money-bill"
-        class="p-button-wine"
-        (click)="irARegistrarPago()">
-      </button>
+      <div class="header-right">
+        <p-button 
+          label="Registrar pago de multas" 
+          icon="pi pi-money-bill" 
+          styleClass="p-button-wine w-full-mobile" 
+          (click)="irARegistrarPago()">
+        </p-button>
+      </div>
     </div>
   </div>
 </div>
@@ -32,7 +33,7 @@
     [rowsPerPageOptions]="[10, 25, 50]"
     [globalFilterFields]="['folio', 'lectorNombre', 'metodoPago']"
     responsiveLayout="scroll"
-    styleClass="custom-table"
+    styleClass="custom-table p-datatable-gridlines p-datatable-striped"
   >
     <ng-template pTemplate="caption">
       <div class="table-header">
@@ -61,12 +62,12 @@
 
     <ng-template pTemplate="header">
       <tr>
-        <th>Folio</th>
-        <th>Lector</th>
-        <th>Fecha</th>
-        <th>Total</th>
-        <th>Método</th>
-        <th>Estado</th>
+        <th pSortableColumn="folio">Folio <p-sortIcon field="folio"></p-sortIcon></th>
+        <th pSortableColumn="lectorNombre">Lector <p-sortIcon field="lectorNombre"></p-sortIcon></th>
+        <th pSortableColumn="fechaPago">Fecha <p-sortIcon field="fechaPago"></p-sortIcon></th>
+        <th pSortableColumn="total">Total <p-sortIcon field="total"></p-sortIcon></th>
+        <th pSortableColumn="metodoPago">Método <p-sortIcon field="metodoPago"></p-sortIcon></th>
+        <th pSortableColumn="anulado">Estado <p-sortIcon field="anulado"></p-sortIcon></th>
         <th>Acciones</th>
       </tr>
     </ng-template>
@@ -123,7 +124,7 @@
       <tr>
         <td colspan="7">
           <div class="empty-message">
-            <i class="pi pi-credit-card"></i>
+            <i class="pi pi-credit-card" style="font-size: 2rem; margin-bottom: 1rem; color: var(--gray);"></i>
             <p>No hay pagos registrados</p>
           </div>
         </td>

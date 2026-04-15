@@ -18,8 +18,8 @@
 
       <div class="book-info-container">
         <p-tag [value]="libro.categoria?.nombre || 'Sin Categoría'" severity="warning" styleClass="category-tag"></p-tag>
-        <h2 class="book-title">{{ libro.titulo }}</h2>
-        <p class="book-authors">{{ getAutoresAsString(libro.autores) }}</p>
+        <h2 class="book-title">{{ libro.titulo }} - <span class="book-adition">{{ libro.edicion || 'Sin edición' }}</span> </h2>
+        <p class="book-authors">{{ getAutoresAsString(libro.autores) }}</p> 
         
         <p-divider></p-divider>
 

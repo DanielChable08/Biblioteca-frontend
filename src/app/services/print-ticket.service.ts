@@ -6,7 +6,16 @@ import jsPDF from 'jspdf';
 })
 export class PrintTicketService {
 
-  imprimirTicketPrestamo(data: {
+  private loadImage(url: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => resolve(img);
+      img.onerror = (e) => reject(e);
+    });
+  }
+
+  async imprimirTicketPrestamo(data: {
     lector: string;
     bibliotecario: string;
     fechaPrestamo: Date;
@@ -16,18 +25,33 @@ export class PrintTicketService {
       titulo: string;
       autor: string;
     }>;
-  }): void {
+  }): Promise<void> {
+    const pdfWindow = window.open('', '_blank');
+    if (pdfWindow) {
+      pdfWindow.document.write('<html><body style="font-family:sans-serif;text-align:center;margin-top:20%;"><h3>Generando ticket, por favor espere...</h3></body></html>');
+    }
+
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: [80, 200]
     });
 
-    let y = 8;
+    let y = 4;
 
-    doc.setFontSize(14);
+    try {
+      const logo = await this.loadImage('assets/img/Logo-Seminario2.png');
+      doc.addImage(logo, 'PNG', 31, y, 18, 24);
+      
+      y += 33; 
+    } catch (e) {
+      console.warn('No se pudo cargar el logo del Seminario.', e);
+      y += 5;
+    }
+
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('BIBLIOTECA', 40, y, { align: 'center' });
+    doc.text('BIBLIOTECA JOSEPH RATZINGER', 40, y, { align: 'center' });
     y += 5;
     
     doc.setFontSize(11);
@@ -79,31 +103,33 @@ export class PrintTicketService {
     this.drawLine(doc, y, 'solid');
     y += 4;
 
-    doc.setFontSize(7);
+    doc.setFontSize(9);
     data.ejemplares.forEach((ejemplar, index) => {
       doc.setFont('helvetica', 'bold');
       doc.text(`${index + 1}.`, 5, y);
       doc.text(ejemplar.codigo, 10, y);
-      y += 3.5;
+      y += 4;
       
       doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9); 
       const tituloLineas = doc.splitTextToSize(ejemplar.titulo, 68);
       tituloLineas.forEach((linea: string) => {
         doc.text(linea, 8, y);
-        y += 3.2;
+        y += 4;
       });
 
       doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8.5);
       const autorLineas = doc.splitTextToSize(`Autor: ${ejemplar.autor}`, 68);
       autorLineas.forEach((linea: string) => {
         doc.text(linea, 8, y);
-        y += 3.2;
+        y += 4;
       });
 
       if (index < data.ejemplares.length - 1) {
         y += 1;
         this.drawLine(doc, y, 'dotted');
-        y += 3;
+        y += 4;
       } else {
         y += 2;
       }
@@ -112,42 +138,37 @@ export class PrintTicketService {
     this.drawLine(doc, y, 'double');
     y += 5;
 
-    doc.setFontSize(7);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.text('IMPORTANTE:', 40, y, { align: 'center' });
-    y += 3.5;
+    y += 4;
     
     doc.setFont('helvetica', 'italic');
     doc.text('Recuerda devolver los libros antes', 40, y, { align: 'center' });
-    y += 3.5;
+    y += 4;
     doc.text('de la fecha límite para evitar multas', 40, y, { align: 'center' });
     y += 5;
 
     this.drawLine(doc, y, 'solid');
     y += 4;
 
-    doc.setFontSize(6);
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.text(this.formatDateTime(new Date()), 40, y, { align: 'center' });
-    y += 3;
+    y += 4;
     doc.text('Gracias por usar nuestra biblioteca', 40, y, { align: 'center' });
 
     doc.autoPrint();
-    const blob = doc.output('blob');
-    const url = URL.createObjectURL(blob);
     
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none'; 
-    iframe.src = url;
-    document.body.appendChild(iframe);
-    
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-      URL.revokeObjectURL(url);
-    }, 5000);
+    const blobUrl = doc.output('bloburl');
+    if (pdfWindow) {
+      pdfWindow.location.href = blobUrl.toString();
+    } else {
+      window.open(blobUrl.toString(), '_blank');
+    }
   }
 
-  imprimirTicketPago(data: {
+  async imprimirTicketPago(data: {
     cajero: string;
     fechaPago: Date;
     multas: Array<{
@@ -159,18 +180,33 @@ export class PrintTicketService {
     totalPagar: number;
     montoRecibido: number;
     cambio: number;
-  }): void {
+  }): Promise<void> {
+    const pdfWindow = window.open('', '_blank');
+    if (pdfWindow) {
+      pdfWindow.document.write('<html><body style="font-family:sans-serif;text-align:center;margin-top:20%;"><h3>Generando ticket, por favor espere...</h3></body></html>');
+    }
+
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: [80, 200]
     });
 
-    let y = 8;
+    let y = 4;
+
+    try {
+      const logo = await this.loadImage('assets/img/Logo-Seminario2.png');
+      doc.addImage(logo, 'PNG', 31, y, 18, 24);
+      
+      y += 33;
+    } catch (e) {
+      console.warn('No se pudo cargar el logo del Seminario.', e);
+      y += 5;
+    }
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('BIBLIOTECA', 40, y, { align: 'center' });
+    doc.text('BIBLIOTECA JOSEPH RATZINGER', 40, y, { align: 'center' });
     y += 5;
     
     doc.setFontSize(11);
@@ -207,27 +243,28 @@ export class PrintTicketService {
     this.drawLine(doc, y, 'solid');
     y += 4;
 
-    doc.setFontSize(7);
+    doc.setFontSize(8.5);
     data.multas.forEach((multa, index) => {
       doc.setFont('helvetica', 'bold');
-      doc.text(`${index + 1}. ${multa.motivo}`, 5, y);
-      y += 3.5;
+      const motivoLines = doc.splitTextToSize(`${index + 1}. ${multa.motivo}`, 50);
+      doc.text(motivoLines, 5, y);
+      
+      doc.setFontSize(9);
+      doc.text(`$${multa.monto.toFixed(2)}`, 75, y, { align: 'right' });
+      doc.setFontSize(8.5);
+
+      y += 4 * motivoLines.length;
 
       if (multa.diasRetraso && multa.montoPorDia) {
         doc.setFont('helvetica', 'normal');
         doc.text(`   ${multa.diasRetraso} días × $${multa.montoPorDia.toFixed(2)}/día`, 5, y);
-        y += 3.5;
+        y += 4;
       }
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.text(`$${multa.monto.toFixed(2)}`, 70, y - 3.5, { align: 'right' });
-      doc.setFontSize(7);
 
       if (index < data.multas.length - 1) {
         y += 1;
         this.drawLine(doc, y, 'dotted');
-        y += 3;
+        y += 4;
       } else {
         y += 2;
       }
@@ -239,27 +276,27 @@ export class PrintTicketService {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.text('TOTAL A PAGAR:', 5, y);
-    doc.text(`$${data.totalPagar.toFixed(2)}`, 70, y, { align: 'right' });
+    doc.text(`$${data.totalPagar.toFixed(2)}`, 75, y, { align: 'right' });
     y += 5;
 
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.text('Monto recibido:', 5, y);
-    doc.text(`$${data.montoRecibido.toFixed(2)}`, 70, y, { align: 'right' });
+    doc.text(`$${data.montoRecibido.toFixed(2)}`, 75, y, { align: 'right' });
     y += 5;
 
     doc.setFont('helvetica', 'bold');
     doc.text('CAMBIO:', 5, y);
-    doc.text(`$${data.cambio.toFixed(2)}`, 70, y, { align: 'right' });
+    doc.text(`$${data.cambio.toFixed(2)}`, 75, y, { align: 'right' });
     y += 6;
 
     this.drawLine(doc, y, 'double');
     y += 5;
 
-    doc.setFontSize(7);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.text('¡GRACIAS POR TU PAGO!', 40, y, { align: 'center' });
-    y += 3.5;
+    y += 4;
     
     doc.setFont('helvetica', 'italic');
     doc.text('Conserva este comprobante', 40, y, { align: 'center' });
@@ -268,23 +305,18 @@ export class PrintTicketService {
     this.drawLine(doc, y, 'solid');
     y += 4;
 
-    doc.setFontSize(6);
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.text(this.formatDateTime(new Date()), 40, y, { align: 'center' });
 
     doc.autoPrint();
-    const blob = doc.output('blob');
-    const url = URL.createObjectURL(blob);
-    
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none'; 
-    iframe.src = url;
-    document.body.appendChild(iframe);
-    
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-      URL.revokeObjectURL(url);
-    }, 5000);
+
+    const blobUrl = doc.output('bloburl');
+    if (pdfWindow) {
+      pdfWindow.location.href = blobUrl.toString();
+    } else {
+      window.open(blobUrl.toString(), '_blank');
+    }
   }
 
   private drawLine(doc: jsPDF, y: number, style: 'solid' | 'dashed' | 'dotted' | 'double'): void {
@@ -317,14 +349,6 @@ export class PrintTicketService {
         doc.line(startX, y + 0.8, endX, y + 0.8);
         break;
     }
-  }
-
-  private formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('es-MX', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
   }
 
   private formatDateTime(date: Date): string {

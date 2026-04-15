@@ -1,16 +1,17 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { finalize } from 'rxjs';
 
-import { ButtonModule } from 'primeng/button';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { ToastModule } from 'primeng/toast';
-import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
+import { DialogModule } from 'primeng/dialog';
+import { ToastModule } from 'primeng/toast';
 
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
@@ -32,7 +33,18 @@ type TipoCatalogoEjemplar = 'condicion' | 'estado';
     TooltipModule
   ],
   templateUrl: './ejemplar-formulario.html',
-  styleUrls: ['./ejemplar-formulario.css']
+  styleUrls: ['./ejemplar-formulario.css'],
+  animations: [
+    trigger('dropIn', [
+      transition(':enter', [
+        style({ transform: 'translateY(-10px)', opacity: 0 }),
+        animate('250ms ease-out', style({ transform: 'translateY(0)', opacity: 1 })),
+      ]),
+      transition(':leave', [
+        animate('150ms ease-in', style({ transform: 'translateY(-10px)', opacity: 0 })),
+      ]),
+    ]),
+  ],
 })
 export default class EjemplarFormularioComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -40,17 +52,17 @@ export default class EjemplarFormularioComponent implements OnInit {
   private bookService = inject(BookService);
   private dialogRef = inject(DynamicDialogRef);
   private config = inject(DynamicDialogConfig);
-  private messageService!: MessageService;
+  private messageService = inject(MessageService);
 
   ejemplarForm: FormGroup = this.fb.group({
-    ubicacion: [''],
+    ubicacion: ['', Validators.minLength(2)],
     idLibro: [null, Validators.required],
     idCondicionFisicaEjemplar: [null, Validators.required],
     idEstadoEjemplar: [null, Validators.required]
   });
 
   catalogoForm: FormGroup = this.fb.group({
-    nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]]
+    nombre: ['', [Validators.required, Validators.minLength(2)]]
   });
 
   condiciones: Catalogo[] = [];
@@ -66,13 +78,6 @@ export default class EjemplarFormularioComponent implements OnInit {
   catalogoSiendoAgregado: TipoCatalogoEjemplar | null = null;
 
   ngOnInit(): void {
-    this.messageService = this.config.data?.messageService;
-    
-    if (!this.messageService) {
-      console.error('MessageService no fue proporcionado');
-      return;
-    }
-    
     this.idLibro = this.config.data?.idLibro;
     this.ejemplarUuid = this.config.data?.ejemplarUuid;
     this.isEditMode = !!this.ejemplarUuid;
@@ -83,7 +88,7 @@ export default class EjemplarFormularioComponent implements OnInit {
     }
 
     this.loadCatalogs();
-    
+
     if (this.mostrarSelectorLibro) {
       this.loadLibros();
     }
@@ -246,11 +251,18 @@ export default class EjemplarFormularioComponent implements OnInit {
       },
       error: (err) => {
         let errorDetail = 'No se pudo guardar el ejemplar';
-        
+
         if (err.status === 409) {
           errorDetail = 'Ya existe un ejemplar con ese código de barras';
         } else if (err.status === 404) {
           errorDetail = 'Libro no encontrado';
+        } else if (err.status === 400) {
+          if (err.error && typeof err.error === 'object') {
+            const errores = Object.values(err.error).join(', ');
+            errorDetail = errores;
+          } else {
+            errorDetail = err.error?.message || 'Datos inválidos';
+          }
         } else if (err.error?.message) {
           errorDetail = err.error.message;
         }

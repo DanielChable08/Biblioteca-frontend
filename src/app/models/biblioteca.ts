@@ -13,6 +13,8 @@ export interface Autor {
   displayName?: string;
 }
 
+export interface Areas extends Catalogo {}
+
 export interface Editorial extends Catalogo {}
 
 export interface Idioma extends Catalogo {}
@@ -73,6 +75,7 @@ export interface Libro {
   idEditorial: number;
   idIdioma: number;
   uuid: string;
+  areas?: Areas[]; 
   autores?: Autor[];
   categoria?: Catalogo;
   editorial?: Editorial;
@@ -95,6 +98,7 @@ export interface LibroPayload {
   idEditorial: number;
   idIdioma: number;
   idAutores: number[];
+  idAreas: number[]; 
 }
 
 export interface EjemplarPayload {

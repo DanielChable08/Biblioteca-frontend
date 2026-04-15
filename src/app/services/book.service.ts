@@ -1,4 +1,4 @@
-import { Libro, LibroPayload, Autor, Ejemplar, EjemplarPayload } from '../models/biblioteca';
+import { Libro, LibroPayload, Autor, Ejemplar, EjemplarPayload, Areas } from '../models/biblioteca';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/enviroment';
 import { Injectable, inject } from '@angular/core';
@@ -42,7 +42,6 @@ export class BookService {
       }
     });
 
-
     if (file) {
       formData.append('archivoMultipart', file); 
     }
@@ -61,39 +60,60 @@ export class BookService {
   }
 
   deleteLibro(uuid: string): Observable<void> { 
-    return this.http.put<void>(`${this.apiUrl}/${uuid}/eliminar`, {}); }
+    return this.http.put<void>(`${this.apiUrl}/${uuid}/eliminar`, {}); 
+  }
 
   reactivarLibro(uuid: string): Observable<void> { 
-    return this.http.put<void>(`${this.apiUrl}/${uuid}/reactivar`, {}); }
+    return this.http.put<void>(`${this.apiUrl}/${uuid}/reactivar`, {}); 
+  }
 
   addAutoresToLibro(uuid: string, autoresPayload: { idAutor: number }[]): Observable<any> { 
-    return this.http.post(`${this.apiUrl}/${uuid}/autores/carga-masiva`, autoresPayload); }
+    return this.http.post(`${this.apiUrl}/${uuid}/autores/carga-masiva`, autoresPayload); 
+  }
 
   getAutoresForLibro(uuid: string): Observable<Autor[]> { 
-    return this.http.get<Autor[]>(`${this.apiUrl}/${uuid}/autores`); }
+    return this.http.get<Autor[]>(`${this.apiUrl}/${uuid}/autores`); 
+  }
   
+  addAreasToLibro(uuid: string, areasPayload: { idAutor: number }[]): Observable<any> { 
+    return this.http.post(`${this.apiUrl}/${uuid}/areas/carga-masiva`, areasPayload); 
+  }
+
+  getAreasForLibro(uuid: string): Observable<Areas[]> { 
+    return this.http.get<Areas[]>(`${this.apiUrl}/${uuid}/areas`); 
+  }
+
   getEjemplares(): Observable<Ejemplar[]> { 
-    return this.http.get<Ejemplar[]>(this.ejemplaresUrl); }
+    return this.http.get<Ejemplar[]>(this.ejemplaresUrl); 
+  }
   
   getEjemplarByUuid(uuid: string): Observable<Ejemplar> { 
-    return this.http.get<Ejemplar>(`${this.ejemplaresUrl}/${uuid}`); }
+    return this.http.get<Ejemplar>(`${this.ejemplaresUrl}/${uuid}`); 
+  }
   
-  getEjemplaresByLibro(libroId: number): Observable<Ejemplar[]> { let httpParams = new HttpParams().set('idLibro', libroId.toString()); 
-   return this.http.get<Ejemplar[]>(this.ejemplaresUrl, { params: httpParams }); }
+  getEjemplaresByLibro(libroId: number): Observable<Ejemplar[]> { 
+    let httpParams = new HttpParams().set('idLibro', libroId.toString()); 
+    return this.http.get<Ejemplar[]>(this.ejemplaresUrl, { params: httpParams }); 
+  }
   
-  getEjemplaresDisponibles(): Observable<Ejemplar[]> { let httpParams = new HttpParams().set('idEstadoEjemplar', '1'); 
-   return this.http.get<Ejemplar[]>(this.ejemplaresUrl, { params: httpParams }); }
+  getEjemplaresDisponibles(): Observable<Ejemplar[]> { 
+    let httpParams = new HttpParams().set('idEstadoEjemplar', '1'); 
+    return this.http.get<Ejemplar[]>(this.ejemplaresUrl, { params: httpParams }); 
+  }
   
   createEjemplar(ejemplar: EjemplarPayload): Observable<Ejemplar> { 
-    return this.http.post<Ejemplar>(this.ejemplaresUrl, ejemplar); }
+    return this.http.post<Ejemplar>(this.ejemplaresUrl, ejemplar); 
+  }
   
   updateEjemplar(uuid: string, ejemplar: EjemplarPayload): Observable<Ejemplar> { 
-    return this.http.put<Ejemplar>(`${this.ejemplaresUrl}/${uuid}`, ejemplar); }
+    return this.http.put<Ejemplar>(`${this.ejemplaresUrl}/${uuid}`, ejemplar); 
+  }
   
   deleteEjemplar(uuid: string): Observable<void> { 
-    return this.http.delete<void>(`${this.ejemplaresUrl}/${uuid}`); }
+    return this.http.delete<void>(`${this.ejemplaresUrl}/${uuid}`); 
+  }
 
   getLibroDesactivadoByUuid(uuid: string): Observable<Libro> {
     return this.http.get<Libro>(`${this.apiUrl}/${uuid}/desactivado`);
-}
+  }
 }

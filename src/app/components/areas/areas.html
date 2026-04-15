@@ -19,12 +19,12 @@
           pTooltip="Regresar al Panel"
           tooltipPosition="bottom"
         ></button>
-        <h2><i class="pi pi-tags user-icon"></i> Gestión de Categorías</h2>
+        <h2><i class="pi pi-tags user-icon"></i> Gestión de Áreas</h2>
       </div>
 
       <div class="header-right">
         <p-button
-          label="Agregar Categoría"
+          label="Agregar Área"
           icon="pi pi-plus"
           styleClass="p-button-wine"
           (click)="abrirModalAgregar()"
@@ -37,20 +37,20 @@
 
 <div class="admin-page-container">
   <p-table
-    #dtCategorias
-    [value]="categorias"
+    #dtAreas
+    [value]="areas"
     [loading]="loading"
     [paginator]="true"
     [rows]="10"
     [rowsPerPageOptions]="[10, 25, 50]"
     [globalFilterFields]="['nombre']"
     styleClass="p-datatable-striped p-datatable-gridlines custom-table"
-    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} categorías"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} áreas"
     [showCurrentPageReport]="true"
   >
     <ng-template pTemplate="caption">
       <div class="table-header">
-        <span>Lista de Categorías</span>
+        <span>Lista de Áreas</span>
         <div class="filter-container">
           <span class="p-input-icon-left">
             <i class="pi pi-search"></i>
@@ -58,7 +58,7 @@
               pInputText
               type="text"
               [(ngModel)]="globalFilter"
-              (input)="applyFilterGlobal(dtCategorias, $event)"
+              (input)="applyFilterGlobal(dtAreas, $event)"
               placeholder="Buscar..."
               class="table-search-input"
             />
@@ -66,7 +66,7 @@
           <p-button
             icon="pi pi-filter-slash"
             styleClass="p-button-outlined clear-filter-button"
-            (click)="clearFilter(dtCategorias)"
+            (click)="clearFilter(dtAreas)"
             pTooltip="Limpiar filtro"
           >
           </p-button>
@@ -77,30 +77,30 @@
     <ng-template pTemplate="header">
       <tr>
         <th pSortableColumn="nombre">
-          Nombre de la Categoría <p-sortIcon field="nombre"></p-sortIcon>
+          Nombre del Área <p-sortIcon field="nombre"></p-sortIcon>
         </th>
-        <th style="width: 10rem">Acciones</th>
+        <th style="width: 10rem; text-align: center;">Acciones</th>
       </tr>
     </ng-template>
 
-    <ng-template pTemplate="body" let-categoria>
+    <ng-template pTemplate="body" let-area>
       <tr>
-        <td>{{ categoria.nombre }}</td>
-        <td>
+        <td>{{ area.nombre }}</td>
+        <td style="text-align: center;">
           <div class="table-actions">
             <button
               pButton
               icon="pi pi-pencil"
               class="action-btn-compact edit-btn"
               pTooltip="Editar"
-              (click)="abrirModalEditar(categoria)"
+              (click)="abrirModalEditar(area)"
             ></button>
             <button
               pButton
               icon="pi pi-trash"
               class="action-btn-compact delete-btn"
               pTooltip="Eliminar"
-              (click)="eliminar(categoria)"
+              (click)="eliminar(area)"
             ></button>
           </div>
         </td>
@@ -109,21 +109,20 @@
 
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="2" class="text-center empty-message">No se encontraron categorías.</td>
+        <td colspan="2" class="text-center empty-message">No se encontraron áreas.</td>
       </tr>
     </ng-template>
 
     <ng-template pTemplate="loadingbody">
       <tr>
-        <td colspan="2" class="text-center loading-message">Cargando categorías...</td>
+        <td colspan="2" class="text-center loading-message">Cargando Áreas...</td>
       </tr>
     </ng-template>
   </p-table>
 </div>
 
-<!-- MODAL FORMULARIO -->
 <p-dialog
-  [header]="isEditMode ? 'Editar Categoría' : 'Agregar Nueva Categoría'"
+  [header]="isEditMode ? 'Editar Área' : 'Agregar Nueva Área'"
   [(visible)]="displayModal"
   [modal]="true"
   [style]="{ width: '500px' }"
@@ -131,41 +130,41 @@
   [dismissableMask]="false"
   [focusOnShow]="false"
 >
-  <form [formGroup]="categoriaForm" (ngSubmit)="onSubmit()" class="form-container">
+  <form [formGroup]="areasForm" (ngSubmit)="onSubmit()" class="form-container">
     <div class="field">
       <label for="nombre">
-        <i class="pi pi-tag"></i> <span>Nombre de la Categoría<span class="text red">*</span></span>
+        <i class="pi pi-tag"></i> <span>Nombre del Área<span class="text red">*</span></span>
       </label>
       <input
         id="nombre"
         pInputText
         formControlName="nombre"
-        placeholder="Ej: Gredos, Grandes Filósofos"
-        class="form-comp"
+        placeholder="Ej: Teología, Filosofía"
+        class="form-comp w-full"
         maxlength="75"
       />
       <div
         class="error-msg text red text-sm flex flex-column"
         [@dropIn]
-        *ngIf="(categoriaForm.get('nombre')?.dirty || isSubmitting) && categoriaForm.get('nombre')?.invalid"
+        *ngIf="(areasForm.get('nombre')?.dirty || isSubmitting) && areasForm.get('nombre')?.invalid"
       >
-        <small *ngIf="categoriaForm.get('nombre')?.errors?.['required']"
+        <small *ngIf="areasForm.get('nombre')?.errors?.['required']"
           >El nombre es obligatorio.</small
         >
-        <small *ngIf="categoriaForm.get('nombre')?.errors?.['minlength']"
+        <small *ngIf="areasForm.get('nombre')?.errors?.['minlength']"
           >El nombre debe tener al menos 4 caracteres.</small
         >
       </div>
     </div>
-    <div class="form-footer">
-      <button type="button" pButton class="btn-info text" (click)="cerrarModal()">Cancelar</button>
+    <div class="form-footer mt-4" style="display: flex; justify-content: flex-end; gap: 1rem;">
+      <button type="button" pButton class="p-button-text" style="color: var(--wine);" (click)="cerrarModal()">Cancelar</button>
       <button
         type="submit"
         pButton
         icon="pi pi-check"
-        class="btn-primary"
+        style="background-color: var(--wine); border-color: var(--wine);"
         [loading]="isSubmitting"
-        [disabled]="categoriaForm.invalid"
+        [disabled]="areasForm.invalid"
       >
         Guardar
       </button>

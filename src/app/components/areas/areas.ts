@@ -12,14 +12,14 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
+import { TableModule } from 'primeng/table';
 
 import { CatalogService } from '../../services/catalog.service';
-import { Idioma } from '../../models/biblioteca';
+import { Areas } from '../../models/biblioteca';
 
 @Component({
-  selector: 'app-idiomas',
+  selector: 'app-areas',
   standalone: true,
   imports: [
     CommonModule,
@@ -33,8 +33,8 @@ import { Idioma } from '../../models/biblioteca';
     DialogModule,
     InputTextModule
   ],
-  templateUrl: './idiomas.html',
-  styleUrls: ['./idiomas.css'],
+  templateUrl: './areas.html',
+  styleUrls: ['./areas.css'],
   animations: [
     trigger('dropIn', [
       transition(':enter', [
@@ -47,23 +47,22 @@ import { Idioma } from '../../models/biblioteca';
     ]),
   ],
 })
-export default class IdiomasComponent implements OnInit {
+export default class AreasComponent implements OnInit {
   private catalogService = inject(CatalogService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
 
-  idiomas: Idioma[] = [];
+  areas: Areas[] = [];
   loading = false;
   globalFilter: string = '';
-  
- 
+
   displayModal = false;
   isEditMode = false;
   isSubmitting = false;
-  idiomaForm!: FormGroup;
-  idiomaSeleccionado: Idioma | null = null;
+  areasForm!: FormGroup;
+  areaSeleccionada: Areas | null = null;
 
   ngOnInit(): void {
     this.initForm();
@@ -71,24 +70,24 @@ export default class IdiomasComponent implements OnInit {
   }
 
   initForm(): void {
-    this.idiomaForm = this.fb.group({
-      nombre: ['', [Validators.required, Validators.minLength(2)]]
+    this.areasForm = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(4)]]
     });
   }
 
   loadData(): void {
     this.loading = true;
-    this.catalogService.getIdiomas().pipe(
+    this.catalogService.getAreas().pipe(
       finalize(() => this.loading = false)
     ).subscribe({
       next: (data) => {
-        this.idiomas = data;
+        this.areas = data;
       },
       error: (err: any) => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'No se pudieron cargar los idiomas.'
+          detail: 'No se pudieron cargar las Áreas.'
         });
         console.error(err);
       }
@@ -97,36 +96,36 @@ export default class IdiomasComponent implements OnInit {
 
   abrirModalAgregar(): void {
     this.isEditMode = false;
-    this.idiomaSeleccionado = null;
-    this.idiomaForm.reset();
+    this.areaSeleccionada = null;
+    this.areasForm.reset();
     this.displayModal = true;
   }
 
-  abrirModalEditar(idioma: Idioma): void {
+  abrirModalEditar(area: Areas): void {
     this.isEditMode = true;
-    this.idiomaSeleccionado = idioma;
-    this.idiomaForm.patchValue({ nombre: idioma.nombre });
+    this.areaSeleccionada = area;
+    this.areasForm.patchValue({ nombre: area.nombre });
     this.displayModal = true;
   }
 
   cerrarModal(): void {
     this.displayModal = false;
-    this.idiomaForm.reset();
-    this.idiomaSeleccionado = null;
+    this.areasForm.reset();
+    this.areaSeleccionada = null;
   }
 
   onSubmit(): void {
-    if (this.idiomaForm.invalid) {
-      this.idiomaForm.markAllAsTouched();
+    if (this.areasForm.invalid) {
+      this.areasForm.markAllAsTouched();
       return;
     }
 
     this.isSubmitting = true;
-    const data = this.idiomaForm.value;
+    const data = this.areasForm.value;
 
-    const request = this.isEditMode && this.idiomaSeleccionado
-      ? this.catalogService.updateIdioma(this.idiomaSeleccionado.uuid, data)
-      : this.catalogService.createIdioma(data);
+    const request = this.isEditMode && this.areaSeleccionada
+      ? this.catalogService.updateAreas(this.areaSeleccionada.uuid, data)
+      : this.catalogService.createAreas(data);
 
     request.pipe(
       finalize(() => this.isSubmitting = false)
@@ -135,13 +134,13 @@ export default class IdiomasComponent implements OnInit {
         this.messageService.add({
           severity: 'success',
           summary: 'Éxito',
-          detail: `Idioma ${this.isEditMode ? 'actualizado' : 'creado'} correctamente.`
+          detail: `Área ${this.isEditMode ? 'actualizada' : 'creada'} correctamente.`
         });
         this.cerrarModal();
         this.loadData();
       },
       error: (err: any) => {
-        let errorDetail = `No se pudo ${this.isEditMode ? 'actualizar' : 'crear'} el idioma.`;
+        let errorDetail = `No se pudo ${this.isEditMode ? 'actualizar' : 'crear'} el área.`;
         let errorSummary = 'Error';
 
         if (err.status === 400) {
@@ -155,7 +154,7 @@ export default class IdiomasComponent implements OnInit {
           errorDetail = err.error.error;
         }
 
-        this.messageService?.add({
+        this.messageService.add({
           severity: 'error',
           summary: errorSummary,
           detail: errorDetail
@@ -168,9 +167,9 @@ export default class IdiomasComponent implements OnInit {
     this.router.navigate(['/admin']);
   }
 
-  eliminar(idioma: Idioma): void {
+  eliminar(area: Areas): void {
     this.confirmationService.confirm({
-      message: `¿Estás seguro de eliminar el idioma "${idioma.nombre}"?`,
+      message: `¿Estás seguro de eliminar el área "${area.nombre}"?`,
       header: 'Confirmar eliminación',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, eliminar',
@@ -179,19 +178,19 @@ export default class IdiomasComponent implements OnInit {
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
         this.loading = true;
-        this.catalogService.deleteIdioma(idioma.uuid).pipe(
+        this.catalogService.deleteAreas(area.uuid).pipe(
           finalize(() => this.loading = false)
         ).subscribe({
           next: () => {
             this.messageService.add({
               severity: 'success',
               summary: 'Éxito',
-              detail: 'Idioma eliminado.'
+              detail: 'Área eliminada.'
             });
-            this.idiomas = this.idiomas.filter(i => i.id !== idioma.id);
+            this.areas = this.areas.filter(a => a.id !== area.id);
           },
           error: (err: any) => {
-            let errorDetail = 'No se pudo eliminar el idioma.';
+            let errorDetail = 'No se pudo eliminar el Área.';
             let errorSummary = 'Error';
 
             if (err.status === 400) {
@@ -205,7 +204,7 @@ export default class IdiomasComponent implements OnInit {
               errorDetail = err.error.error;
             }
 
-            this.messageService?.add({
+            this.messageService.add({
               severity: 'error',
               summary: errorSummary,
               detail: errorDetail

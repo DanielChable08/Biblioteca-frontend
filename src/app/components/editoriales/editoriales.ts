@@ -1,18 +1,19 @@
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DialogModule } from 'primeng/dialog';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { ToastModule } from 'primeng/toast';
+import { TableModule } from 'primeng/table';
 
 import { CatalogService } from '../../services/catalog.service';
 import { Editorial } from '../../models/biblioteca';
@@ -33,7 +34,18 @@ import { Editorial } from '../../models/biblioteca';
     InputTextModule
   ],
   templateUrl: './editoriales.html',
-  styleUrls: ['./editoriales.css']
+  styleUrls: ['./editoriales.css'],
+  animations: [
+    trigger('dropIn', [
+      transition(':enter', [
+        style({ transform: 'translateY(-10px)', opacity: 0 }),
+        animate('250ms ease-out', style({ transform: 'translateY(0)', opacity: 1 })),
+      ]),
+      transition(':leave', [
+        animate('150ms ease-in', style({ transform: 'translateY(-10px)', opacity: 0 })),
+      ]),
+    ]),
+  ],
 })
 export default class EditorialesComponent implements OnInit {
   private catalogService = inject(CatalogService);
@@ -129,12 +141,25 @@ export default class EditorialesComponent implements OnInit {
         this.loadData();
       },
       error: (err: any) => {
-        this.messageService.add({
+        let errorDetail = `No se pudo ${this.isEditMode ? 'actualizar' : 'crear'} la editorial.`;
+        let errorSummary = 'Error';
+
+        if (err.status === 400) {
+          if (err.error && typeof err.error === 'object') {
+            const errores = Object.values(err.error).join(' ');
+            errorDetail = errores;
+          }
+          errorSummary = 'Conflicto';
+        } else if (err.status === 409) {
+          errorSummary = 'Conflicto';
+          errorDetail = err.error.error;
+        }
+
+        this.messageService?.add({
           severity: 'error',
-          summary: 'Error',
-          detail: `No se pudo ${this.isEditMode ? 'actualizar' : 'crear'} la editorial.`
+          summary: errorSummary,
+          detail: errorDetail
         });
-        console.error(err);
       }
     });
   }
@@ -166,12 +191,25 @@ export default class EditorialesComponent implements OnInit {
             this.editoriales = this.editoriales.filter(e => e.id !== editorial.id);
           },
           error: (err: any) => {
-            this.messageService.add({
+            let errorDetail = 'No se pudo eliminar la editorial.';
+            let errorSummary = 'Error';
+
+            if (err.status === 400) {
+              if (err.error && typeof err.error === 'object') {
+                const errores = Object.values(err.error).join(' ');
+                errorDetail = errores;
+              }
+              errorSummary = 'Conflicto';
+            } else if (err.status === 409) {
+              errorSummary = 'Conflicto';
+              errorDetail = err.error.error;
+            }
+
+            this.messageService?.add({
               severity: 'error',
-              summary: 'Error',
-              detail: 'No se pudo eliminar la editorial.'
+              summary: errorSummary,
+              detail: errorDetail
             });
-            console.error(err);
           }
         });
       }

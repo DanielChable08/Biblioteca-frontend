@@ -1,18 +1,19 @@
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DialogModule } from 'primeng/dialog';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { TableModule } from 'primeng/table';
+import { ToastModule } from 'primeng/toast';
 
 import { CatalogService } from '../../services/catalog.service';
 import { Autor } from '../../models/biblioteca';
@@ -33,7 +34,18 @@ import { Autor } from '../../models/biblioteca';
     InputTextModule
   ],
   templateUrl: './autores.html',
-  styleUrls: ['./autores.css']
+  styleUrls: ['./autores.css'],
+  animations: [
+    trigger('dropIn', [
+      transition(':enter', [
+        style({ transform: 'translateY(-10px)', opacity: 0 }),
+        animate('250ms ease-out', style({ transform: 'translateY(0)', opacity: 1 })),
+      ]),
+      transition(':leave', [
+        animate('150ms ease-in', style({ transform: 'translateY(-10px)', opacity: 0 })),
+      ]),
+    ]),
+  ],
 })
 export default class AutoresComponent implements OnInit {
   private catalogService = inject(CatalogService);
@@ -45,7 +57,7 @@ export default class AutoresComponent implements OnInit {
   autores: Autor[] = [];
   loading = false;
   globalFilter: string = '';
-  
+
   displayModal = false;
   isEditMode = false;
   isSubmitting = false;
@@ -60,8 +72,8 @@ export default class AutoresComponent implements OnInit {
   initForm(): void {
     this.autorForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(2)]],
-      apPaterno: ['', [Validators.required, Validators.minLength(2)]],
-      apMaterno: ['']
+      apPaterno: ['', [Validators.minLength(2)]],
+      apMaterno: ['', [Validators.minLength(2)]]
     });
   }
 
@@ -150,7 +162,7 @@ export default class AutoresComponent implements OnInit {
 
   eliminar(autor: Autor): void {
     this.confirmationService.confirm({
-      message: `¿Estás seguro de eliminar al autor "${autor.nombre} ${autor.apPaterno}"?`,
+      message: `¿Estás seguro de eliminar al autor "${autor.nombre} ${autor.apPaterno || ''}"?`,
       header: 'Confirmar eliminación',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, eliminar',

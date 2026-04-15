@@ -1,18 +1,19 @@
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DialogModule } from 'primeng/dialog';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { ToastModule } from 'primeng/toast';
+import { TableModule } from 'primeng/table';
 
 import { CatalogService } from '../../services/catalog.service';
 import { TipoLibro } from '../../models/biblioteca';
@@ -33,7 +34,18 @@ import { TipoLibro } from '../../models/biblioteca';
     InputTextModule
   ],
   templateUrl: './tipos.html',
-  styleUrls: ['./tipos.css']
+  styleUrls: ['./tipos.css'],
+  animations: [
+    trigger('dropIn', [
+      transition(':enter', [
+        style({ transform: 'translateY(-10px)', opacity: 0 }),
+        animate('250ms ease-out', style({ transform: 'translateY(0)', opacity: 1 })),
+      ]),
+      transition(':leave', [
+        animate('150ms ease-in', style({ transform: 'translateY(-10px)', opacity: 0 })),
+      ]),
+    ]),
+  ],
 })
 export default class TiposComponent implements OnInit {
   private catalogService = inject(CatalogService);
@@ -60,7 +72,7 @@ export default class TiposComponent implements OnInit {
 
   initForm(): void {
     this.tipoForm = this.fb.group({
-      nombre: ['', [Validators.required, Validators.minLength(2)]]
+      nombre: ['', [Validators.required, Validators.minLength(3)]]
     });
   }
 
@@ -76,7 +88,7 @@ export default class TiposComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'No se pudieron cargar los tipos de libros.'
+          detail: 'No se pudieron cargar las facultades.'
         });
         console.error(err);
       }
@@ -123,18 +135,31 @@ export default class TiposComponent implements OnInit {
         this.messageService.add({
           severity: 'success',
           summary: 'Éxito',
-          detail: `Tipo de libro ${this.isEditMode ? 'actualizado' : 'creado'} correctamente.`
+          detail: `Facultad ${this.isEditMode ? 'actualizada' : 'creada'} correctamente.`
         });
         this.cerrarModal();
         this.loadData();
       },
       error: (err: any) => {
-        this.messageService.add({
+        let errorDetail = `No se pudo ${this.isEditMode ? 'actualizar' : 'crear'} la facultad.`;
+        let errorSummary = 'Error';
+
+        if (err.status === 400) {
+          if (err.error && typeof err.error === 'object') {
+            const errores = Object.values(err.error).join(' ');
+            errorDetail = errores;
+          }
+          errorSummary = 'Conflicto';
+        } else if (err.status === 409) {
+          errorSummary = 'Conflicto';
+          errorDetail = err.error.error;
+        }
+
+        this.messageService?.add({
           severity: 'error',
-          summary: 'Error',
-          detail: `No se pudo ${this.isEditMode ? 'actualizar' : 'crear'} el tipo de libro.`
+          summary: errorSummary,
+          detail: errorDetail
         });
-        console.error(err);
       }
     });
   }
@@ -145,7 +170,7 @@ export default class TiposComponent implements OnInit {
 
   eliminar(tipo: TipoLibro): void {
     this.confirmationService.confirm({
-      message: `¿Estás seguro de eliminar el tipo "${tipo.nombre}"?`,
+      message: `¿Estás seguro de eliminar la facultad de "${tipo.nombre}"?`,
       header: 'Confirmar eliminación',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, eliminar',
@@ -161,17 +186,30 @@ export default class TiposComponent implements OnInit {
             this.messageService.add({
               severity: 'success',
               summary: 'Éxito',
-              detail: 'Tipo de libro eliminado.'
+              detail: 'Facultad eliminada.'
             });
             this.tipos = this.tipos.filter(t => t.id !== tipo.id);
           },
           error: (err: any) => {
-            this.messageService.add({
+            let errorDetail = 'No se pudo eliminar la facultad.';
+            let errorSummary = 'Error';
+
+            if (err.status === 400) {
+              if (err.error && typeof err.error === 'object') {
+                const errores = Object.values(err.error).join(' ');
+                errorDetail = errores;
+              }
+              errorSummary = 'Conflicto';
+            } else if (err.status === 409) {
+              errorSummary = 'Conflicto';
+              errorDetail = err.error.error;
+            }
+
+            this.messageService?.add({
               severity: 'error',
-              summary: 'Error',
-              detail: 'No se pudo eliminar el tipo de libro.'
+              summary: errorSummary,
+              detail: errorDetail
             });
-            console.error(err);
           }
         });
       }
