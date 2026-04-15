@@ -55,98 +55,125 @@
   <div class="tab-content-container">
 
     <div *ngIf="activeTab === 'prestamos'">
-      <p-table [value]="prestamos" styleClass="custom-table" [paginator]="true" [rows]="10">
+      <p-table [value]="prestamos" styleClass="p-datatable-striped p-datatable-gridlines custom-table" [paginator]="true" [rows]="10" [loading]="loadingPrestamosYMultas" responsiveLayout="stack" breakpoint="960px">
         <ng-template pTemplate="header">
           <tr>
-            <th>Libro / Ejemplar</th>
+            <th>Responsable</th>
             <th>Fecha Préstamo</th>
-            <th>Fecha Devolución</th>
+            <th>Fecha Límite</th>
             <th>Estado</th>
-            <th style="text-align: center;">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-prestamo>
+          <tr>
+            <td>
+              <span class="p-column-title">Responsable</span>
+              {{ prestamo.bibliotecario?.nombre }} {{ prestamo.bibliotecario?.apPaterno }}
+            </td>
+            <td>
+              <span class="p-column-title">Fecha Préstamo</span>
+              {{ prestamo.fechaPrestamo | date:'dd/MM/yyyy' }}
+            </td>
+            <td>
+              <span class="p-column-title">Fecha Límite</span>
+              {{ prestamo.fechaLimite | date:'dd/MM/yyyy' }}
+            </td>
+            <td class="col-estado">
+              <span class="p-column-title">Estado</span>
+              <span class="user-role-badge" [ngClass]="getEstadoPrestamoClass(prestamo.estadoPrestamo?.nombre)">
+                  {{ prestamo.estadoPrestamo?.nombre || 'N/A' }}
+              </span>
+            </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="5">
-              <div class="empty-state">
-                <i class="pi pi-book"></i>
-                <p>Este usuario no tiene préstamos registrados.</p>
-              </div>
-            </td>
-          </tr>
+          <tr><td colspan="4" class="text-center empty-message">No se encontraron préstamos.</td></tr>
         </ng-template>
       </p-table>
     </div>
 
     <div *ngIf="activeTab === 'multas'">
-      <p-table [value]="multas" styleClass="custom-table" [paginator]="true" [rows]="10">
+      <p-table [value]="multas" styleClass="p-datatable-striped p-datatable-gridlines custom-table" [paginator]="true" [rows]="10" [loading]="loadingPrestamosYMultas" responsiveLayout="stack" breakpoint="960px">
         <ng-template pTemplate="header">
           <tr>
             <th>Motivo</th>
-            <th>Fecha</th>
+            <th>Días Atraso</th>
             <th>Monto</th>
+            <th>Fecha Emisión</th>
             <th>Estado</th>
-            <th style="text-align: center;">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-multa>
+          <tr>
+            <td>
+              <span class="p-column-title">Motivo</span>
+              {{ multa.motivoMulta?.nombre || 'N/A' }}
+            </td>
+            <td>
+              <span class="p-column-title">Días Atraso</span>
+              <span class="dias-badge" [ngClass]="getDiasRetrasoClass(multa.diasRetraso)">
+                  <i class="pi pi-calendar"></i> {{ multa.diasRetraso || 0 }} días
+              </span>
+            </td>
+            <td>
+              <span class="p-column-title">Monto</span>
+              <span style="font-weight: 600; color: var(--wine);">${{ multa.monto | number:'1.2-2' }}</span>
+            </td>
+            <td>
+              <span class="p-column-title">Fecha Emisión</span>
+              {{ multa.fechaEmision | date:'dd/MM/yyyy' }}
+            </td>
+            <td class="col-estado">
+              <span class="p-column-title">Estado</span>
+              <span class="user-role-badge" [ngClass]="getEstadoMultaClass(multa.estadoMulta?.nombre)">
+                  {{ multa.estadoMulta?.nombre || 'N/A' }}
+              </span>
+            </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="5">
-              <div class="empty-state text-green">
-                <i class="pi pi-check-circle"></i>
-                <p>Este usuario tiene un historial impecable. Cero multas.</p>
-              </div>
-            </td>
-          </tr>
+          <tr><td colspan="5" class="text-center empty-message">No se encontraron multas.</td></tr>
         </ng-template>
       </p-table>
     </div>
 
     <div *ngIf="activeTab === 'pagos'">
-      <p-table 
-        [value]="pagos" 
-        styleClass="custom-table p-datatable-striped" 
-        [paginator]="true" 
-        [rows]="10"
-        [loading]="loadingPagos">
+      <p-table [value]="pagos" styleClass="p-datatable-striped p-datatable-gridlines custom-table" [paginator]="true" [rows]="10" [loading]="loadingPagos" responsiveLayout="stack" breakpoint="960px">
         <ng-template pTemplate="header">
           <tr>
             <th>Fecha</th>
             <th>Folio</th>
             <th>Método</th>
             <th class="text-right">Total</th>
-            <th class="text-right">Monto recibido</th>
-            <th class="text-right">Cambio</th>
             <th class="text-center">Estado</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-pago>
           <tr>
-            <td>{{ formatearFecha(pago.fechaPago) }}</td>
-            <td style="font-weight: 600; color: var(--wine);">{{ pago.folio }}</td>
             <td>
+              <span class="p-column-title">Fecha</span>
+              {{ pago.fechaPago | date:'dd/MM/yyyy' }}
+            </td>
+            <td style="font-weight: 600; color: var(--wine);">
+              <span class="p-column-title">Folio</span>
+              {{ pago.folio }}
+            </td>
+            <td>
+              <span class="p-column-title">Método</span>
               <span class="metodo-badge"><i class="pi pi-money-bill"></i> {{ pago.metodoPago }}</span>
             </td>
-            <td class="text-right font-bold text-wine">{{ formatearMoneda(pago.total) }}</td>
-            <td class="text-right">{{ formatearMoneda(pago.montoRecibido) }}</td>
-            <td class="text-right">{{ formatearMoneda(pago.cambio) }}</td>
-            <td class="text-center">
-              <p-tag 
-                [value]="getEstadoTexto(pago.anulado)" 
-                [severity]="getEstadoSeverity(pago.anulado)">
-              </p-tag>
+            <td class="text-right font-bold text-wine">
+              <span class="p-column-title">Total</span>
+              ${{ pago.total | number:'1.2-2' }}
+            </td>
+            <td class="text-center col-estado">
+              <span class="p-column-title">Estado</span>
+              <p-tag [value]="getEstadoTexto(pago.anulado)" [severity]="getEstadoSeverity(pago.anulado)"></p-tag>
             </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="7">
-              <div class="empty-state">
-                <i class="pi pi-wallet"></i>
-                <p>No hay registros de pagos para este usuario.</p>
-              </div>
-            </td>
-          </tr>
+          <tr><td colspan="5" class="text-center empty-message">No hay registros de pagos.</td></tr>
         </ng-template>
       </p-table>
     </div>

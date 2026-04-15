@@ -52,8 +52,31 @@
           </div>
 
           <div class="field">
+            <label for="areas">Área(s) <label class="text red">*</label></label>
+            <div class="p-inputgroup">
+              <p-multiSelect
+                id="areas"
+                class="form-comp full-w"
+                [options]="areas"
+                formControlName="idAreas"
+                optionLabel="nombre"
+                optionValue="id"
+                display="chip"
+                placeholder="Seleccionar área(s)"
+                emptyFilterMessage="Sin coincidencias encontradas"
+                [ngClass]="{'p-invalid': libroForm.get('idAreas')?.invalid && (libroForm.get('idAreas')?.dirty || isSubmitting)}"
+                [selectedItemsLabel]="'{0} seleccionadas'"
+              ></p-multiSelect>
+              <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('area')" pTooltip="Agregar área" tooltipPosition="top"></button>
+            </div>
+            <div class="error-msg text red text-sm" [@dropIn] *ngIf="(libroForm.get('idAreas')?.dirty || isSubmitting) && libroForm.get('idAreas')?.invalid">
+              <small *ngIf="libroForm.get('idAreas')?.errors?.['required']">Seleccionar al menos un área es obligatorio.</small>
+            </div>
+          </div>
+
+          <div class="field">
             <label for="resumen">Resumen</label>
-            <textarea id="resumen" class="form-comp pb-3" pInputTextarea formControlName="resumen" [rows]="7" [autoResize]="true" placeholder="Ej: 'En la historia del siglo XX es complicado encontrar autores más influyentes que Hermann Hesse. Sus libros han actuado como estímulo espiritual para diversas oleadas de jóvenes hartos de estar sujetos a unos patrones de vida demasiado estrechos. El legado de Hesse es una extensa, profunda y riquísima obra..."></textarea>
+            <textarea id="resumen" class="form-comp pb-3" pInputTextarea formControlName="resumen" [rows]="7" [autoResize]="true" placeholder="Ej: 'En la historia del siglo XX es complicado encontrar autores más influyentes que Hermann Hesse..."></textarea>
           </div>
 
           <div class="field">

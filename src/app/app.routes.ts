@@ -89,6 +89,11 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard]
   },
   { 
+    path: 'admin/areas', 
+    loadComponent: () => import('./components/areas/areas').then(m => m.default),
+    canActivate: [authGuard, roleGuard]
+  },
+  { 
     path: 'admin/editoriales', 
     loadComponent: () => import('./components/editoriales/editoriales').then(m => m.default),
     canActivate: [authGuard, roleGuard]

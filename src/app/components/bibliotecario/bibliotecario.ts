@@ -27,7 +27,7 @@ import { CatalogService } from '../../services/catalog.service';
 import { EjemplarService } from '../../services/ejemplar.service';
 import { AuthService } from '../../services/auth.service';
 import { SharedDataService } from '../../services/shared-data.service';
-import { Libro, Catalogo, Autor, Ejemplar } from '../../models/biblioteca';
+import { Libro, Catalogo, Autor, Ejemplar, Areas } from '../../models/biblioteca';
 
 import LibroFormularioComponent from '../libro-formulario/libro-formulario';
 import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
@@ -64,13 +64,18 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   libros: Libro[] = [];
   allLibros: Libro[] = [];
   categorias: Catalogo[] = [];
+  areasCat: Areas[] = []; 
   librosSeleccionados: Libro[] = [];
 
   vistaActual: 'cards' | 'tabla' = 'cards';
   categoriaSeleccionada: CategoriaKey = 'Todas';
+  areasSeleccionadas: Areas[] = []; 
+  
   terminoBusqueda = '';
   loading = true;
   dropdownOpen = false;
+  areasDropdownOpen = false;
+  
   contadoresCategoria: { [key: string]: number } = {};
   catalogMenuItems: MenuItem[] = [];
   currentFullName: string = '';
@@ -124,6 +129,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     const items: MenuItem[] = [
       { label: 'Gestionar Catálogos', styleClass: 'menu-header' },
       { separator: true },
+      { label: 'Areas', icon: 'pi pi-th-large', command: () => this.router.navigate(['/admin/areas']) },
       { label: 'Autores', icon: 'pi pi-user-edit', command: () => this.router.navigate(['/admin/autores']) },
       { label: 'Categorías', icon: 'pi pi-tags', command: () => this.router.navigate(['/admin/categorias']) },
       { label: 'Editoriales', icon: 'pi pi-building', command: () => this.router.navigate(['/admin/editoriales']) },
@@ -159,18 +165,22 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
         })
       ),
       categorias: this.catalogService.getCategorias().pipe(catchError(() => of([]))),
+      areasCat: this.catalogService.getAreas().pipe(catchError(() => of([]))), 
       ejemplares: this.ejemplarService.getEjemplares().pipe(catchError(() => of([]))),
       estados: this.catalogService.getEstadosEjemplares().pipe(catchError(() => of([])))
     }).pipe(
-      switchMap(({ libros, categorias, ejemplares, estados }) => {
-        if (libros.length === 0) return of({ libros: [], categorias });
+      switchMap(({ libros, categorias, areasCat, ejemplares, estados }) => {
+        if (libros.length === 0) return of({ libros: [], categorias, areasCat });
 
-        const autorRequests = libros.map(libro =>
-          this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([])))
+        const libroDetallesRequests = libros.map(libro =>
+          forkJoin({
+            autores: this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([]))),
+            areas: this.bookService.getAreasForLibro(libro.uuid).pipe(catchError(() => of([]))) 
+          })
         );
 
-        return forkJoin(autorRequests).pipe(
-          map(autoresArray => {
+        return forkJoin(libroDetallesRequests).pipe(
+          map(detallesArray => {
             const librosCompletos = libros.map((libro, index) => {
               
               let imagenCorregida = libro.imagen;
@@ -192,7 +202,8 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
                 ...libro,
                 imagen: imagenCorregida, 
                 categoria: categoriaDelLibro,
-                autores: autoresArray[index],
+                autores: detallesArray[index].autores,
+                areas: detallesArray[index].areas,
                 ejemplares: ejemplaresDelLibro,
                 activo: estadoDesdeBack !== false 
               };
@@ -205,15 +216,16 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
 
             librosPermitidos.sort((a, b) => b.id - a.id); 
 
-            return { libros: librosPermitidos, categorias };
+            return { libros: librosPermitidos, categorias, areasCat };
           })
         );
       }),
       finalize(() => this.loading = false)
     ).subscribe({
-      next: ({ libros, categorias }) => {
+      next: ({ libros, categorias, areasCat }) => {
         this.allLibros = libros;
         this.categorias = categorias;
+        this.areasCat = areasCat;
         this.actualizarContadores();
         this.filtrarLibros();
         this.librosSeleccionados = [];
@@ -276,11 +288,23 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
         resultado = resultado.filter(libro => libro.categoria?.nombre === this.categoriaSeleccionada);
       }
       
+      if (this.areasSeleccionadas && this.areasSeleccionadas.length > 0) {
+        const nombresAreasSeleccionadas = this.areasSeleccionadas.map(a => a.nombre);
+        
+        resultado = resultado.filter(libro => {
+           const areasLibro = (libro as any).areas || [];
+           if (areasLibro.length === 0) return false; 
+           const nombresAreasDelLibro = areasLibro.map((a: any) => a?.nombre || a?.area?.nombre || (typeof a === 'string' ? a : ''));
+           return nombresAreasDelLibro.some((nombre: string) => nombresAreasSeleccionadas.includes(nombre));
+        });
+      }
+      
       if (this.terminoBusqueda) {
         const termino = this.terminoBusqueda.toLowerCase().trim();
         resultado = resultado.filter(libro =>
           (libro.titulo || '').toLowerCase().includes(termino) ||
           this.getAutoresAsString(libro.autores).toLowerCase().includes(termino) ||
+          this.getAreasAsString((libro as any).areas).toLowerCase().includes(termino) ||
           (libro.isbn || '').toLowerCase().includes(termino)
         );
       }
@@ -288,14 +312,53 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       this.libros = resultado;
       this.first = 0; 
       this.librosSeleccionados = [];
-    }
+  }
 
   buscar(): void { this.filtrarLibros(); }
   filtrarCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.filtrarLibros(); }
-  toggleDropdown(): void { this.dropdownOpen = !this.dropdownOpen; }
+  
+  toggleDropdown(event?: Event): void { 
+    if(event) event.stopPropagation();
+    this.dropdownOpen = !this.dropdownOpen; 
+    if (this.dropdownOpen) this.areasDropdownOpen = false; 
+  }
+  
+  toggleAreasDropdown(event: Event): void {
+    event.stopPropagation();
+    this.areasDropdownOpen = !this.areasDropdownOpen;
+    if (this.areasDropdownOpen) this.dropdownOpen = false; 
+  }
+
   selectCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.dropdownOpen = false; this.filtrarLibros(); }
   getDropdownText(): string { return this.categoriaSeleccionada === 'Todas' ? 'Todas las categorías' : this.categoriaSeleccionada; }
   esCategoriaActiva(categoria: CategoriaKey): boolean { return this.categoriaSeleccionada === categoria; }
+
+  esAreaSeleccionada(area: Areas): boolean {
+    return this.areasSeleccionadas.some(a => a.id === area.id);
+  }
+
+  toggleArea(area: Areas, event: Event): void {
+    event.stopPropagation();
+    const index = this.areasSeleccionadas.findIndex(a => a.id === area.id);
+    if (index > -1) {
+        this.areasSeleccionadas.splice(index, 1);
+    } else {
+        this.areasSeleccionadas.push(area);
+    }
+    this.filtrarLibros();
+  }
+
+  clearAreas(event: Event): void {
+    event.stopPropagation();
+    this.areasSeleccionadas = [];
+    this.filtrarLibros();
+  }
+
+  getAreasDropdownText(): string {
+    if (this.areasSeleccionadas.length === 0) return 'Todas las áreas';
+    if (this.areasSeleccionadas.length === 1) return this.areasSeleccionadas[0].nombre;
+    return `${this.areasSeleccionadas.length} áreas selec.`;
+  }
 
   formatIsbn(isbn: string | undefined): string {
     if (!isbn || isbn.length !== 13) return isbn || 'N/A';
@@ -313,6 +376,22 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   getAutoresAsString(autores?: Autor[]): string {
     if (!autores || autores.length === 0) return 'Autor no asignado';
     return autores.map(a => `${a.nombre} ${a.apPaterno || ''}`).join(', ');
+  }
+
+  getAreasAsString(areas?: any[]): string {
+    if (!areas || !Array.isArray(areas) || areas.length === 0) {
+      return 'Sin áreas';
+    }
+
+    return areas
+      .map(a => {
+        if (a?.nombre) return a.nombre;
+        if (a?.area?.nombre) return a.area.nombre;
+        if (typeof a === 'string') return a;
+        return '';
+      })
+      .filter(nombre => nombre.trim() !== '')
+      .join(', ') || 'Sin áreas';
   }
 
   private actualizarContadores(): void {
