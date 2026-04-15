@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -87,6 +87,7 @@ export default class ImpresionesComponent implements OnInit {
   vistaPrevia = false;
   preparandoImpresion = false;
   preparandoPDF = false;
+  progresoPDF: string = '';
   cargando = false;
 
   ngOnInit(): void {
@@ -249,52 +250,129 @@ export default class ImpresionesComponent implements OnInit {
     this.imprimirDirecto();
   }
 
+
   descargarPDF(): void {
     if (this.ejemplaresSeleccionados.length === 0) return;
 
     this.preparandoPDF = true;
-    this.messageService.add({ severity: 'info', summary: 'Generando PDF', detail: 'Por favor espere... Esto mejorará la nitidez.' });
+    this.messageService.add({ severity: 'info', summary: 'Generando PDF', detail: 'Procesando archivo HD, por favor espere...' });
+    
     this.cdr.detectChanges(); 
-    setTimeout(() => {
-      if (this.modoImpresion === 'barras') {
-        this.generarCodigosBarras('pdf');
-      }
 
-      setTimeout(() => {
-        const element = document.getElementById('pdf-content');
-        if (!element) {
-          this.preparandoPDF = false;
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se encontró el contenido' });
-          return;
+    setTimeout(async () => {
+      try {
+        this.preparandoImpresion = true;
+        this.cdr.detectChanges();
+
+        if (this.modoImpresion === 'barras') {
+          this.generarCodigosBarras('print');
         }
 
-        html2canvas(element, { 
-          scale: 4, 
-          useCORS: true, 
-          logging: false,
-          backgroundColor: '#ffffff' 
-        }).then(canvas => {
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new jsPDF('p', 'mm', 'letter');
-          
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const imgProps = pdf.getImageProperties(imgData);
-          const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        await new Promise(r => setTimeout(r, 150));
 
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
+        const printContainer = document.querySelector('.print-page');
+        if (!printContainer) throw new Error('No se encontró el contenedor');
+
+        const etiquetasNodes = Array.from(printContainer.querySelectorAll('.etiqueta-print, .etiqueta-lomo-print'));
+
+        let itemsPerPage = 32;
+        if (this.modoImpresion === 'barras') {
+           if (this.tamanoEtiqueta === 'pequena') itemsPerPage = 40;
+           else if (this.tamanoEtiqueta === 'mediana') itemsPerPage = 32;
+           else if (this.tamanoEtiqueta === 'grande') itemsPerPage = 18;
+        } else {
+           if (this.tamanoEtiqueta === 'lomo-delgado') itemsPerPage = 55;
+           else if (this.tamanoEtiqueta === 'lomo-estandar') itemsPerPage = 40;
+           else if (this.tamanoEtiqueta === 'lomo-ancho') itemsPerPage = 35;
+        }
+
+        const pdf = new jsPDF('p', 'mm', 'letter');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+
+
+        const offScreenContainer = document.createElement('div');
+        offScreenContainer.style.position = 'fixed';
+        offScreenContainer.style.top = '-9999px';  
+        offScreenContainer.style.left = '-9999px'; 
+        offScreenContainer.style.width = '215.9mm';
+        offScreenContainer.style.background = 'white';
+        offScreenContainer.style.zIndex = '-1';
+        document.body.appendChild(offScreenContainer);
+
+        const gridClass = this.modoImpresion === 'barras' ? 'etiquetas-grid-print' : 'etiquetas-lomo-grid-print';
+
+        for (let i = 0; i < etiquetasNodes.length; i += itemsPerPage) {
+          if (i > 0) pdf.addPage(); 
+
+          offScreenContainer.innerHTML = '';
           
-          const fecha = new Date().toISOString().slice(0, 10);
-          pdf.save(`Etiquetas_HD_${this.modoImpresion}_${fecha}.pdf`);
-          
-          this.preparandoPDF = false;
-          this.messageService.add({ severity: 'success', summary: 'Listo', detail: 'PDF de alta calidad descargado' });
-        }).catch(err => {
-          console.error(err);
-          this.preparandoPDF = false;
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la generación del PDF' });
-        });
-      }, 600);
-    }, 100);
+          const pageDiv = document.createElement('div');
+          pageDiv.style.width = '215.9mm';
+          pageDiv.style.height = '279.4mm';
+          pageDiv.style.padding = '10mm';
+          pageDiv.style.boxSizing = 'border-box';
+          pageDiv.style.background = 'white';
+
+          const grid = document.createElement('div');
+          grid.className = gridClass;
+          grid.style.display = 'grid';
+          grid.style.justifyContent = 'center';
+          grid.style.alignItems = 'flex-start';
+
+          if (this.modoImpresion === 'barras') {
+             grid.style.gap = '0.25cm';
+             if (this.tamanoEtiqueta === 'pequena') grid.style.gridTemplateColumns = 'repeat(4, 4cm)';
+             else if (this.tamanoEtiqueta === 'mediana') grid.style.gridTemplateColumns = 'repeat(4, 4.8cm)';
+             else if (this.tamanoEtiqueta === 'grande') grid.style.gridTemplateColumns = 'repeat(3, 6cm)';
+          } else {
+             grid.style.rowGap = '0.5cm';
+             grid.style.columnGap = '0.2cm';
+             if (this.tamanoEtiqueta === 'lomo-delgado') grid.style.gridTemplateColumns = 'repeat(11, 1.5cm)';
+             else if (this.tamanoEtiqueta === 'lomo-estandar') grid.style.gridTemplateColumns = 'repeat(8, 2.0cm)';
+             else if (this.tamanoEtiqueta === 'lomo-ancho') grid.style.gridTemplateColumns = 'repeat(7, 2.5cm)';
+          }
+
+          const chunk = etiquetasNodes.slice(i, i + itemsPerPage);
+          chunk.forEach(nodo => {
+             grid.appendChild(nodo.cloneNode(true));
+          });
+          pageDiv.appendChild(grid);
+          offScreenContainer.appendChild(pageDiv);
+
+          const canvas = await html2canvas(pageDiv, {
+            scale: 2, 
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            scrollX: 0,
+            scrollY: -window.scrollY 
+          });
+
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          const imgProps = pdf.getImageProperties(imgData);
+          const imgH = (imgProps.height * pdfWidth) / imgProps.width;
+
+          pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, imgH);
+        }
+
+        document.body.removeChild(offScreenContainer);
+        this.preparandoImpresion = false;
+        
+        const fecha = new Date().toISOString().slice(0, 10);
+        pdf.save(`Etiquetas_${this.modoImpresion}_${fecha}.pdf`);
+        
+        this.preparandoPDF = false;
+        this.cdr.detectChanges();
+        this.messageService.add({ severity: 'success', summary: 'Listo', detail: 'PDF generado correctamente.' });
+
+      } catch (error) {
+        console.error('Error generando PDF:', error);
+        this.preparandoImpresion = false;
+        this.preparandoPDF = false;
+        this.cdr.detectChanges();
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la generación del PDF' });
+      }
+    }, 50); 
   }
 
   private generarCodigosBarras(tipo: 'preview' | 'print' | 'pdf'): void {
@@ -315,7 +393,6 @@ export default class ImpresionesComponent implements OnInit {
             background: '#ffffff' 
           };
           
-
           if (this.tamanoEtiqueta === 'pequena') {
              config.width = 1.7; 
              config.height = 25;

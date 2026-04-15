@@ -6,16 +6,15 @@ import { definePreset } from '@primeng/themes';
 import { App } from './app/app';
 import { appConfig } from './app/app.config';
 
-// Preset personalizado con tu paleta BEIGE/DORADO
 const BibliotecaPreset = definePreset(Aura, {
   semantic: {
     primary: {
       50: '#FFF8E7',      // Beige muy claro
       100: '#FFF0D1',     // Beige claro
       200: '#FFEEC4',     // Beige
-      300: '#EDD9A3',     // Tu beige principal ✨
+      300: '#EDD9A3',     // Tu beige principal 
       400: '#DEC062',     // Beige dorado
-      500: '#D4AF37',     // Tu DORADO principal ⭐
+      500: '#D4AF37',     // Tu DORADO principal 
       600: '#C4A131',     // Dorado oscuro
       700: '#B8941F',     // Dorado más oscuro
       800: '#9A7A1A',     // Dorado profundo

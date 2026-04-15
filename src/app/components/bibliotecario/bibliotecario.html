@@ -1,6 +1,6 @@
 <p-toast></p-toast>
 
-<div class="full-container">
+<div class="full-container" (click)="dropdownOpen = false; areasDropdownOpen = false">
   <div class="main-header">
     <div class="header-brand">
       <img src="assets/img/Logo-Dorado.png" class="brand-logo" alt="logo" />
@@ -30,19 +30,43 @@
   <p-menu #menu [model]="catalogMenuItems" [popup]="true" [appendTo]="'body'"></p-menu>
 
   <div class="search-and-stats-wrapper">
-    <div class="search-section">
-      <div class="search-container">
+    <div class="search-section" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div class="search-container" style="flex: 1; min-width: 250px;">
         <i class="pi pi-search search-icon"></i>
         <input
           type="text"
           pInputText
-          placeholder="Buscar libros, autores, temas..."
+          placeholder="Buscar libros, autores, áreas, temas..."
           class="searchbar full-w"
           [(ngModel)]="terminoBusqueda"
           (input)="buscar()" 
         />
       </div>
-      <div class="custom-filter-dropdown-container" (click)="toggleDropdown()">
+
+      <div class="custom-filter-dropdown-container" (click)="toggleAreasDropdown($event)">
+        <div class="custom-filter-dropdown-trigger">
+          <i class="pi pi-th-large"></i>
+          <span>{{ getAreasDropdownText() }}</span>
+          <i class="pi pi-chevron-down" [class.rotated]="areasDropdownOpen"></i>
+        </div>
+        <div class="custom-filter-dropdown-panel" *ngIf="areasDropdownOpen" (click)="$event.stopPropagation()">
+          <div class="filter-dropdown-option" (click)="clearAreas($event)">
+            <i class="pi pi-filter-slash"></i>
+            <span>Limpiar áreas</span>
+          </div>
+          <div
+            *ngFor="let area of areasCat"
+            class="filter-dropdown-option"
+            [class.selected]="esAreaSeleccionada(area)"
+            (click)="toggleArea(area, $event)"
+          >
+            <i class="pi" [class.pi-check-square]="esAreaSeleccionada(area)" [class.pi-stop]="!esAreaSeleccionada(area)"></i>
+            <span>{{ area.nombre }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="custom-filter-dropdown-container" (click)="toggleDropdown($event)">
         <div class="custom-filter-dropdown-trigger">
           <i class="pi pi-filter"></i>
           <span>{{ getDropdownText() }}</span>
@@ -155,16 +179,30 @@
     </div>
   </div>
 
-  <div class="catalog-title">
-    {{ categoriaSeleccionada === 'Todas' ? 'Catálogo Completo' : 'Categoría: ' + categoriaSeleccionada }}
-    ({{ libros.length }} libro{{ libros.length !== 1 ? 's' : '' }})
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div class="catalog-title m-0" style="padding: 0; margin-bottom: 0;">
+      {{ categoriaSeleccionada === 'Todas' ? 'Catálogo Completo' : 'Categoría: ' + categoriaSeleccionada }}
+      ({{ libros.length }} libro{{ libros.length !== 1 ? 's' : '' }})
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+      <div *ngIf="isAdmin && vistaActual === 'tabla' && librosSeleccionados.length > 0" style="display: flex; gap: 0.5rem;">
+        <button pButton icon="pi pi-trash" class="btn-primary" label="Desactivar" (click)="procesarMultiples(false)"></button>
+        <button pButton icon="pi pi-refresh" class="btn-secondary" label="Reactivar" (click)="procesarMultiples(true)"></button>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button pButton icon="pi pi-th-large" [class]="vistaActual === 'cards' ? 'btn-primary' : 'p-button-outlined'" (click)="vistaActual = 'cards'" pTooltip="Vista de tarjetas" tooltipPosition="top"></button>
+        <button pButton icon="pi pi-list" [class]="vistaActual === 'tabla' ? 'btn-primary' : 'p-button-outlined'" (click)="vistaActual = 'tabla'" pTooltip="Vista de tabla" tooltipPosition="top"></button>
+      </div>
+    </div>
   </div>
 
   <div *ngIf="loading" style="text-align: center; padding: 2rem">
     <i class="pi pi-spin pi-spinner" style="font-size: 2.5rem; color: var(--wine)"></i>
   </div>
 
-  <div *ngIf="!loading && libros.length > 0">
+  <div *ngIf="!loading && libros.length > 0 && vistaActual === 'cards'">
     <div class="catalog-grid">
       <p-card *ngFor="let libro of libros.slice(first, first + rows)" class="book-card-compact" [class.inactive-card]="libro['activo'] === false">
         <ng-template pTemplate="header">
@@ -196,9 +234,16 @@
 
         <div class="book-info-compact">
           <h4 class="book-title-compact">{{ libro.titulo }}</h4>
-          <p class="book-author-compact">
+          
+          <p class="book-author-compact" style="margin-bottom: 0.2rem;">
             {{ getAutoresAsString(libro.autores) }}
           </p>
+          
+          <span class="book-areas-compact">
+            <i class="pi pi-th-large" style="font-size: 0.7rem; margin-right: 3px;"></i> 
+            {{ getAreasAsString($any(libro).areas) }}
+          </span>
+              
           <span class="book-category-compact" [title]="libro.categoria?.nombre">
             {{ libro.categoria?.nombre | slice : 0 : 22 }}{{ (libro.categoria?.nombre?.length || 0) > 22 ? '...' : '' }}
           </span>
@@ -214,7 +259,7 @@
               <i class="pi pi-calendar"></i> {{ libro.anho }}
             </span>
             <span class="detail-item-compact">
-              <i class="pi pi-file"></i> {{ libro.paginas }} páginas
+              <i class="pi pi-file"></i> {{ libro.paginas }} pages
             </span>
           </div>
         </div>
@@ -252,7 +297,6 @@
             icon="pi pi-refresh"
             class="action-btn-compact reactivate-btn"
             pTooltip="Reactivar Libro"
-            style="background-color: #27ae60; color: white; border-color: #27ae60;"
             (click)="reactivarLibro(libro)"
           ></button>
 
@@ -267,16 +311,90 @@
         </div>
       </p-card>
     </div> 
-    <div class="paginator-container">
-      <p-paginator 
-        [first]="first" 
-        [rows]="rows" 
-        [totalRecords]="libros.length" 
-        (onPageChange)="onPageChange($event)"
-        [rowsPerPageOptions]="[10, 15, 25, 50]"
-        styleClass="custom-paginator-transparent">
-      </p-paginator>
-    </div>
+  </div>
+
+  <div *ngIf="!loading && libros.length > 0 && vistaActual === 'tabla'" style="padding: 0 2rem;">
+    <p-table 
+      [value]="libros.slice(first, first + rows)" 
+      [(selection)]="librosSeleccionados" 
+      dataKey="uuid" 
+      styleClass="custom-table p-datatable-gridlines p-datatable-striped"
+      responsiveLayout="stack"
+      breakpoint="960px">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 4rem" *ngIf="isAdmin">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
+          <th style="width: 80px">Portada</th>
+          <th pSortableColumn="titulo">Título <p-sortIcon field="titulo"></p-sortIcon></th>
+          <th>Autores y Áreas</th>
+          <th pSortableColumn="categoria.nombre">Categoría <p-sortIcon field="categoria.nombre"></p-sortIcon></th>
+          <th>Estado</th>
+          <th style="width: 14rem; text-align: center;">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-libro>
+        <tr [ngStyle]="{'opacity': libro.activo === false ? '0.6' : '1'}">
+          <td *ngIf="isAdmin">
+            <span class="p-column-title">Seleccionar</span>
+            <p-tableCheckbox [value]="libro"></p-tableCheckbox>
+          </td>
+          <td>
+            <span class="p-column-title">Portada</span>
+            <img [src]="(libro.imagen | secureImage | async)" alt="portada" style="width: 45px; height: 65px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
+          </td>
+          <td>
+            <span class="p-column-title">Título</span>
+            <strong style="color: var(--wine);">{{ libro.titulo }}</strong><br>
+            <small style="color: var(--gray);"><i class="pi pi-tag"></i> {{ formatearISBN(libro.isbn) }}</small>
+          </td>
+          <td>
+            <span class="p-column-title">Autores y Áreas</span>
+            <div style="font-weight: 500;">{{ getAutoresAsString(libro.autores) }}</div>
+            <div style="font-size: 0.8rem; color: #7f8c8d; font-style: italic;">
+              <i class="pi pi-th-large" style="font-size: 0.7rem; margin-right: 3px;"></i>{{ getAreasAsString($any(libro).areas) }}
+            </div>
+          </td>
+          <td>
+            <span class="p-column-title">Categoría</span>
+            <span class="book-category-compact">{{ libro.categoria?.nombre || 'N/A' }}</span>
+          </td>
+          <td>
+            <span class="p-column-title">Estado</span>
+            <span *ngIf="libro.activo !== false" [class]="'status-badge ' + getEstadoPrincipal(libro).clase" [pTooltip]="getTooltipEstados(libro)" [escape]="false" tooltipPosition="top">
+              <i [class]="'pi ' + getEstadoPrincipal(libro).icono"></i>
+              {{ getEstadoPrincipal(libro).cantidad }}
+            </span>
+            <span *ngIf="libro.activo === false" class="status-badge" style="background-color: #e74c3c; color: #fff;">
+              <i class="pi pi-exclamation-triangle"></i> DESACTIVADO
+            </span>
+          </td>
+          <td style="text-align: center;">
+            <span class="p-column-title">Acciones</span>
+            <div class="table-actions">
+              <button pButton icon="pi pi-align-left" class="action-btn-compact view-btn" pTooltip="Ver Detalles" tooltipPosition="top" (click)="verLibro(libro)"></button>
+              <button pButton icon="pi pi-pen-to-square" class="action-btn-compact edit-btn" pTooltip="Editar" tooltipPosition="top" [disabled]="libro.activo === false" (click)="editarLibro(libro)"></button>
+              <button *ngIf="libro.activo !== false && isAdmin" pButton icon="pi pi-trash" class="action-btn-compact delete-btn" pTooltip="Desactivar" tooltipPosition="top" (click)="eliminarLibro(libro)"></button>
+              <button *ngIf="libro.activo === false && isAdmin" pButton icon="pi pi-refresh" class="action-btn-compact reactivate-btn" pTooltip="Reactivar" tooltipPosition="top" (click)="reactivarLibro(libro)"></button>
+              <button pButton icon="pi pi-file-plus" class="action-btn-compact edit-btn" pTooltip="Agregar Ejemplar" tooltipPosition="top" [disabled]="libro.activo === false" (click)="abrirModalAgregarEjemplar(libro)"></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <div class="paginator-container" *ngIf="!loading && libros.length > 0">
+    <p-paginator 
+      [first]="first" 
+      [rows]="rows" 
+      [totalRecords]="libros.length" 
+      (onPageChange)="onPageChange($event)"
+      [rowsPerPageOptions]="[10, 15, 25, 50]"
+      styleClass="custom-paginator-transparent">
+    </p-paginator>
   </div>
 
   <p-confirmDialog>

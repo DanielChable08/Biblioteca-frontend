@@ -90,6 +90,10 @@ export default class PersonasListComponent implements OnInit {
     this.router.navigate(['/admin/personas', id, 'historial-pagos']);
   }
 
+  abrirPerfil(persona: Persona): void {
+    this.router.navigate(['/admin/personas/detalle', persona.uuid]);
+  }
+
 
   agregarPersona(): void {
     this.router.navigate(['admin/personas/nuevo']);

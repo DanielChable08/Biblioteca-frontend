@@ -1,6 +1,4 @@
-
 <form [formGroup]="ejemplarForm" (ngSubmit)="onSubmit()" class="form-container">
-  
   <div class="field" *ngIf="mostrarSelectorLibro">
     <label for="libro">
       <i class="pi pi-book"></i> Libro
@@ -18,22 +16,40 @@
       [showClear]="true"
       class="form-comp"
     ></p-select>
-    <small class="p-error" *ngIf="isFieldInvalid('idLibro')">
-      Debes seleccionar un libro.
-    </small>
+    <div
+      class="error-msg text red text-sm flex flex-column"
+      [@dropIn]
+      *ngIf="
+        (ejemplarForm.get('idLibro')?.dirty || isSubmitting) && ejemplarForm.get('idLibro')?.invalid
+      "
+    >
+      <small *ngIf="ejemplarForm.get('idLibro')?.errors?.['required']"
+        >Especificar un libro es obligatorio.</small
+      >
+    </div>
   </div>
 
   <div class="field">
-    <label for="ubicacion">
-      <i class="pi pi-map-marker"></i> Ubicación
-    </label>
-    <input 
-      id="ubicacion" 
-      pInputText 
-      class="form-comp" 
-      formControlName="ubicacion" 
-      placeholder="Ej: Estante A-3, Nivel 2" 
+    <label for="ubicacion"> <i class="pi pi-map-marker"></i> Ubicación </label>
+    <input
+      id="ubicacion"
+      pInputText
+      class="form-comp"
+      formControlName="ubicacion"
+      placeholder="Ej: Estante A-3, Nivel 2"
     />
+    <div
+      class="error-msg text red text-sm flex flex-column"
+      [@dropIn]
+      *ngIf="
+        (ejemplarForm.get('ubicacion')?.dirty || isSubmitting) &&
+        ejemplarForm.get('ubicacion')?.invalid
+      "
+    >
+      <small *ngIf="ejemplarForm.get('ubicacion')?.errors?.['minlength']"
+        >La ubicación debe tener al menos 2 caracteres.</small
+      >
+    </div>
   </div>
 
   <div class="field">
@@ -44,6 +60,7 @@
     <div class="p-inputgroup">
       <p-select
         id="estado"
+        [showClear]="true"
         [options]="condiciones"
         formControlName="idCondicionFisicaEjemplar"
         optionLabel="nombre"
@@ -61,9 +78,18 @@
         tooltipPosition="top"
       ></button>
     </div>
-    <small class="p-error" *ngIf="isFieldInvalid('idCondicionFisicaEjemplar')">
-      La condición física es obligatoria.
-    </small>
+    <div
+      class="error-msg text red text-sm flex flex-column"
+      [@dropIn]
+      *ngIf="
+        (ejemplarForm.get('idCondicionFisicaEjemplar')?.dirty || isSubmitting) &&
+        ejemplarForm.get('idCondicionFisicaEjemplar')?.invalid
+      "
+    >
+      <small *ngIf="ejemplarForm.get('idCondicionFisicaEjemplar')?.errors?.['required']"
+        >Especificar la condición del ejemplar es obligatorio.</small
+      >
+    </div>
   </div>
 
   <div class="field">
@@ -74,6 +100,7 @@
     <div class="p-inputgroup">
       <p-select
         id="estado"
+        [showClear]="true"
         [options]="estados"
         formControlName="idEstadoEjemplar"
         optionLabel="nombre"
@@ -91,26 +118,35 @@
         tooltipPosition="top"
       ></button>
     </div>
-    <small class="p-error" *ngIf="isFieldInvalid('idEstadoEjemplar')">
-      El estado del ejemplar es obligatorio.
-    </small>
+    <div
+      class="error-msg text red text-sm flex flex-column"
+      [@dropIn]
+      *ngIf="
+        (ejemplarForm.get('idEstadoEjemplar')?.dirty || isSubmitting) &&
+        ejemplarForm.get('idEstadoEjemplar')?.invalid
+      "
+    >
+      <small *ngIf="ejemplarForm.get('idEstadoEjemplar')?.errors?.['required']"
+        >Especificar el estado del ejemplar es obligatorio.</small
+      >
+    </div>
   </div>
 
   <div class="form-footer">
-    <button 
-      type="button" 
-      pButton 
-      class="btn-info text" 
+    <button
+      type="button"
+      pButton
+      class="btn-info text"
       (click)="cancelar()"
       [disabled]="isSubmitting"
     >
       Cancelar
     </button>
-    <button 
-      type="submit" 
-      pButton 
-      icon="pi pi-check" 
-      class="btn-primary" 
+    <button
+      type="submit"
+      pButton
+      icon="pi pi-check"
+      class="btn-primary"
       [loading]="isSubmitting"
       [disabled]="ejemplarForm.invalid || isSubmitting"
     >
@@ -120,7 +156,9 @@
 </form>
 
 <p-dialog
-  [header]="catalogoSiendoAgregado === 'condicion' ? 'Agregar Nueva Condición' : 'Agregar Nuevo Estado'"
+  [header]="
+    catalogoSiendoAgregado === 'condicion' ? 'Agregar Nueva Condición' : 'Agregar Nuevo Estado'
+  "
   [(visible)]="displayCatalogoDialog"
   [draggable]="false"
   [modal]="true"
@@ -134,41 +172,39 @@
         Nombre
         <label class="text red">*</label>
       </label>
-      <input 
-        id="nuevoNombre" 
-        pInputText 
-        formControlName="nombre" 
-        autofocus 
-        placeholder="Ingresa el nombre"
+      <input
+        id="nuevoNombre"
+        pInputText
+        maxlength="50"
+        formControlName="nombre"
+        placeholder="Ingrese el nombre"
         class="form-comp"
       />
-      <small class="p-error" *ngIf="catalogoForm.get('nombre')?.invalid && catalogoForm.get('nombre')?.touched">
-        <span *ngIf="catalogoForm.get('nombre')?.hasError('required')">
-          El nombre es obligatorio.
-        </span>
-        <span *ngIf="catalogoForm.get('nombre')?.hasError('minlength')">
-          Mínimo 2 caracteres.
-        </span>
-        <span *ngIf="catalogoForm.get('nombre')?.hasError('maxlength')">
-          Máximo 50 caracteres.
-        </span>
-      </small>
+      <div
+        class="special-error-msg text red text-sm flex flex-column mt-1"
+        [class.visible]="
+          (catalogoForm.get('nombre')?.dirty || isSubmitting) && catalogoForm.get('nombre')?.invalid
+        "
+      >
+        <small *ngIf="catalogoForm.get('nombre')?.errors?.['required']"
+          >El nombre es obligatorio.</small
+        >
+        <small *ngIf="catalogoForm.get('nombre')?.errors?.['minlength']"
+          >El nombre debe tener al menos 2 caracteres.</small
+        >
+      </div>
     </div>
 
     <div class="form-footer">
-      <button 
-        type="button" 
-        pButton 
-        class="btn-info text" 
-        (click)="displayCatalogoDialog = false"
-      >
+      <button type="button" pButton class="btn-info text" (click)="displayCatalogoDialog = false">
         Cancelar
       </button>
-      <button 
-        type="submit" 
-        pButton 
-        icon="pi pi-check" 
+      <button
+        type="submit"
+        pButton
+        icon="pi pi-check"
         class="btn-primary"
+        [loading]="isSubmitting"
         [disabled]="catalogoForm.invalid"
       >
         Guardar

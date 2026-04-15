@@ -104,6 +104,7 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
       width: '50vw',
       contentStyle: { overflow: 'auto' },
       baseZIndex: 10000,
+      modal: true,
       data: { messageService: this.messageService }
     });
 
@@ -118,6 +119,7 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
       width: '50vw',
       contentStyle: { overflow: 'auto' },
       baseZIndex: 10000,
+      modal: true,
       data: { ejemplarUuid: ejemplar.uuid, messageService: this.messageService }
     });
 

@@ -55,6 +55,20 @@ p-select {
   border-top: 1px solid var(--slate-200);
 }
 
+.special-error-msg {
+  opacity: 0;
+  transform: translateY(-4px);
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity .3s ease, transform .3s ease, max-height .3s ease;
+}
+
+.special-error-msg.visible {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 80px;
+}
+
 @media (max-width: 600px) {
   .form-container {
     max-width: 95vw;
