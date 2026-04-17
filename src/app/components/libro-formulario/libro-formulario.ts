@@ -20,7 +20,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
 import { Autor, Catalogo, Libro, Areas } from '../../models/biblioteca';
-import { environment } from '../../../environments/enviroment';
+import { environment } from '../../../environments/environment';
 
 type TipoCatalogo = 'autor' | 'categoria' | 'editorial' | 'idioma' | 'tipoLibro' | 'area';
 
@@ -361,7 +361,28 @@ export default class LibroFormularioComponent implements OnInit {
         setTimeout(() => this.router.navigate(['/admin']), 1500);
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo completar la operación.' });
+        let errorDetail = 'No se pudo guardar el libro';
+
+        if (err.status === 409) {
+          errorDetail = 'Ya existe un libro con estos datos';
+        } else if (err.status === 404) {
+          errorDetail = 'Libro no encontrado';
+        } else if (err.status === 400) {
+          if (err.error && typeof err.error === 'object') {
+            const errores = Object.values(err.error).join(', ');
+            errorDetail = errores;
+          } else {
+            errorDetail = err.error?.message || 'Datos inválidos';
+          }
+        } else if (err.error?.message) {
+          errorDetail = err.error.message;
+        }
+
+        this.messageService?.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorDetail
+        });
       }
     });
   }

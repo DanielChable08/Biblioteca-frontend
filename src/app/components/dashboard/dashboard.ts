@@ -21,7 +21,7 @@ import { EjemplarService } from '../../services/ejemplar.service';
 import { AuthService } from '../../services/auth.service';
 import { SecureImagePipe } from '../../pipes/secure-image.pipe';
 import { Libro, Catalogo, Autor } from '../../models/biblioteca';
-import { environment } from '../../../environments/enviroment';
+import { environment } from '../../../environments/environment';
 
 import LibroDetalleComponent from '../libro-detalle/libro-detalle';
 
