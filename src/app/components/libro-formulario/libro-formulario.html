@@ -145,7 +145,7 @@
           <div class="field">
             <label for="categoria">Categoría <label class="text red">*</label></label>
             <div class="p-inputgroup">
-              <p-select id="categoria" dataKey="id" class="form-comp full-w" [options]="categorias" formControlName="idCategoria" optionLabel="nombre" optionValue="id" placeholder="Seleccionar categoría"></p-select>
+              <p-select id="categoria" dataKey="id" class="form-comp full-w" [filter]="true" [options]="categorias" formControlName="idCategoria" optionLabel="nombre" optionValue="id" placeholder="Seleccionar categoría"></p-select>
               <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('categoria')" pTooltip="Agregar categoría" tooltipPosition="top"></button>
             </div>
             <div class="error-msg text red" *ngIf="(libroForm.get('idCategoria')?.dirty || isSubmitting) && libroForm.get('idCategoria')?.invalid">
@@ -156,7 +156,7 @@
           <div class="field">
             <label for="editorial">Editorial <label class="text red">*</label></label>
             <div class="p-inputgroup">
-              <p-select id="editorial" [options]="editoriales" formControlName="idEditorial" class="form-comp full-w" optionLabel="nombre" optionValue="id" placeholder="Seleccionar editorial"></p-select>
+              <p-select id="editorial" [options]="editoriales" [filter]="true" formControlName="idEditorial" class="form-comp full-w" optionLabel="nombre" optionValue="id" placeholder="Seleccionar editorial"></p-select>
               <button type="button" pButton icon="pi pi-plus" class="btn-primary" (click)="abrirModalAgregar('editorial')" pTooltip="Agregar editorial" tooltipPosition="top"></button>
             </div>
             <div class="error-msg text red" *ngIf="(libroForm.get('idEditorial')?.dirty || isSubmitting) && libroForm.get('idEditorial')?.invalid">
