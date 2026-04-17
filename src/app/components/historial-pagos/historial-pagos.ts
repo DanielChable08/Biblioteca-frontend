@@ -11,7 +11,7 @@ import { TagModule } from 'primeng/tag';
 import { CardModule } from 'primeng/card';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { environment } from '../../../environments/enviroment';
+import { environment } from '../../../environments/environment';
 
 interface Pago {
   id: number;
