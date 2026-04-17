@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angula
 import { Router, ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { finalize, switchMap, forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators'; 
+import { catchError } from 'rxjs/operators';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 import { ButtonModule } from 'primeng/button';
@@ -89,7 +89,7 @@ export default class LibroFormularioComponent implements OnInit {
       idAutores: [[], Validators.required],
       idAreas: [[], Validators.required],
       resumen: [''],
-      isbn: ['', [Validators.pattern(/^\d{10}$|^\d{13}$/)]],
+      isbn: ['', [Validators.pattern(/^(?:\d{9}X|\d{10}|\d{13})$/)]],
       isbnDisplay: [''],
       anho: [new Date().getFullYear(), [Validators.required, Validators.pattern('^[0-9]{4}$')]],
       paginas: [null, [Validators.required, Validators.min(1)]],
@@ -108,7 +108,14 @@ export default class LibroFormularioComponent implements OnInit {
     });
 
     this.libroForm.get('isbnDisplay')!.valueChanges.subscribe((val: string) => {
-      const raw = (val || '').replace(/\D/g, '');
+      let raw = (val || '').toUpperCase().replace(/[^0-9X]/g, '');
+
+      if (raw.includes('X')) {
+        raw = raw.replace(/X/g, '');
+        if (raw.length < 10) {
+          raw += 'X';
+        }
+      }
       let formatted = '';
       if (raw.length <= 10) {
         if (raw.length > 0) formatted += raw.substring(0, 1);
@@ -116,11 +123,12 @@ export default class LibroFormularioComponent implements OnInit {
         if (raw.length > 4) formatted += '-' + raw.substring(4, 9);
         if (raw.length > 9) formatted += '-' + raw.substring(9, 10);
       } else {
-        if (raw.length > 0) formatted += raw.substring(0, 3);
-        if (raw.length > 3) formatted += '-' + raw.substring(3, 4);
-        if (raw.length > 4) formatted += '-' + raw.substring(4, 7);
-        if (raw.length > 7) formatted += '-' + raw.substring(7, 12);
-        if (raw.length > 12) formatted += '-' + raw.substring(12, 13);
+        const digitsOnly = raw.replace(/X/g, '');
+        if (digitsOnly.length > 0) formatted += digitsOnly.substring(0, 3);
+        if (digitsOnly.length > 3) formatted += '-' + digitsOnly.substring(3, 4);
+        if (digitsOnly.length > 4) formatted += '-' + digitsOnly.substring(4, 7);
+        if (digitsOnly.length > 7) formatted += '-' + digitsOnly.substring(7, 12);
+        if (digitsOnly.length > 12) formatted += '-' + digitsOnly.substring(12, 13);
       }
       if (val !== formatted) {
         this.libroForm.get('isbnDisplay')!.setValue(formatted, { emitEvent: false });
@@ -195,7 +203,7 @@ export default class LibroFormularioComponent implements OnInit {
   private fillForm(libro: any, autores: any[], areasLibro: any[]): void {
     const autoresIds = autores.map(a => a.id);
     const areasIds = areasLibro.map(a => a.id);
-    
+
     this.libroForm.patchValue({
       titulo: libro.titulo,
       resumen: libro.resumen || '',
@@ -266,9 +274,9 @@ export default class LibroFormularioComponent implements OnInit {
         const nuevoItem = response?.data || response;
 
         if (!nuevoItem || !nuevoItem.id) {
-           this.messageService.add({ severity: 'error', summary: 'Error de Servidor', detail: 'El dato se creó, pero el servidor no devolvió su ID.' });
-           this.displayCatalogoDialog = false;
-           return;
+          this.messageService.add({ severity: 'error', summary: 'Error de Servidor', detail: 'El dato se creó, pero el servidor no devolvió su ID.' });
+          this.displayCatalogoDialog = false;
+          return;
         }
 
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Agregado correctamente.' });
@@ -347,7 +355,7 @@ export default class LibroFormularioComponent implements OnInit {
         const areasValidas = (fv.idAreas || []).filter((id: any) => id != null);
 
         const autoresPayload = autoresValidos.map((id: number) => ({ idAutor: id }));
-        
+
         const areasPayload = areasValidas.map((id: number) => ({ idAutor: id }));
 
         return this.bookService.addAutoresToLibro(libro.uuid, autoresPayload).pipe(
