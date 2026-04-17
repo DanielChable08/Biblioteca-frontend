@@ -32,7 +32,7 @@ import { Libro, Catalogo, Autor, Ejemplar, Areas } from '../../models/biblioteca
 import LibroFormularioComponent from '../libro-formulario/libro-formulario';
 import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
 import LibroDetalleComponent from '../libro-detalle/libro-detalle';
-import { environment } from '../../../environments/enviroment';
+import { environment } from '../../../environments/environment';
 
 type CategoriaKey = 'Todas' | string;
 
@@ -64,25 +64,25 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   libros: Libro[] = [];
   allLibros: Libro[] = [];
   categorias: Catalogo[] = [];
-  areasCat: Areas[] = []; 
+  areasCat: Areas[] = [];
   librosSeleccionados: Libro[] = [];
 
   vistaActual: 'cards' | 'tabla' = 'cards';
   categoriaSeleccionada: CategoriaKey = 'Todas';
-  areasSeleccionadas: Areas[] = []; 
-  
+  areasSeleccionadas: Areas[] = [];
+
   terminoBusqueda = '';
   loading = true;
   dropdownOpen = false;
   areasDropdownOpen = false;
-  
+
   contadoresCategoria: { [key: string]: number } = {};
   catalogMenuItems: MenuItem[] = [];
   currentFullName: string = '';
   currentUserRole: string = '';
   currentUserInitials: string = '';
   mostrarStats = true;
-  
+
   first: number = 0;
   rows: number = 15;
 
@@ -91,14 +91,14 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   private readonly IMAGES_BASE_URL = environment.plainURL + '/assets/img/';
 
   get isAdmin(): boolean {
-      return this.authService.isAdmin();
+    return this.authService.isAdmin();
   }
 
   ngOnInit(): void {
     this.loadUserInfo();
     this.loadInitialData();
     this.setupCatalogMenu();
-    
+
     this.ejemplaresSubscription = this.sharedDataService.ejemplaresActualizados$.subscribe(
       (actualizado) => {
         if (actualizado) this.loadInitialData();
@@ -120,12 +120,14 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   }
 
   onPageChange(event: any) {
-      this.first = event.first;
-      this.rows = event.rows;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.first = event.first;
+    this.rows = event.rows;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   setupCatalogMenu(): void {
+    const userRole = this.authService.getRoleName();
+
     const items: MenuItem[] = [
       { label: 'Gestionar Catálogos', styleClass: 'menu-header' },
       { separator: true },
@@ -140,7 +142,12 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       { label: 'Estados de Ejemplar', icon: 'pi pi-check-circle', command: () => this.router.navigate(['/admin/estados']) },
       { label: 'Condición Física', icon: 'pi pi-clipboard', command: () => this.router.navigate(['/admin/condiciones']) },
       { separator: true },
-      { label: 'Multas', icon: 'pi pi-receipt', command: () => this.router.navigate(['/admin/multas']) },     
+      { label: 'Préstamos', icon: 'pi pi-book', command: () => this.router.navigate(['/admin/prestamos']) },
+      { label: 'Multas', icon: 'pi pi-receipt', command: () => this.router.navigate(['/admin/multas']) },
+      { label: 'Pagos', icon: 'pi pi-money-bill', visible: userRole === 'Administrador', command: () => this.router.navigate(['/admin/pagos']) },
+      { separator: true, visible: userRole === 'Administrador' },
+      { label: 'Personas', icon: 'pi pi-users', visible: userRole === 'Administrador', command: () => this.router.navigate(['/admin/personas']) },
+      { label: 'Usuarios', icon: 'pi pi-address-book', visible: userRole === 'Administrador', command: () => this.router.navigate(['/admin/usuarios']) },
       { separator: true }
     ];
 
@@ -160,12 +167,12 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     forkJoin({
       libros: this.bookService.getAllLibrosAdmin().pipe(
         catchError(err => {
-            console.error('Error cargando libros:', err);
-            return of([]); 
+          console.error('Error cargando libros:', err);
+          return of([]);
         })
       ),
       categorias: this.catalogService.getCategorias().pipe(catchError(() => of([]))),
-      areasCat: this.catalogService.getAreas().pipe(catchError(() => of([]))), 
+      areasCat: this.catalogService.getAreas().pipe(catchError(() => of([]))),
       ejemplares: this.ejemplarService.getEjemplares().pipe(catchError(() => of([]))),
       estados: this.catalogService.getEstadosEjemplares().pipe(catchError(() => of([])))
     }).pipe(
@@ -175,17 +182,17 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
         const libroDetallesRequests = libros.map(libro =>
           forkJoin({
             autores: this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([]))),
-            areas: this.bookService.getAreasForLibro(libro.uuid).pipe(catchError(() => of([]))) 
+            areas: this.bookService.getAreasForLibro(libro.uuid).pipe(catchError(() => of([])))
           })
         );
 
         return forkJoin(libroDetallesRequests).pipe(
           map(detallesArray => {
             const librosCompletos = libros.map((libro, index) => {
-              
+
               let imagenCorregida = libro.imagen;
               if (libro.imagen && !libro.imagen.startsWith('http')) {
-                  imagenCorregida = `${this.IMAGES_BASE_URL}${libro.imagen}`;
+                imagenCorregida = `${this.IMAGES_BASE_URL}${libro.imagen}`;
               }
 
               const categoriaDelLibro = categorias.find(cat => cat.id === libro.idCategoria);
@@ -200,21 +207,21 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
 
               return {
                 ...libro,
-                imagen: imagenCorregida, 
+                imagen: imagenCorregida,
                 categoria: categoriaDelLibro,
                 autores: detallesArray[index].autores,
                 areas: detallesArray[index].areas,
                 ejemplares: ejemplaresDelLibro,
-                activo: estadoDesdeBack !== false 
+                activo: estadoDesdeBack !== false
               };
             });
 
             let librosPermitidos = librosCompletos;
             if (!this.isAdmin) {
-                librosPermitidos = librosCompletos.filter(libro => libro.activo === true);
+              librosPermitidos = librosCompletos.filter(libro => libro.activo === true);
             }
 
-            librosPermitidos.sort((a, b) => b.id - a.id); 
+            librosPermitidos.sort((a, b) => b.id - a.id);
 
             return { libros: librosPermitidos, categorias, areasCat };
           })
@@ -259,7 +266,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     const reparacion = this.getEjemplaresReparacion(libro);
     const total = libro.ejemplares?.length || 0;
     if (total === 0) return 'Sin ejemplares';
-    
+
     let html = '<div style="text-align: left; font-size: 13px;">';
     html += '<strong style="display: block; margin-bottom: 8px; color: #D4AF37;">Desglose de ejemplares</strong>';
     if (disponibles > 0) html += `<div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;"><i class="pi pi-check-circle" style="color: #27ae60; font-size: 14px;"></i><span style="flex: 1;">Disponibles:</span><strong>${disponibles}</strong></div>`;
@@ -282,51 +289,51 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   logout(): void { this.authService.logout(); }
 
   filtrarLibros(): void {
-      let resultado = this.allLibros;
-      
-      if (this.categoriaSeleccionada !== 'Todas') {
-        resultado = resultado.filter(libro => libro.categoria?.nombre === this.categoriaSeleccionada);
-      }
-      
-      if (this.areasSeleccionadas && this.areasSeleccionadas.length > 0) {
-        const nombresAreasSeleccionadas = this.areasSeleccionadas.map(a => a.nombre);
-        
-        resultado = resultado.filter(libro => {
-           const areasLibro = (libro as any).areas || [];
-           if (areasLibro.length === 0) return false; 
-           const nombresAreasDelLibro = areasLibro.map((a: any) => a?.nombre || a?.area?.nombre || (typeof a === 'string' ? a : ''));
-           return nombresAreasDelLibro.some((nombre: string) => nombresAreasSeleccionadas.includes(nombre));
-        });
-      }
-      
-      if (this.terminoBusqueda) {
-        const termino = this.terminoBusqueda.toLowerCase().trim();
-        resultado = resultado.filter(libro =>
-          (libro.titulo || '').toLowerCase().includes(termino) ||
-          this.getAutoresAsString(libro.autores).toLowerCase().includes(termino) ||
-          this.getAreasAsString((libro as any).areas).toLowerCase().includes(termino) ||
-          (libro.isbn || '').toLowerCase().includes(termino)
-        );
-      }
-      
-      this.libros = resultado;
-      this.first = 0; 
-      this.librosSeleccionados = [];
+    let resultado = this.allLibros;
+
+    if (this.categoriaSeleccionada !== 'Todas') {
+      resultado = resultado.filter(libro => libro.categoria?.nombre === this.categoriaSeleccionada);
+    }
+
+    if (this.areasSeleccionadas && this.areasSeleccionadas.length > 0) {
+      const nombresAreasSeleccionadas = this.areasSeleccionadas.map(a => a.nombre);
+
+      resultado = resultado.filter(libro => {
+        const areasLibro = (libro as any).areas || [];
+        if (areasLibro.length === 0) return false;
+        const nombresAreasDelLibro = areasLibro.map((a: any) => a?.nombre || a?.area?.nombre || (typeof a === 'string' ? a : ''));
+        return nombresAreasDelLibro.some((nombre: string) => nombresAreasSeleccionadas.includes(nombre));
+      });
+    }
+
+    if (this.terminoBusqueda) {
+      const termino = this.terminoBusqueda.toLowerCase().trim();
+      resultado = resultado.filter(libro =>
+        (libro.titulo || '').toLowerCase().includes(termino) ||
+        this.getAutoresAsString(libro.autores).toLowerCase().includes(termino) ||
+        this.getAreasAsString((libro as any).areas).toLowerCase().includes(termino) ||
+        (libro.isbn || '').toLowerCase().includes(termino)
+      );
+    }
+
+    this.libros = resultado;
+    this.first = 0;
+    this.librosSeleccionados = [];
   }
 
   buscar(): void { this.filtrarLibros(); }
   filtrarCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.filtrarLibros(); }
-  
-  toggleDropdown(event?: Event): void { 
-    if(event) event.stopPropagation();
-    this.dropdownOpen = !this.dropdownOpen; 
-    if (this.dropdownOpen) this.areasDropdownOpen = false; 
+
+  toggleDropdown(event?: Event): void {
+    if (event) event.stopPropagation();
+    this.dropdownOpen = !this.dropdownOpen;
+    if (this.dropdownOpen) this.areasDropdownOpen = false;
   }
-  
+
   toggleAreasDropdown(event: Event): void {
     event.stopPropagation();
     this.areasDropdownOpen = !this.areasDropdownOpen;
-    if (this.areasDropdownOpen) this.dropdownOpen = false; 
+    if (this.areasDropdownOpen) this.dropdownOpen = false;
   }
 
   selectCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.dropdownOpen = false; this.filtrarLibros(); }
@@ -341,9 +348,9 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     const index = this.areasSeleccionadas.findIndex(a => a.id === area.id);
     if (index > -1) {
-        this.areasSeleccionadas.splice(index, 1);
+      this.areasSeleccionadas.splice(index, 1);
     } else {
-        this.areasSeleccionadas.push(area);
+      this.areasSeleccionadas.push(area);
     }
     this.filtrarLibros();
   }
@@ -403,14 +410,14 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   }
 
   editarLibro(libro: Libro): void { this.router.navigate(['/admin/libros/editar', libro.uuid]); }
-  
+
   verLibro(libro: Libro): void {
     this.dialogService.open(LibroDetalleComponent, {
       header: 'Detalles de ' + libro.titulo,
       width: '75%',
       contentStyle: { "max-height": "90vh", "overflow": "auto" },
       baseZIndex: 10000,
-      data: { uuid: libro.uuid, imagenUrl: libro.imagen, estaActivo: libro.activo},
+      data: { uuid: libro.uuid, imagenUrl: libro.imagen, estaActivo: libro.activo },
       modal: true,
       closable: true,
     });
@@ -482,10 +489,10 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
 
   procesarMultiples(activar: boolean): void {
     if (!this.librosSeleccionados || this.librosSeleccionados.length === 0) return;
-    
-    const mensaje = activar 
-        ? `¿Desea reactivar los ${this.librosSeleccionados.length} libros seleccionados?` 
-        : `¿Desea desactivar los ${this.librosSeleccionados.length} libros seleccionados?`;
+
+    const mensaje = activar
+      ? `¿Desea reactivar los ${this.librosSeleccionados.length} libros seleccionados?`
+      : `¿Desea desactivar los ${this.librosSeleccionados.length} libros seleccionados?`;
     const icon = activar ? 'pi pi-refresh text-green-500' : 'pi pi-exclamation-triangle text-red-500';
     const acceptClass = activar ? 'p-button-success' : 'p-button-danger';
 
@@ -500,7 +507,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
         this.loading = true;
-        const peticiones = this.librosSeleccionados.map(libro => 
+        const peticiones = this.librosSeleccionados.map(libro =>
           activar ? this.bookService.reactivarLibro(libro.uuid) : this.bookService.deleteLibro(libro.uuid)
         );
 

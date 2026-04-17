@@ -12,7 +12,7 @@ import { ToastModule } from 'primeng/toast';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
-import { environment } from '../../../environments/enviroment';
+import { environment } from '../../../environments/environment';
 
 interface Pago {
   id: number;
