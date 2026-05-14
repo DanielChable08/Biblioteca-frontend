@@ -1,5 +1,5 @@
 <form [formGroup]="ejemplarForm" (ngSubmit)="onSubmit()" class="form-container">
-  <div class="field" *ngIf="mostrarSelectorLibro">
+  <div class="field" *ngIf="mostrarSelectorLibro && !isEditMode">
     <label for="libro">
       <i class="pi pi-book"></i> Libro
       <label class="text red">*</label>
@@ -15,7 +15,20 @@
       filterBy="titulo"
       [showClear]="true"
       class="form-comp"
-    ></p-select>
+    >
+      <ng-template let-libro #item>
+        <div>
+          {{ (libro.titulo | truncate: 40) + ' | ' }}
+          <span *ngFor="let autor of libro.autores; let last = last">
+            {{ autor.nombre + (autor.apPaterno ? ' ' : '')
+            }}{{ (autor.apPaterno ?? '') + (autor.apMaterno ? ' ' : '') }}{{ autor.apMaterno ?? ''
+            }}{{ !last ? ',' : '' }}
+          </span>
+          <br>
+          <span class="text-sm">{{ libro.edicion ?? 'S/E' }}</span>
+        </div>
+      </ng-template>
+    </p-select>
     <div
       class="error-msg text red text-sm flex flex-column"
       [@dropIn]

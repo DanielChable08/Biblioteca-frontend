@@ -19,6 +19,7 @@ import { PagoService } from '../../services/pago.service';
 import { PrestamoService } from '../../services/prestamo.service';
 import { PrintTicketService } from '../../services/print-ticket.service';
 import { PagoMultaPayload } from '../../models/biblioteca';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-multa-pago',
@@ -46,6 +47,7 @@ export class MultaPagoComponent implements OnInit {
   private router = inject(Router);
   private messageService = inject(MessageService);
   private printService = inject(PrintTicketService);
+  private authService = inject(AuthService);
 
   multas: any[] = [];
   multasSeleccionadas: any[] = [];
@@ -60,57 +62,57 @@ export class MultaPagoComponent implements OnInit {
     this.loadMultasPendientes();
   }
 
-loadMultasPendientes(): void {
-  this.loading = true;
-  forkJoin({
-    multas: this.multaService.getMultas(),
-    estados: this.multaService.getEstadosMultas(),
-    motivos: this.multaService.getMotivosMultas(),
-    personas: this.prestamoService.getPersonas()
-  }).pipe(
-    map(({ multas, estados, motivos, personas }) => {
-      const personasMap = new Map(personas.map(p => [p.id, p]));
-      
-      return multas
-        .filter(m => {
-          const estado = estados.find(e => e.id === m.idEstadoMulta);
-          return estado?.nombre === 'Emitida' || estado?.nombre === 'Pendiente';
-        })
-        .map(m => ({
-          ...m,
-          estadoMulta: estados.find(e => e.id === m.idEstadoMulta),
-          motivoMulta: motivos.find(mo => mo.id === m.idMotivoMulta),
-          lector: m.idPersona ? personasMap.get(m.idPersona) : null,
-          seleccionada: false
-        }));
-    }),
-    finalize(() => this.loading = false)
-  ).subscribe({
-    next: (multasPendientes) => {
-      this.multas = multasPendientes;
-      
-      const multaId = sessionStorage.getItem('multaIdSeleccionada');
-      if (multaId) {
-        setTimeout(() => {
-          const multa = this.multas.find(m => m.id === +multaId);
-          if (multa) {
-            multa.seleccionada = true;
-            this.actualizarTotal();
-          }
-          sessionStorage.removeItem('multaIdSeleccionada');
-        }, 100);
+  loadMultasPendientes(): void {
+    this.loading = true;
+    forkJoin({
+      multas: this.multaService.getMultas(),
+      estados: this.multaService.getEstadosMultas(),
+      motivos: this.multaService.getMotivosMultas(),
+      personas: this.prestamoService.getPersonas()
+    }).pipe(
+      map(({ multas, estados, motivos, personas }) => {
+        const personasMap = new Map(personas.map(p => [p.id, p]));
+
+        return multas
+          .filter(m => {
+            const estado = estados.find(e => e.id === m.idEstadoMulta);
+            return estado?.nombre === 'Emitida' || estado?.nombre === 'Pendiente';
+          })
+          .map(m => ({
+            ...m,
+            estadoMulta: estados.find(e => e.id === m.idEstadoMulta),
+            motivoMulta: motivos.find(mo => mo.id === m.idMotivoMulta),
+            lector: m.idPersona ? personasMap.get(m.idPersona) : null,
+            seleccionada: false
+          }));
+      }),
+      finalize(() => this.loading = false)
+    ).subscribe({
+      next: (multasPendientes) => {
+        this.multas = multasPendientes;
+
+        const multaId = sessionStorage.getItem('multaIdSeleccionada');
+        if (multaId) {
+          setTimeout(() => {
+            const multa = this.multas.find(m => m.id === +multaId);
+            if (multa) {
+              multa.seleccionada = true;
+              this.actualizarTotal();
+            }
+            sessionStorage.removeItem('multaIdSeleccionada');
+          }, 100);
+        }
+      },
+      error: (err: any) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar las multas.'
+        });
+        console.error('Error al cargar multas:', err);
       }
-    },
-    error: (err: any) => {
-      this.messageService.add({ 
-        severity: 'error', 
-        summary: 'Error', 
-        detail: 'No se pudieron cargar las multas.' 
-      });
-      console.error('Error al cargar multas:', err);
-    }
-  });
-}
+    });
+  }
 
 
   actualizarTotal(): void {
@@ -138,72 +140,77 @@ loadMultasPendientes(): void {
     return `${multa.lector.nombre} ${multa.lector.apPaterno || ''}`.trim();
   }
 
-procesarPago(): void {
-  if (this.multasSeleccionadas.length === 0) {
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Advertencia',
-      detail: 'Debes seleccionar al menos una multa para pagar.'
-    });
-    return;
-  }
-
-  if (this.montoRecibido < this.totalSeleccionado) {
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Monto Insuficiente',
-      detail: `El monto recibido debe ser al menos $${this.totalSeleccionado.toFixed(2)}`
-    });
-    return;
-  }
-
-  const lectorId = this.multasSeleccionadas[0]?.idPersona;
-  
-  if (!lectorId) {
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'No se pudo identificar al lector de las multas.'
-    });
-    return;
-  }
-
-  this.procesando = true;
-
-  const cajeroId = 1;
-  const pagoData: PagoMultaPayload = {
-    montoRecibido: this.montoRecibido,
-    cajero: cajeroId,
-    lectorPago: lectorId,
-    idsMultas: this.multasSeleccionadas.map(m => m.id)
-  };
-
-  this.pagoService.registrarPago(pagoData).pipe(
-    finalize(() => this.procesando = false)
-  ).subscribe({
-    next: () => {
+  procesarPago(): void {
+    if (this.multasSeleccionadas.length === 0) {
       this.messageService.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: `Pago registrado correctamente. Cambio: $${this.cambio.toFixed(2)}`
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Debes seleccionar al menos una multa para pagar.'
       });
+      return;
+    }
 
-      this.imprimirTicketPago();
+    if (this.montoRecibido < this.totalSeleccionado) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Monto Insuficiente',
+        detail: `El monto recibido debe ser al menos $${this.totalSeleccionado.toFixed(2)}`
+      });
+      return;
+    }
 
-      setTimeout(() => {
-        this.router.navigate(['/admin/multas']);
-      }, 2000);
-    },
-    error: (err) => {
-      console.error('Error al registrar pago:', err);
+    const lectorId = this.multasSeleccionadas[0]?.idPersona;
+
+    if (!lectorId) {
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'No se pudo registrar el pago.'
+        detail: 'No se pudo identificar al lector de las multas.'
       });
+      return;
     }
-  });
-}
+
+    this.procesando = true;
+
+    let cajeroId = 1;
+    const userData = sessionStorage.getItem('userData');
+    if (userData) {
+      const user = JSON.parse(userData);
+      cajeroId = user.idPersona || user.id;
+    }
+    const pagoData: PagoMultaPayload = {
+      montoRecibido: this.montoRecibido,
+      cajero: cajeroId,
+      lectorPago: lectorId,
+      idsMultas: this.multasSeleccionadas.map(m => m.id)
+    };
+
+    this.pagoService.registrarPago(pagoData).pipe(
+      finalize(() => this.procesando = false)
+    ).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: `Pago registrado correctamente. Cambio: $${this.cambio.toFixed(2)}`
+        });
+
+        this.imprimirTicketPago();
+
+        setTimeout(() => {
+          this.router.navigate(['/admin/multas']);
+        }, 2000);
+      },
+      error: (err) => {
+        console.error('Error al registrar pago:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo registrar el pago.'
+        });
+      }
+    });
+  }
 
 
   imprimirTicketPago(): void {
@@ -241,8 +248,8 @@ procesarPago(): void {
   }
 
   irAlIndexPagos() {
-  this.router.navigate(['/admin/pagos']);
-  
+    this.router.navigate(['/admin/pagos']);
+
   }
 
 }
