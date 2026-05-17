@@ -92,6 +92,14 @@ export class BookService {
     return this.http.get<Ejemplar[]>(this.ejemplaresUrl);
   }
 
+  getEjemplaresDesactivados(): Observable<Ejemplar[]> {
+    return this.http.get<Ejemplar[]>(`${this.ejemplaresUrl}/desactivados`);
+  }
+
+  getTodosEjemplares(): Observable<Ejemplar[]> {
+    return this.http.get<Ejemplar[]>(`${this.ejemplaresUrl}/todos`);
+  }
+
   getEjemplarByUuid(uuid: string): Observable<Ejemplar> {
     return this.http.get<Ejemplar>(`${this.ejemplaresUrl}/${uuid}`);
   }
@@ -112,6 +120,14 @@ export class BookService {
 
   updateEjemplar(uuid: string, ejemplar: EjemplarPayload): Observable<Ejemplar> {
     return this.http.put<Ejemplar>(`${this.ejemplaresUrl}/${uuid}`, ejemplar);
+  }
+
+  desactivarEjemplar(uuid: string): Observable<void> {
+    return this.http.put<void>(`${this.ejemplaresUrl}/${uuid}/desactivar`, {});
+  }
+
+  reactivarEjemplar(uuid: string): Observable<void> {
+    return this.http.put<void>(`${this.ejemplaresUrl}/${uuid}/reactivar`, {});
   }
 
   deleteEjemplar(uuid: string): Observable<void> {

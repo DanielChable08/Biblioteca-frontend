@@ -50,14 +50,17 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
   private dialogService = inject(DialogService);
 
   ejemplares: any[] = [];
+  ejemplaresDesactivados: any[] = [];
   loading = false;
   globalFilter: string = '';
+  mostrarModalDesactivados = false;
   private dialogRef?: DynamicDialogRef;
 
-  private readonly IMAGES_BASE_URL = environment.plainURL + '/assets/img/'; 
+  private readonly IMAGES_BASE_URL = environment.plainURL + '/assets/img/';
 
   ngOnInit(): void {
     this.loadData();
+    this.loadDeactivatedData();
   }
 
   loadData(): void {
@@ -86,6 +89,44 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (ejemplaresMapeados) => {
         this.ejemplares = ejemplaresMapeados;
+      },
+      error: (err: any) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los ejemplares.'
+        });
+        console.error('Error al cargar ejemplares:', err);
+      }
+    });
+  }
+
+  loadDeactivatedData(): void {
+    this.loading = true;
+    forkJoin({
+      ejemplaresDesactivados: this.bookService.getEjemplaresDesactivados(),
+      libros: this.bookService.getLibros(),
+      estadosEjemplares: this.catalogService.getEstadosEjemplares(),
+      condicionesFisicas: this.catalogService.getCondicionesFisicas()
+    }).pipe(
+      map(({ ejemplaresDesactivados, libros, estadosEjemplares, condicionesFisicas }) => {
+        return ejemplaresDesactivados.map((ejemplar: any) => {
+          const libro = libros.find((l: any) => l.id === ejemplar.idLibro);
+          const estadoEjemplar = estadosEjemplares.find((e: any) => e.id === ejemplar.idEstadoEjemplar);
+          const condicionFisica = condicionesFisicas.find((c: any) => c.id === ejemplar.idCondicionFisicaEjemplar);
+
+          return {
+            ...ejemplar,
+            libro: libro,
+            estadoEjemplar: estadoEjemplar,
+            condicionFisica: condicionFisica
+          };
+        });
+      }),
+      finalize(() => this.loading = false)
+    ).subscribe({
+      next: (ejemplaresMapeados) => {
+        this.ejemplaresDesactivados = ejemplaresMapeados;
       },
       error: (err: any) => {
         this.messageService.add({
@@ -153,10 +194,10 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
     // === LÓGICA DE IMAGEN COPIADA DE BIBLIOTECARIO ===
     // Construimos la URL completa antes de abrir el modal
     let imagenCompleta = ejemplar.libro.imagen;
-    
+
     if (imagenCompleta && !imagenCompleta.startsWith('http')) {
-        // Concatenamos la base URL
-        imagenCompleta = `${this.IMAGES_BASE_URL}${imagenCompleta}`;
+      // Concatenamos la base URL
+      imagenCompleta = `${this.IMAGES_BASE_URL}${imagenCompleta}`;
     }
 
     this.dialogRef = this.dialogService.open(LibroDetalleComponent, {
@@ -170,6 +211,96 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
       },
       modal: true,
       closable: true
+    });
+  }
+
+  desactivarEjemplar(ejemplar: Ejemplar): void {
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de desactivar el ejemplar con código "${ejemplar.codigo}"?`,
+      header: 'Confirmar Desactivación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, desactivar',
+      rejectLabel: 'No',
+      acceptButtonStyleClass: 'p-button-danger custom-accept-button',
+      rejectButtonStyleClass: 'p-button-text custom-reject-button',
+      accept: () => {
+        this.loading = true;
+        this.bookService.desactivarEjemplar(ejemplar.uuid).pipe(
+          finalize(() => this.loading = false)
+        ).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ejemplar desactivado correctamente.' });
+            this.loadData();
+            this.loadDeactivatedData();
+          },
+          error: (err: any) => {
+            let errorDetail = 'No se pudo desactivar el ejemplar.';
+            let errorSummary = 'Error';
+
+            if (err.status === 400) {
+              if (err.error && typeof err.error === 'object') {
+                const errores = Object.values(err.error).join(' ');
+                errorDetail = errores;
+              }
+              errorSummary = 'Conflicto';
+            } else if (err.status === 409) {
+              errorSummary = 'Conflicto';
+              errorDetail = err.error.error;
+            }
+
+            this.messageService?.add({
+              severity: 'error',
+              summary: errorSummary,
+              detail: errorDetail
+            });
+          }
+        });
+      }
+    });
+  }
+
+  reactivarEjemplar(ejemplar: Ejemplar): void {
+    this.confirmationService.confirm({
+      message: `¿Desea reactivar el ejemplar con código "${ejemplar.codigo}"?`,
+      header: 'Confirmar Reactivación',
+      icon: 'pi pi-refresh text-green-500',
+      acceptLabel: 'Sí, reactivar',
+      rejectLabel: 'No',
+      acceptButtonStyleClass: 'p-button-success custom-accept-button',
+      rejectButtonStyleClass: 'p-button-text custom-reject-button',
+      accept: () => {
+        this.loading = true;
+        this.bookService.reactivarEjemplar(ejemplar.uuid).pipe(
+          finalize(() => this.loading = false)
+        ).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ejemplar reactivado correctamente.' });
+            this.loadData();
+            this.loadDeactivatedData();
+          },
+          error: (err: any) => {
+            let errorDetail = 'No se pudo reactivar el ejemplar.';
+            let errorSummary = 'Error';
+
+            if (err.status === 400) {
+              if (err.error && typeof err.error === 'object') {
+                const errores = Object.values(err.error).join(' ');
+                errorDetail = errores;
+              }
+              errorSummary = 'Conflicto';
+            } else if (err.status === 409) {
+              errorSummary = 'Conflicto';
+              errorDetail = err.error.error;
+            }
+
+            this.messageService?.add({
+              severity: 'error',
+              summary: errorSummary,
+              detail: errorDetail
+            });
+          }
+        });
+      }
     });
   }
 
@@ -233,6 +364,14 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
       case 'malo': case 'mala': case 'deteriorado': return 'condicion-mala';
       default: return 'condicion-desconocida';
     }
+  }
+
+  abrirModalDesactivados() {
+    this.mostrarModalDesactivados = true;
+  }
+
+  cerrarModalDesactivados() {
+    this.mostrarModalDesactivados = false;
   }
 
   ngOnDestroy(): void {
