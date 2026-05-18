@@ -49,8 +49,8 @@
               <input
                 pInputText
                 type="text"
-                [(ngModel)]="globalFilter"
-                (input)="applyFilterGlobal(ejemplaresDesactivados, $event)"
+                [(ngModel)]="ocultosFilter"
+                (input)="applyFilterOcultos(ejempDesactivados, $event)"
                 placeholder="Buscar..."
                 class="table-search-input"
               />
@@ -58,7 +58,7 @@
             <p-button
               icon="pi pi-filter-slash"
               styleClass="p-button-outlined clear-filter-button"
-              (click)="clearFilter(ejemplaresDesactivados)"
+              (click)="clearOcultosFilter(ejempDesactivados)"
               pTooltip="Limpiar filtro"
             >
             </p-button>

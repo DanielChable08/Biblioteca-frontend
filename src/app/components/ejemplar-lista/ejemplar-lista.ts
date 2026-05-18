@@ -53,6 +53,7 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
   ejemplaresDesactivados: any[] = [];
   loading = false;
   globalFilter: string = '';
+  ocultosFilter: string = '';
   mostrarModalDesactivados = false;
   private dialogRef?: DynamicDialogRef;
 
@@ -341,6 +342,16 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
 
   clearFilter(table: any): void {
     this.globalFilter = '';
+    table.clear();
+  }
+
+  applyFilterOcultos(table: any, event: Event): void {
+    const filterValue = (event.target as HTMLInputElement).value;
+    table.filterGlobal(filterValue, 'contains');
+  }
+
+  clearOcultosFilter(table: any): void {
+    this.ocultosFilter = '';
     table.clear();
   }
 
