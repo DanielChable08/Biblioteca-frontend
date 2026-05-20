@@ -456,7 +456,27 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
             this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Libro desactivado correctamente.' });
             this.loadInitialData();
           },
-          error: (err: any) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo desactivar el libro.' })
+          error: (err: any) => {
+            let errorDetail = 'No se pudo desactivar el libro.';
+            let errorSummary = 'Error';
+
+            if (err.status === 400) {
+              if (err.error && typeof err.error === 'object') {
+                const errores = Object.values(err.error).join(' ');
+                errorDetail = errores;
+              }
+              errorSummary = 'Conflicto';
+            } else if (err.status === 409) {
+              errorSummary = 'Conflicto';
+              errorDetail = err.error.error;
+            }
+
+            this.messageService?.add({
+              severity: 'error',
+              summary: errorSummary,
+              detail: errorDetail
+            });
+          }
         });
       }
     });

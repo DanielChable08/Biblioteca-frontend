@@ -72,11 +72,12 @@ export class PrestamoService {
     return this.http.get<EstadoEjemplar[]>(`${this.apiUrl}/estados-ejemplares`);
   }
 
-  devolverEjemplares(prestamoUuid: string, detallesIds: number[]): Observable<any> {
+  devolverEjemplares(prestamoUuid: string, detallesIds: number[], diasFestivos: number): Observable<any> {
     const url = `${this.apiUrl}/prestamos/devolucion`;
     const payload = { 
       prestamoUuid: prestamoUuid,
-      detallesIds: detallesIds 
+      detallesIds: detallesIds, 
+      diasFestivos: diasFestivos, 
     };;
     return this.http.post(url, payload, { headers: this.getHeaders() });
   }

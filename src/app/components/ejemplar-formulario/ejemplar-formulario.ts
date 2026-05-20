@@ -15,6 +15,7 @@ import { ToastModule } from 'primeng/toast';
 
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
+import { TruncatePipe } from '../../pipes/truncate.pipe';
 import { Catalogo } from '../../models/biblioteca';
 
 type TipoCatalogoEjemplar = 'condicion' | 'estado';
@@ -30,7 +31,8 @@ type TipoCatalogoEjemplar = 'condicion' | 'estado';
     SelectModule,
     ToastModule,
     DialogModule,
-    TooltipModule
+    TooltipModule,
+    TruncatePipe
   ],
   templateUrl: './ejemplar-formulario.html',
   styleUrls: ['./ejemplar-formulario.css'],
@@ -127,7 +129,7 @@ export default class EjemplarFormularioComponent implements OnInit {
   }
 
   private loadLibros(): void {
-    this.bookService.getLibros().subscribe({
+    this.bookService.getOptionLibros().subscribe({
       next: (data) => {
         this.libros = data;
       },

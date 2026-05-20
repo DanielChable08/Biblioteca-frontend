@@ -9,27 +9,27 @@ export interface Autor {
   uuid: string;
   nombre: string;
   apPaterno?: string;
-  apMaterno?: string; 
+  apMaterno?: string;
   displayName?: string;
 }
 
-export interface Areas extends Catalogo {}
+export interface Areas extends Catalogo { }
 
-export interface Editorial extends Catalogo {}
+export interface Editorial extends Catalogo { }
 
-export interface Idioma extends Catalogo {}
+export interface Idioma extends Catalogo { }
 
-export interface TipoLibro extends Catalogo {}
+export interface TipoLibro extends Catalogo { }
 
-export interface CondicionFisica extends Catalogo {}
+export interface CondicionFisica extends Catalogo { }
 
-export interface EstadoEjemplar extends Catalogo {}
+export interface EstadoEjemplar extends Catalogo { }
 
-export interface EstadoPrestamo extends Catalogo {}
+export interface EstadoPrestamo extends Catalogo { }
 
-export interface MotivoMulta extends Catalogo {}
+export interface MotivoMulta extends Catalogo { }
 
-export interface EstadoMulta extends Catalogo {}
+export interface EstadoMulta extends Catalogo { }
 
 export interface Ejemplar {
   id: number;
@@ -75,7 +75,7 @@ export interface Libro {
   idEditorial: number;
   idIdioma: number;
   uuid: string;
-  areas?: Areas[]; 
+  areas?: Areas[];
   autores?: Autor[];
   categoria?: Catalogo;
   editorial?: Editorial;
@@ -98,7 +98,15 @@ export interface LibroPayload {
   idEditorial: number;
   idIdioma: number;
   idAutores: number[];
-  idAreas: number[]; 
+  idAreas: number[];
+}
+
+// Método para mostrar libros en un select/multiselect
+export interface OptionLibro {
+  id: number;
+  titulo: string;
+  edicion: string;
+  autores?: Autor[];
 }
 
 export interface EjemplarPayload {
@@ -122,6 +130,7 @@ export interface Prestamo {
   uuid?: string;
   fechaPrestamo: string;
   fechaLimite: string;
+  diasFestivos?: number;
   idBibliotecario: number;
   idLector: number;
   idEstadoPrestamo: number;
@@ -173,7 +182,7 @@ export interface Multa {
   idPrestamoDetalle: number;
   idMotivoMulta: number;
   idEstadoMulta: number;
-  idPersona?: number; 
+  idPersona?: number;
   diasRetraso?: number;
   montoPorDia?: number;
   motivoMulta?: MotivoMulta;
@@ -202,8 +211,8 @@ export interface PagoMulta {
   motivoAnulacion?: string;
   fechaAnulacion?: string;
   uuid: string;
-  lectorPago: Persona; 
-  cajero: Persona;       
+  lectorPago: Persona;
+  cajero: Persona;
   anuladoPor?: Persona;
 }
 

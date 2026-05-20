@@ -14,6 +14,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
 import { CheckboxModule } from 'primeng/checkbox';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { DividerModule } from 'primeng/divider';
 
 import { PrestamoService } from '../../services/prestamo.service';
 import { CatalogService } from '../../services/catalog.service';
@@ -35,7 +37,9 @@ import { Prestamo, DetallePrestamo } from '../../models/biblioteca';
     ConfirmDialogModule,
     InputTextModule,
     CheckboxModule,
-    DatePipe
+    DatePipe,
+    InputNumberModule,
+    DividerModule
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './prestamo-lista.html',
@@ -59,8 +63,11 @@ export default class PrestamoListaComponent implements OnInit {
   loading = false;
   globalFilter: string = '';
   loadingDetalles = false;
+  diasfestivosSelect = 0;
+  diasfestivos = 0;
 
   mostrarModalDevolucion = false;
+  mostrarModalDiasFestivos = false;
   detallesDevolucion: any[] = [];
   prestamoDevolucion: Prestamo | null = null;
   loadingDevolucion = false;
@@ -92,16 +99,16 @@ export default class PrestamoListaComponent implements OnInit {
     ).subscribe({
       next: (prestamosMapeados) => {
         this.prestamos = prestamosMapeados.sort((a, b) => {
-            const dateA = new Date(a.fechaPrestamo).getTime();
-            const dateB = new Date(b.fechaPrestamo).getTime();
-            return dateB - dateA;
+          const dateA = new Date(a.fechaPrestamo).getTime();
+          const dateB = new Date(b.fechaPrestamo).getTime();
+          return dateB - dateA;
         });
       },
       error: (err: any) => {
-        this.messageService.add({ 
-          severity: 'error', 
-          summary: 'Error', 
-          detail: 'No se pudieron cargar los préstamos.' 
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los préstamos.'
         });
         console.error('Error al cargar préstamos:', err);
       }
@@ -120,8 +127,8 @@ export default class PrestamoListaComponent implements OnInit {
 
     forkJoin({
       detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
-      ejemplares: this.bookService.getEjemplares(),
-      libros: this.bookService.getLibros(),
+      ejemplares: this.bookService.getTodosEjemplares(),
+      libros: this.bookService.getAllLibrosAdmin(),
       estadosEjemplares: this.catalogService.getEstadosEjemplares()
     }).pipe(
       switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
@@ -141,7 +148,7 @@ export default class PrestamoListaComponent implements OnInit {
           map(autoresArray => {
             const autoresPorLibro = new Map<number, any[]>();
             libroIds.forEach((id, index) => {
-                autoresPorLibro.set(id, autoresArray[index]);
+              autoresPorLibro.set(id, autoresArray[index]);
             });
 
             const detallesMapeados = detalles.map(detalle => {
@@ -150,14 +157,14 @@ export default class PrestamoListaComponent implements OnInit {
               const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplarEncontrado?.idEstadoEjemplar);
 
               const libroConAutores = libroOriginal ? {
-                  ...libroOriginal,
-                  autores: autoresPorLibro.get(libroOriginal.id) || []
+                ...libroOriginal,
+                autores: autoresPorLibro.get(libroOriginal.id) || []
               } : undefined;
 
               const ejemplarCompleto = ejemplarEncontrado ? {
-                  ...ejemplarEncontrado,
-                  libro: libroConAutores,
-                  estadoEjemplar: estadoEjemplar
+                ...ejemplarEncontrado,
+                libro: libroConAutores,
+                estadoEjemplar: estadoEjemplar
               } : undefined;
 
               return {
@@ -191,8 +198,8 @@ export default class PrestamoListaComponent implements OnInit {
 
     forkJoin({
       detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
-      ejemplares: this.bookService.getEjemplares(),
-      libros: this.bookService.getLibros(),
+      ejemplares: this.bookService.getTodosEjemplares(),
+      libros: this.bookService.getAllLibrosAdmin(),
       estadosEjemplares: this.catalogService.getEstadosEjemplares()
     }).pipe(
       switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
@@ -212,7 +219,7 @@ export default class PrestamoListaComponent implements OnInit {
           map(autoresArray => {
             const autoresPorLibro = new Map<number, any[]>();
             libroIds.forEach((id, index) => {
-                autoresPorLibro.set(id, autoresArray[index]);
+              autoresPorLibro.set(id, autoresArray[index]);
             });
 
             const detallesMapeados = detalles
@@ -223,14 +230,14 @@ export default class PrestamoListaComponent implements OnInit {
                 const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplarEncontrado?.idEstadoEjemplar);
 
                 const libroConAutores = libroOriginal ? {
-                    ...libroOriginal,
-                    autores: autoresPorLibro.get(libroOriginal.id) || []
+                  ...libroOriginal,
+                  autores: autoresPorLibro.get(libroOriginal.id) || []
                 } : undefined;
 
                 const ejemplarCompleto = ejemplarEncontrado ? {
-                    ...ejemplarEncontrado,
-                    libro: libroConAutores,
-                    estadoEjemplar: estadoEjemplar
+                  ...ejemplarEncontrado,
+                  libro: libroConAutores,
+                  estadoEjemplar: estadoEjemplar
                 } : undefined;
 
                 return {
@@ -257,6 +264,19 @@ export default class PrestamoListaComponent implements OnInit {
     });
   }
 
+  abrirModalDiasFestivos() {
+    this.mostrarModalDiasFestivos = true;
+  }
+
+  cerrarModalDiasFestivos() {
+    this.mostrarModalDiasFestivos = false;
+  }
+
+  guardarDiasFestivos() {
+    this.diasfestivos = this.diasfestivosSelect;
+    this.cerrarModalDiasFestivos();
+  }
+
   procesarDevolucion(): void {
     const detallesSeleccionados = this.detallesDevolucion.filter(d => d.seleccionado);
 
@@ -268,7 +288,7 @@ export default class PrestamoListaComponent implements OnInit {
     this.procesandoDevolucion = true;
     const detallesIds = detallesSeleccionados.map(detalle => detalle.id);
 
-    this.prestamoService.devolverEjemplares(this.prestamoDevolucion!.uuid!, detallesIds)
+    this.prestamoService.devolverEjemplares(this.prestamoDevolucion!.uuid!, detallesIds, this.diasfestivos)
       .pipe(finalize(() => this.procesandoDevolucion = false))
       .subscribe({
         next: () => {
@@ -278,14 +298,14 @@ export default class PrestamoListaComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error al devolver ejemplares:', err);
-          
+
           const backendMsg = err.error?.message || (typeof err.error === 'string' ? err.error : '');
           let msgUsuario = 'No se pudieron devolver los ejemplares.';
 
           if (backendMsg.includes('Devolvió a tiempo') || backendMsg.includes('no aplica multa')) {
-             msgUsuario = 'Error del Servidor: El sistema falló al procesar una devolución puntual (Bug Reportado).';
+            msgUsuario = 'Error del Servidor: El sistema falló al procesar una devolución puntual (Bug Reportado).';
           } else if (backendMsg) {
-             msgUsuario = backendMsg;
+            msgUsuario = backendMsg;
           }
 
           this.messageService.add({ severity: 'error', summary: 'Error', detail: msgUsuario });
@@ -301,44 +321,44 @@ export default class PrestamoListaComponent implements OnInit {
     }
 
     if (prestamo && (!this.detallesPrestamo.length || this.prestamoActual?.uuid !== prestamo.uuid)) {
-        this.loadingDetalles = true;
-        
-        forkJoin({
-            detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
-            ejemplares: this.bookService.getEjemplares(),
-            libros: this.bookService.getLibros(),
-            estadosEjemplares: this.catalogService.getEstadosEjemplares()
-        }).pipe(
-            switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
-                const idsEjemplaresEnPrestamo = new Set(detalles.map(d => d.idEjemplar));
-                const ejemplaresDelPrestamo = ejemplares.filter(e => idsEjemplaresEnPrestamo.has(e.id));
-                const libroIds = [...new Set(ejemplaresDelPrestamo.map(e => e.idLibro))];
+      this.loadingDetalles = true;
 
-                const autorRequests = libroIds.map(idLibro => {
-                    const libro = libros.find(l => l.id === idLibro);
-                    return libro?.uuid ? this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([]))) : of([]);
-                });
+      forkJoin({
+        detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
+        ejemplares: this.bookService.getEjemplares(),
+        libros: this.bookService.getLibros(),
+        estadosEjemplares: this.catalogService.getEstadosEjemplares()
+      }).pipe(
+        switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
+          const idsEjemplaresEnPrestamo = new Set(detalles.map(d => d.idEjemplar));
+          const ejemplaresDelPrestamo = ejemplares.filter(e => idsEjemplaresEnPrestamo.has(e.id));
+          const libroIds = [...new Set(ejemplaresDelPrestamo.map(e => e.idLibro))];
 
-                return forkJoin(autorRequests.length > 0 ? autorRequests : [of([])]).pipe(
-                    map(autoresArray => {
-                        const autoresPorLibro = new Map<number, any[]>();
-                        libroIds.forEach((id, index) => autoresPorLibro.set(id, autoresArray[index]));
+          const autorRequests = libroIds.map(idLibro => {
+            const libro = libros.find(l => l.id === idLibro);
+            return libro?.uuid ? this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([]))) : of([]);
+          });
 
-                        return detalles.map(detalle => {
-                            const ejemplar = ejemplares.find(e => e.id === detalle.idEjemplar);
-                            const libro = libros.find(l => l.id === ejemplar?.idLibro);
-                            const libroConAutores = libro ? { ...libro, autores: autoresPorLibro.get(libro.id) || [] } : undefined;
-                            const ejemplarCompleto = ejemplar ? { ...ejemplar, libro: libroConAutores } : undefined;
-                            return { ...detalle, ejemplar: ejemplarCompleto };
-                        });
-                    })
-                );
-            }),
-            finalize(() => this.loadingDetalles = false)
-        ).subscribe({
-            next: (detalles) => this.generarTicket(prestamoAImprimir, detalles),
-            error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al generar ticket.' })
-        });
+          return forkJoin(autorRequests.length > 0 ? autorRequests : [of([])]).pipe(
+            map(autoresArray => {
+              const autoresPorLibro = new Map<number, any[]>();
+              libroIds.forEach((id, index) => autoresPorLibro.set(id, autoresArray[index]));
+
+              return detalles.map(detalle => {
+                const ejemplar = ejemplares.find(e => e.id === detalle.idEjemplar);
+                const libro = libros.find(l => l.id === ejemplar?.idLibro);
+                const libroConAutores = libro ? { ...libro, autores: autoresPorLibro.get(libro.id) || [] } : undefined;
+                const ejemplarCompleto = ejemplar ? { ...ejemplar, libro: libroConAutores } : undefined;
+                return { ...detalle, ejemplar: ejemplarCompleto };
+              });
+            })
+          );
+        }),
+        finalize(() => this.loadingDetalles = false)
+      ).subscribe({
+        next: (detalles) => this.generarTicket(prestamoAImprimir, detalles),
+        error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al generar ticket.' })
+      });
     } else {
       this.generarTicket(prestamoAImprimir, this.detallesPrestamo);
     }
@@ -349,7 +369,7 @@ export default class PrestamoListaComponent implements OnInit {
     const ejemplaresData = detalles.map(detalle => ({
       codigo: detalle.ejemplar?.codigo || 'N/A',
       titulo: detalle.ejemplar?.libro?.titulo || 'No disponible',
-      autor: this.getAutoresNombres(detalle) 
+      autor: this.getAutoresNombres(detalle)
     }));
 
     const ticketData = {
@@ -362,30 +382,30 @@ export default class PrestamoListaComponent implements OnInit {
     this.printService.imprimirTicketPrestamo(ticketData);
   }
 
-  cerrarModalDetalle(): void { 
-    this.mostrarDetalle = false; this.prestamoActual = null; this.detallesPrestamo = []; 
+  cerrarModalDetalle(): void {
+    this.mostrarDetalle = false; this.prestamoActual = null; this.detallesPrestamo = [];
   }
 
-  cerrarModalDevolucion(): void { 
-    this.mostrarModalDevolucion = false; this.prestamoDevolucion = null; this.detallesDevolucion = []; 
+  cerrarModalDevolucion(): void {
+    this.mostrarModalDevolucion = false; this.prestamoDevolucion = null; this.detallesDevolucion = []; this.diasfestivos = 0; this.diasfestivosSelect = 0;
   }
 
-  regresar(): void { 
-    this.router.navigate(['/admin']); 
+  regresar(): void {
+    this.router.navigate(['/admin']);
   }
 
-  agregarPrestamo(): void { 
-    this.router.navigate(['admin/prestamos/nuevo']); 
+  agregarPrestamo(): void {
+    this.router.navigate(['admin/prestamos/nuevo']);
   }
 
-  multas(): void { 
-    sessionStorage.setItem('multasOrigen', 'prestamos'); this.router.navigate(['admin/multas']); 
+  multas(): void {
+    sessionStorage.setItem('multasOrigen', 'prestamos'); this.router.navigate(['admin/multas']);
   }
 
-  editarPrestamo(p: Prestamo): void { 
-    this.router.navigate(['/admin/prestamos/editar', p.uuid]); 
+  editarPrestamo(p: Prestamo): void {
+    this.router.navigate(['/admin/prestamos/editar', p.uuid]);
   }
-  
+
   eliminarPrestamo(p: Prestamo): void {
     this.confirmationService.confirm({
       message: '¿Anular préstamo?',
@@ -413,11 +433,11 @@ export default class PrestamoListaComponent implements OnInit {
     const estado = estadoNombre.toLowerCase();
     switch (estado) {
       case 'activo': return 'status-activo';
-      case 'devuelto': 
-      case 'devuelto a tiempo': 
+      case 'devuelto':
+      case 'devuelto a tiempo':
       case 'completado a tiempo': return 'status-devuelto';
       case 'atrasado':
-      case 'devuelto tarde': 
+      case 'devuelto tarde':
       case 'completado con retardo': return 'status-atrasado';
       case 'parcialmente devuelto': return 'status-parcial';
       default: return 'status-desconocido';
@@ -435,19 +455,19 @@ export default class PrestamoListaComponent implements OnInit {
       .join(', ');
   }
 
-  getCantidadSeleccionados(): number { 
-    return this.detallesDevolucion.filter(d => d.seleccionado).length; 
+  getCantidadSeleccionados(): number {
+    return this.detallesDevolucion.filter(d => d.seleccionado).length;
   }
 
-  toggleSeleccionTodos(event: any): void { 
-    this.detallesDevolucion.forEach(d => d.seleccionado = event.checked); 
+  toggleSeleccionTodos(event: any): void {
+    this.detallesDevolucion.forEach(d => d.seleccionado = event.checked);
   }
 
-  todosSeleccionados(): boolean { 
-    return this.detallesDevolucion.length > 0 && this.detallesDevolucion.every(d => d.seleccionado); 
+  todosSeleccionados(): boolean {
+    return this.detallesDevolucion.length > 0 && this.detallesDevolucion.every(d => d.seleccionado);
   }
 
-  algunoSeleccionado(): boolean { 
-    return this.detallesDevolucion.some(d => d.seleccionado); 
+  algunoSeleccionado(): boolean {
+    return this.detallesDevolucion.some(d => d.seleccionado);
   }
 }
