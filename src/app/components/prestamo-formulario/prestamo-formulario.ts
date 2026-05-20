@@ -244,7 +244,6 @@ export default class PrestamoFormularioComponent implements OnInit {
     }).subscribe({
       next: ({ lectores, estados, ejemplares, libros, estadosEjemplares }) => {
         this.lectores = lectores
-          .filter(p => p.idTipoPersona === 1) 
           .map(p => ({
             ...p,
             nombreCompleto: `${p.nombre} ${p.apPaterno} ${p.apMaterno || ''}`.trim()
