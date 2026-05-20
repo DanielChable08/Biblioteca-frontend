@@ -21,6 +21,7 @@ import { Ejemplar } from '../../models/biblioteca';
 import { environment } from '../../../environments/environment';
 import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
 import LibroDetalleComponent from '../libro-detalle/libro-detalle';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-ejemplar-lista',
@@ -49,6 +50,7 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
   private messageService = inject(MessageService);
   private dialogService = inject(DialogService);
 
+  authService = inject(AuthService);
   ejemplares: any[] = [];
   ejemplaresDesactivados: any[] = [];
   loading = false;
@@ -106,7 +108,7 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
     this.loading = true;
     forkJoin({
       ejemplaresDesactivados: this.bookService.getEjemplaresDesactivados(),
-      libros: this.bookService.getLibros(),
+      libros: this.bookService.getAllLibrosAdmin(),
       estadosEjemplares: this.catalogService.getEstadosEjemplares(),
       condicionesFisicas: this.catalogService.getCondicionesFisicas()
     }).pipe(

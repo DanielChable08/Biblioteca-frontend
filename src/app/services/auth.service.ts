@@ -11,9 +11,9 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private apiUrl = environment.apiURL + '/auth';
-  
+
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(!!sessionStorage.getItem('token'));
-  
+
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
   login(credentials: any): Observable<any> {
@@ -22,21 +22,21 @@ export class AuthService {
         if (!response || !response.token) {
           throw new Error('Respuesta inválida del servidor');
         }
-        
+
         sessionStorage.setItem('token', response.token);
-        
+
         let nombre = response.nombre || null;
         let apPaterno = response.apPaterno || null;
         let apMaterno = response.apMaterno || null;
         let idPersona = response.idPersona || null;
-        
+
         if (response.persona) {
           nombre = response.persona.nombre || nombre;
           apPaterno = response.persona.apPaterno || apPaterno;
           apMaterno = response.persona.apMaterno || apMaterno;
           idPersona = response.persona.id || idPersona;
         }
-        
+
         const userData = {
           id: response.id,
           idPersona: idPersona || response.id,
@@ -68,7 +68,7 @@ export class AuthService {
 
   getUserRole(): string {
     const userData = this.getUserData();
-    
+
     if (!userData || !userData.roles || userData.roles.length === 0) {
       return 'USER';
     }
@@ -77,27 +77,27 @@ export class AuthService {
       const roleName = typeof role === 'string' ? role : role.name;
       return roleName === 'Administrador' || roleName === 'ADMIN';
     });
-    
+
     if (isAdmin) return 'ADMIN';
 
     const isBibliotecario = userData.roles.some((role: any) => {
-        const roleName = typeof role === 'string' ? role : role.name;
-        return roleName === 'Bibliotecario';
+      const roleName = typeof role === 'string' ? role : role.name;
+      return roleName === 'Bibliotecario';
     });
 
     if (isBibliotecario) return 'BIBLIOTECARIO';
-    
+
     return 'USER';
   }
 
 
   isAdmin(): boolean {
-      return this.getUserRole() === 'ADMIN';
+    return this.getUserRole() === 'ADMIN';
   }
 
   canAccessAdminPanel(): boolean {
-      const role = this.getUserRole();
-      return role === 'ADMIN' || role === 'BIBLIOTECARIO';
+    const role = this.getUserRole();
+    return role === 'ADMIN' || role === 'BIBLIOTECARIO';
   }
 
   getRoleName(): string {
@@ -116,11 +116,11 @@ export class AuthService {
     const nombre = userData.nombre || '';
     const apPaterno = userData.apPaterno || '';
     const apMaterno = userData.apMaterno || '';
-    
+
     if (nombre && apPaterno) {
       return `${nombre} ${apPaterno} ${apMaterno}`.trim();
     }
-    
+
     if (userData.email) {
       return userData.email.split('@')[0];
     }
@@ -130,7 +130,7 @@ export class AuthService {
   getUserInitials(): string {
     const userData = this.getUserData();
     if (!userData) return 'U';
-    
+
     if (userData.nombre) {
       const nombreParts = userData.nombre.trim().split(/\s+/);
       if (nombreParts.length >= 2) {
@@ -151,13 +151,24 @@ export class AuthService {
     return sessionStorage.getItem('token');
   }
 
+  getPermisos(): string[] {
+    const userData = this.getUserData();
+    if (!userData || !userData.roles) return [];
+
+    return userData.roles.flatMap((rol: any) => rol.permisos ?? []);
+  }
+
+  hasPermission(permiso: string): boolean {
+    return this.getPermisos().includes(permiso);
+  }
+
   isAuthenticated(): boolean {
     if (!this.isAuthenticatedSubject.value) {
-        const token = sessionStorage.getItem('token');
-        if (token) {
-            this.isAuthenticatedSubject.next(true);
-            return true;
-        }
+      const token = sessionStorage.getItem('token');
+      if (token) {
+        this.isAuthenticatedSubject.next(true);
+        return true;
+      }
     }
     return this.isAuthenticatedSubject.value;
   }

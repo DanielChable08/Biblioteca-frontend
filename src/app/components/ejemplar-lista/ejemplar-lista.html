@@ -176,6 +176,7 @@
           class="mr-4"
           label="Lista de desactivados"
           icon="pi pi-ban"
+          *ngIf="authService.hasPermission('ELIMINAR_EJEMPLAR')"
           (click)="abrirModalDesactivados()"
         ></p-button>
         <p-button

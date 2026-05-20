@@ -127,8 +127,8 @@ export default class PrestamoListaComponent implements OnInit {
 
     forkJoin({
       detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
-      ejemplares: this.bookService.getEjemplares(),
-      libros: this.bookService.getLibros(),
+      ejemplares: this.bookService.getTodosEjemplares(),
+      libros: this.bookService.getAllLibrosAdmin(),
       estadosEjemplares: this.catalogService.getEstadosEjemplares()
     }).pipe(
       switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
@@ -198,8 +198,8 @@ export default class PrestamoListaComponent implements OnInit {
 
     forkJoin({
       detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
-      ejemplares: this.bookService.getEjemplares(),
-      libros: this.bookService.getLibros(),
+      ejemplares: this.bookService.getTodosEjemplares(),
+      libros: this.bookService.getAllLibrosAdmin(),
       estadosEjemplares: this.catalogService.getEstadosEjemplares()
     }).pipe(
       switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
