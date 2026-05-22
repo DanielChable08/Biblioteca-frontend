@@ -108,7 +108,7 @@ export default class LibroDetalleComponent implements OnInit {
 
   getAutoresAsString(autores?: Autor[]): string {
     if (!autores || autores.length === 0) return 'Autor desconocido';
-    return autores.map(a => `${a.nombre} ${a.apPaterno || ''}`).join(', ');
+    return autores.map(a => `${a.apPaterno || ''} ${a.apMaterno || ''} ${a.nombre}`).join(', ');
   }
 
   getStatusClass(estadoNombre?: string): string {
