@@ -382,7 +382,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
 
   getAutoresAsString(autores?: Autor[]): string {
     if (!autores || autores.length === 0) return 'Autor no asignado';
-    return autores.map(a => `${a.nombre} ${a.apPaterno || ''}`).join(', ');
+    return autores.map(a => `${a.apPaterno || ''} ${a.apMaterno || ''} ${a.nombre}`).join(', ');
   }
 
   getAreasAsString(areas?: any[]): string {
