@@ -1,0 +1,121 @@
+<div class="header-container">
+  <div class="form-header-container">
+    <div class="form-header page-header-layout">
+      <div class="header-left">
+        <button
+          pButton
+          icon="pi pi-arrow-left"
+          class="p-button-text back-button"
+          (click)="regresar()"
+          pTooltip="Regresar"
+        ></button>
+        <h2><i class="pi pi-file-excel"></i> Descarga de relaciones</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="form-page-container">
+  <div class="form-section">
+    <h3 class="section-title"><i class="pi pi-cog"></i> Configuración de Descarga</h3>
+    <hr />
+    <div class="form-row modo-selector-row">
+      <div class="w-full">
+        <label class="mb-2 block font-bold text-wine">Entidad a seleccionar</label>
+        <p-selectButton
+          [options]="opcionesModo"
+          [(ngModel)]="modoDescarga"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="w-full responsive-select-button"
+        >
+        </p-selectButton>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label><i class="pi pi-list"></i> Tipo de archivo</label>
+        <p-select
+          [options]="tiposArchivo"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccionar tipo de archivo"
+          [showClear]="true"
+          [(ngModel)]="tipoArchivoSeleccionado"
+          [disabled]="!modoDescarga"
+        ></p-select>
+      </div>
+      <div class="form-field">
+        <label><i class="pi pi-check-square"></i> Campos a seleccionar</label>
+        <p-button
+          (onClick)="mostrarOpcionesExport = true"
+          [disabled]="!tipoArchivoSeleccionado"
+          icon="pi pi-search"
+          class="py-1"
+        ></p-button>
+      </div>
+    </div>
+  </div>
+
+  <p-dialog
+    header="Campos a exportar"
+    [modal]="true"
+    [(visible)]="mostrarOpcionesExport"
+    [draggable]="false"
+    [dismissableMask]="false"
+  >
+    <p><strong>Campos fijos:</strong> Título, Autores, Categoría</p>
+
+    <p-divider />
+
+    <!-- Seleccionar todos -->
+    <div class="field-checkbox mb-3">
+      <p-checkbox
+        [(ngModel)]="todosSeleccionados"
+        [binary]="true"
+        inputId="todos"
+        (onChange)="toggleTodos()"
+      />
+      <label for="todos"><strong>Seleccionar todos</strong></label>
+    </div>
+
+    <!-- Campos opcionales -->
+    <div *ngFor="let campo of camposOpcionales" class="field-checkbox">
+      <p-checkbox
+        [(ngModel)]="campo.checked"
+        [binary]="true"
+        [inputId]="campo.value"
+        (onChange)="onCampoChange()"
+      />
+      <label [for]="campo.value">{{ campo.label }}</label>
+    </div>
+
+    <ng-template #footer>
+      <div class="flex flex-column w-full">
+        <p-divider />
+
+        <div class="form-footer">
+          <button
+            type="button"
+            pButton
+            class="btn-info text"
+            (click)="mostrarOpcionesExport = false"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            pButton
+            [label]="loading ? 'Generando...' : 'Descargar'"
+            icon="pi pi-download"
+            (click)="exportarExcel()"
+            [disabled]="!tipoArchivoSeleccionado"
+            [loading]="loading"
+          ></button>
+          <!-- <p-button label="Descargar" icon="pi pi-download" (click)="exportarExcel()" /> -->
+        </div>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>
