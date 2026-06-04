@@ -88,6 +88,13 @@ export class BookService {
     return this.http.get<Areas[]>(`${this.apiUrl}/${uuid}/areas`);
   }
 
+  exportarLibrosExcel(campos: string[]): Observable<Blob> {
+    let params = new HttpParams;
+    campos.forEach(c => params = params.append('campos', c));
+
+    return this.http.get(`${this.apiUrl}/exportar/excel`, { params, responseType: 'blob' });
+  }
+
   getEjemplares(): Observable<Ejemplar[]> {
     return this.http.get<Ejemplar[]>(this.ejemplaresUrl);
   }
@@ -136,5 +143,12 @@ export class BookService {
 
   getLibroDesactivadoByUuid(uuid: string): Observable<Libro> {
     return this.http.get<Libro>(`${this.apiUrl}/${uuid}/desactivado`);
+  }
+
+  exportarEjemplaresExcel(campos: string[]): Observable<Blob> {
+    let params = new HttpParams;
+    campos.forEach(c => params = params.append('campos', c));
+
+    return this.http.get(`${this.ejemplaresUrl}/exportar/excel`, { params, responseType: 'blob' });
   }
 }

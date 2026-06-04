@@ -84,6 +84,7 @@
   background-color: var(--beige);
   border-radius: 5px;
   font-weight: lighter;
+  padding: 0 0.5rem;
 }
 
 .details-section {

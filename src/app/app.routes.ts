@@ -89,6 +89,11 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard]
   },
   { 
+    path: 'admin/procedencias', 
+    loadComponent: () => import('./components/procedencias/procedencias').then(m => m.default),
+    canActivate: [authGuard, roleGuard]
+  },
+  { 
     path: 'admin/areas', 
     loadComponent: () => import('./components/areas/areas').then(m => m.default),
     canActivate: [authGuard, roleGuard]
@@ -141,6 +146,11 @@ export const routes: Routes = [
   {
     path: 'admin/impresiones',
     loadComponent: () => import('./components/impresiones/impresiones').then(m => m.default),
+    canActivate: [authGuard, roleGuard]
+  },
+  { 
+    path: 'admin/descargas', 
+    loadComponent: () => import('./components/descargas/descargas').then(m => m.DescargasComponent),
     canActivate: [authGuard, roleGuard]
   },
   {

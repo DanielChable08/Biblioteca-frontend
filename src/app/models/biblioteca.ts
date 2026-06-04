@@ -13,6 +13,13 @@ export interface Autor {
   displayName?: string;
 }
 
+export interface Procedencia {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  uuid: string;
+}
+
 export interface Areas extends Catalogo { }
 
 export interface Editorial extends Catalogo { }
@@ -74,6 +81,7 @@ export interface Libro {
   idCategoria: number;
   idEditorial: number;
   idIdioma: number;
+  idProcedenca: number;
   uuid: string;
   areas?: Areas[];
   autores?: Autor[];
@@ -81,6 +89,7 @@ export interface Libro {
   editorial?: Editorial;
   idioma?: Idioma;
   tipoLibro?: TipoLibro;
+  procedencia?: Procedencia;
   imagen?: string;
   ejemplares?: Ejemplar[];
   activo?: boolean;
@@ -97,6 +106,7 @@ export interface LibroPayload {
   idCategoria: number;
   idEditorial: number;
   idIdioma: number;
+  idProcedenca: number;
   idAutores: number[];
   idAreas: number[];
 }
