@@ -186,11 +186,11 @@
         <button
           *ngIf="isAdmin"
           pButton
-          label="Políticas"
-          icon="pi pi-chart-bar"
+          label="Descargas"
+          icon="pi pi-file-excel"
           class="btn-secondary outlined ani-one"
-          (click)="irAPoliticas()"
-          pTooltip="Ir a las politicas de multas"
+          (click)="irADescargas()"
+          pTooltip="Apartado de descargas"
           tooltipPosition="bottom"
         ></button>
       </div>
@@ -299,14 +299,14 @@
       </div>
 
       <div style="display: flex; gap: 0.5rem">
-        <button
+        <!-- <button
           pButton
           icon="pi pi-trash"
           [class]="vistaActual === 'tabla' ? 'btn-primary' : 'p-button-outlined'"
           (click)="vistaActual = 'tabla'"
           pTooltip="Eliminar por selección"
           tooltipPosition="top"
-        ></button>
+        ></button> -->
         <button
           pButton
           icon="pi pi-th-large"

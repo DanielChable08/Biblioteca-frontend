@@ -17,12 +17,13 @@ import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 
+import { Autor, Catalogo, Libro, Areas, Procedencia } from '../../models/biblioteca';
+import { ProcedenciaService } from '../../services/procedencia.service';
 import { CatalogService } from '../../services/catalog.service';
-import { BookService } from '../../services/book.service';
-import { Autor, Catalogo, Libro, Areas } from '../../models/biblioteca';
 import { environment } from '../../../environments/environment';
+import { BookService } from '../../services/book.service';
 
-type TipoCatalogo = 'autor' | 'categoria' | 'editorial' | 'idioma' | 'tipoLibro' | 'area';
+type TipoCatalogo = 'autor' | 'categoria' | 'editorial' | 'idioma' | 'tipoLibro' | 'area' | 'procedencia';
 
 @Component({
   selector: 'app-libro-formulario',
@@ -49,6 +50,7 @@ type TipoCatalogo = 'autor' | 'categoria' | 'editorial' | 'idioma' | 'tipoLibro'
 export default class LibroFormularioComponent implements OnInit {
   private fb = inject(FormBuilder);
   private catalogService = inject(CatalogService);
+  private procedenciaService = inject(ProcedenciaService);
   private bookService = inject(BookService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -62,6 +64,7 @@ export default class LibroFormularioComponent implements OnInit {
   categorias: Catalogo[] = [];
   editoriales: Catalogo[] = [];
   idiomas: Catalogo[] = [];
+  procedencias: Procedencia[] = [];
   tiposLibro: Catalogo[] = [];
   areas: Areas[] = [];
 
@@ -98,11 +101,13 @@ export default class LibroFormularioComponent implements OnInit {
       idCategoria: [null, Validators.required],
       idEditorial: [null, Validators.required],
       idIdioma: [null, Validators.required],
+      idProcedencia: [null],
       idTipoLibro: [null, Validators.required],
     });
 
     this.catalogoForm = this.fb.group({
       nombre: ['', Validators.required],
+      descripcion: ['', Validators.minLength(2)],
       apPaterno: ['', Validators.minLength(2)],
       apMaterno: ['', Validators.minLength(2)]
     });
@@ -167,6 +172,7 @@ export default class LibroFormularioComponent implements OnInit {
       editoriales: this.catalogService.getEditoriales(),
       idiomas: this.catalogService.getIdiomas(),
       tiposLibro: this.catalogService.getTiposLibros(),
+      procedencias: this.procedenciaService.listarOptionProcedencias(),
       areas: this.catalogService.getAreas()
     }).subscribe(catalogs => {
       this.autores = catalogs.autores.map(a => ({
@@ -176,6 +182,7 @@ export default class LibroFormularioComponent implements OnInit {
       this.categorias = catalogs.categorias;
       this.editoriales = catalogs.editoriales;
       this.idiomas = catalogs.idiomas;
+      this.procedencias = catalogs.procedencias;
       this.tiposLibro = catalogs.tiposLibro;
       this.areas = catalogs.areas;
 
@@ -216,6 +223,7 @@ export default class LibroFormularioComponent implements OnInit {
       idCategoria: libro.categoria?.id || null,
       idEditorial: libro.editorial?.id || null,
       idIdioma: libro.idioma?.id || null,
+      idProcedencia: libro.procedencia?.id || null,
       idTipoLibro: libro.tipoLibro?.id || null,
       idAutores: autoresIds,
       idAreas: areasIds
@@ -236,6 +244,7 @@ export default class LibroFormularioComponent implements OnInit {
       case 'idioma': this.tituloDialog = 'Nuevo Idioma'; break;
       case 'tipoLibro': this.tituloDialog = 'Nueva Facultad'; break;
       case 'area': this.tituloDialog = 'Nueva Área'; break;
+      case 'procedencia': this.tituloDialog = 'Nueva Procedencia'; break;
       default: this.tituloDialog = 'Nuevo Dato';
     }
     this.catalogoSiendoAgregado = tipo;
@@ -257,6 +266,11 @@ export default class LibroFormularioComponent implements OnInit {
         nombre: payload.nombre,
         apPaterno: payload.apPaterno?.trim() || null,
         apMaterno: payload.apMaterno?.trim() || null
+      });
+    } else if (tipo === 'procedencia') {
+      request$ = this.procedenciaService.crearProcedencia({
+        nombre: payload.nombre.trim(),
+        descripcion: payload.descripcion?.trim() || null
       });
     } else {
       const serviceMap: any = {
@@ -303,6 +317,9 @@ export default class LibroFormularioComponent implements OnInit {
           this.areas = [...this.areas, nuevoItem];
           const current = this.libroForm.get('idAreas')?.value || [];
           this.libroForm.get('idAreas')?.setValue([...current, nuevoItem.id]);
+        } else if (tipo === 'procedencia') {
+          this.procedencias = [...this.procedencias, nuevoItem];
+          this.libroForm.get('idProcedencia')?.setValue(nuevoItem.id);
         }
         this.cdr.detectChanges();
       },
@@ -337,6 +354,7 @@ export default class LibroFormularioComponent implements OnInit {
       idCategoria: fv.idCategoria,
       idEditorial: fv.idEditorial,
       idIdioma: fv.idIdioma,
+      idProcedencia: fv.idProcedencia,
       activo: true
     };
 
@@ -372,7 +390,12 @@ export default class LibroFormularioComponent implements OnInit {
         let errorDetail = 'No se pudo guardar el libro';
 
         if (err.status === 409) {
-          errorDetail = 'Ya existe un libro con estos datos';
+          if (err.error && typeof err.error === 'object') {
+            const errores = Object.values(err.error).join(', ');
+            errorDetail = errores;
+          } else {
+            errorDetail = err.error?.message || 'Ya existe un libro con estos datos';
+          }
         } else if (err.status === 404) {
           errorDetail = 'Libro no encontrado';
         } else if (err.status === 400) {

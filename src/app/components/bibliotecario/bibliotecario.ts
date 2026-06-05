@@ -137,11 +137,13 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       { label: 'Editoriales', icon: 'pi pi-building', command: () => this.router.navigate(['/admin/editoriales']) },
       { label: 'Idiomas', icon: 'pi pi-globe', command: () => this.router.navigate(['/admin/idiomas']) },
       { label: 'Facultades', icon: 'pi pi-book', command: () => this.router.navigate(['/admin/tipos']) },
+      { label: 'Procedencias', icon: 'pi pi-flag', command: () => this.router.navigate(['/admin/procedencias']) },
       { separator: true },
       { label: 'Ejemplares', icon: 'pi pi-inbox', command: () => this.router.navigate(['/admin/ejemplares']) },
       { label: 'Estados de Ejemplar', icon: 'pi pi-check-circle', command: () => this.router.navigate(['/admin/estados']) },
       { label: 'Condición Física', icon: 'pi pi-clipboard', command: () => this.router.navigate(['/admin/condiciones']) },
       { separator: true },
+      { label: 'Políticas', icon: 'pi pi-chart-bar', visible: userRole === 'Administrador', command: () => this.router.navigate(['/admin/politicas']) },
       { label: 'Préstamos', icon: 'pi pi-book', command: () => this.router.navigate(['/admin/prestamos']) },
       { label: 'Multas', icon: 'pi pi-receipt', command: () => this.router.navigate(['/admin/multas']) },
       { label: 'Pagos', icon: 'pi pi-money-bill', visible: userRole === 'Administrador', command: () => this.router.navigate(['/admin/pagos']) },
@@ -286,6 +288,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   PersonasList(): void { this.router.navigate(['/admin/personas']); }
   Impresiones(): void { this.router.navigate(['/admin/impresiones']); }
   irAPoliticas(): void { this.router.navigate(['/admin/politicas']); }
+  irADescargas(): void { this.router.navigate(['/admin/descargas']); }
   logout(): void { this.authService.logout(); }
 
   filtrarLibros(): void {
