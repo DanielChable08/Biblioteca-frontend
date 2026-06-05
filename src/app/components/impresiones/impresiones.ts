@@ -20,12 +20,14 @@ import { EjemplarService } from '../../services/ejemplar.service';
 import { BookService } from '../../services/book.service';
 import { CatalogService } from '../../services/catalog.service';
 import { Ejemplar } from '../../models/biblioteca';
+import { ProcedenciaService } from '../../services/procedencia.service';
 
 interface EjemplarExtendido extends Ejemplar {
   libroTitulo?: string;
   libroISBN?: string;
   autoresNombres?: string;
-  cutter?: string; 
+  cutter?: string;
+  procedenciaNombre?: string;
 }
 
 @Component({
@@ -49,6 +51,7 @@ export default class ImpresionesComponent implements OnInit {
   private ejemplarService = inject(EjemplarService);
   private bookService = inject(BookService);
   private catalogService = inject(CatalogService);
+  private procedenciaService = inject(ProcedenciaService);
   private messageService = inject(MessageService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
@@ -58,11 +61,16 @@ export default class ImpresionesComponent implements OnInit {
   ejemplaresSeleccionados: EjemplarExtendido[] = [];
 
   modoImpresion: 'barras' | 'lomo' | 'horizontal' = 'barras';
-  
+
   opcionesModo = [
     { label: 'Código de Barras', value: 'barras', icon: 'pi pi-barcode' },
-    { label: 'Identificador Vertical', value: 'lomo', icon: 'pi pi-bookmark' }, 
-    { label: 'Identificador Horiz.', value: 'horizontal', icon: 'pi pi-arrows-v' } 
+    { label: 'Identificador Vertical', value: 'lomo', icon: 'pi pi-bookmark' },
+    { label: 'Identificador Horiz.', value: 'horizontal', icon: 'pi pi-arrows-v' }
+  ];
+
+  opcionesEstilo = [
+    { label: 'Compacta', value: 'compacta', icon: 'pi pi-barcode' },
+    { label: 'Moderna', value: 'moderna', icon: 'pi pi-bookmark' },
   ];
 
   tamanosBarras = [
@@ -79,6 +87,7 @@ export default class ImpresionesComponent implements OnInit {
 
   tamanosDisponibles = this.tamanosBarras;
   tamanoEtiqueta: string = 'mediana';
+  estiloSeleccionado: string = 'compacta';
 
   mostrarISBN = true;
   mostrarUbicacion = true;
@@ -102,9 +111,9 @@ export default class ImpresionesComponent implements OnInit {
       this.tamanosDisponibles = this.tamanosLomo;
       this.tamanoEtiqueta = 'lomo-estandar';
     }
-    
+
     if (this.vistaPrevia && this.modoImpresion === 'barras') {
-       setTimeout(() => this.generarCodigosBarras('preview'), 100);
+      setTimeout(() => this.generarCodigosBarras('preview'), 100);
     }
   }
 
@@ -114,9 +123,10 @@ export default class ImpresionesComponent implements OnInit {
     forkJoin({
       ejemplares: this.ejemplarService.getEjemplares(),
       libros: this.bookService.getLibros(),
-      estados: this.catalogService.getEstadosEjemplares()
+      estados: this.catalogService.getEstadosEjemplares(),
+      procedencias: this.procedenciaService.listarOptionProcedencias()
     }).pipe(
-      map(({ ejemplares, libros, estados }) => {
+      map(({ ejemplares, libros, estados, procedencias }) => {
         const autoresRequests = libros.map(libro =>
           this.bookService.getAutoresForLibro(libro.uuid)
         );
@@ -132,12 +142,13 @@ export default class ImpresionesComponent implements OnInit {
               const libro = librosCompletos.find(l => l.id === ejemplar.idLibro);
               const estado = estados.find(e => e.id === ejemplar.idEstadoEjemplar);
               const autoresStr = this.formatearAutores(libro?.autores || []);
+              const procedencia = procedencias.find(p => p.id === libro?.idProcedencia)
 
               let cutter = 'AAA';
               if (autoresStr && autoresStr !== 'Autor no asignado') {
-                  cutter = autoresStr.substring(0, 3).toUpperCase();
+                cutter = autoresStr.substring(0, 3).toUpperCase();
               } else if (libro?.titulo) {
-                  cutter = libro.titulo.substring(0, 3).toUpperCase();
+                cutter = libro.titulo.substring(0, 3).toUpperCase();
               }
 
               return {
@@ -145,9 +156,10 @@ export default class ImpresionesComponent implements OnInit {
                 libro: libro,
                 estado: estado,
                 libroTitulo: libro?.titulo || 'Sin título',
-                libroISBN: libro?.isbn || '',
+                libroISBN: this.formatearISBN(libro?.isbn) || '-',
                 autoresNombres: autoresStr,
-                cutter: cutter
+                cutter: cutter,
+                procedenciaNombre: procedencia?.nombre || '-'
               };
             });
 
@@ -190,8 +202,8 @@ export default class ImpresionesComponent implements OnInit {
     }
     this.ejemplaresFiltrados = this.ejemplares.filter(ejemplar => {
       return (ejemplar.codigo?.toLowerCase() || '').includes(filtro) ||
-             (ejemplar.libroTitulo?.toLowerCase() || '').includes(filtro) ||
-             (ejemplar.autoresNombres?.toLowerCase() || '').includes(filtro);
+        (ejemplar.libroTitulo?.toLowerCase() || '').includes(filtro) ||
+        (ejemplar.autoresNombres?.toLowerCase() || '').includes(filtro);
     });
   }
 
@@ -219,9 +231,9 @@ export default class ImpresionesComponent implements OnInit {
       return;
     }
     this.vistaPrevia = true;
-    
+
     if (this.modoImpresion === 'barras') {
-       setTimeout(() => this.generarCodigosBarras('preview'), 100);
+      setTimeout(() => this.generarCodigosBarras('preview'), 100);
     }
   }
 
@@ -237,7 +249,7 @@ export default class ImpresionesComponent implements OnInit {
 
     setTimeout(() => {
       if (this.modoImpresion === 'barras') this.generarCodigosBarras('print');
-      
+
       setTimeout(() => {
         window.print();
         this.preparandoImpresion = false;
@@ -256,8 +268,8 @@ export default class ImpresionesComponent implements OnInit {
 
     this.preparandoPDF = true;
     this.messageService.add({ severity: 'info', summary: 'Generando PDF', detail: 'Procesando archivo HD, por favor espere...' });
-    
-    this.cdr.detectChanges(); 
+
+    this.cdr.detectChanges();
 
     setTimeout(async () => {
       try {
@@ -277,13 +289,13 @@ export default class ImpresionesComponent implements OnInit {
 
         let itemsPerPage = 32;
         if (this.modoImpresion === 'barras') {
-           if (this.tamanoEtiqueta === 'pequena') itemsPerPage = 40;
-           else if (this.tamanoEtiqueta === 'mediana') itemsPerPage = 32;
-           else if (this.tamanoEtiqueta === 'grande') itemsPerPage = 18;
+          if (this.tamanoEtiqueta === 'pequena') itemsPerPage = 40;
+          else if (this.tamanoEtiqueta === 'mediana') itemsPerPage = 32;
+          else if (this.tamanoEtiqueta === 'grande') itemsPerPage = 18;
         } else {
-           if (this.tamanoEtiqueta === 'lomo-delgado') itemsPerPage = 55;
-           else if (this.tamanoEtiqueta === 'lomo-estandar') itemsPerPage = 40;
-           else if (this.tamanoEtiqueta === 'lomo-ancho') itemsPerPage = 35;
+          if (this.tamanoEtiqueta === 'lomo-delgado') itemsPerPage = 55;
+          else if (this.tamanoEtiqueta === 'lomo-estandar') itemsPerPage = 40;
+          else if (this.tamanoEtiqueta === 'lomo-ancho') itemsPerPage = 35;
         }
 
         const pdf = new jsPDF('p', 'mm', 'letter');
@@ -292,8 +304,8 @@ export default class ImpresionesComponent implements OnInit {
 
         const offScreenContainer = document.createElement('div');
         offScreenContainer.style.position = 'fixed';
-        offScreenContainer.style.top = '-9999px';  
-        offScreenContainer.style.left = '-9999px'; 
+        offScreenContainer.style.top = '-9999px';
+        offScreenContainer.style.left = '-9999px';
         offScreenContainer.style.width = '215.9mm';
         offScreenContainer.style.background = 'white';
         offScreenContainer.style.zIndex = '-1';
@@ -302,10 +314,10 @@ export default class ImpresionesComponent implements OnInit {
         const gridClass = this.modoImpresion === 'barras' ? 'etiquetas-grid-print' : 'etiquetas-lomo-grid-print';
 
         for (let i = 0; i < etiquetasNodes.length; i += itemsPerPage) {
-          if (i > 0) pdf.addPage(); 
+          if (i > 0) pdf.addPage();
 
           offScreenContainer.innerHTML = '';
-          
+
           const pageDiv = document.createElement('div');
           pageDiv.style.width = '215.9mm';
           pageDiv.style.height = '279.4mm';
@@ -320,32 +332,32 @@ export default class ImpresionesComponent implements OnInit {
           grid.style.alignItems = 'flex-start';
 
           if (this.modoImpresion === 'barras') {
-             grid.style.gap = '0.25cm';
-             if (this.tamanoEtiqueta === 'pequena') grid.style.gridTemplateColumns = 'repeat(4, 4cm)';
-             else if (this.tamanoEtiqueta === 'mediana') grid.style.gridTemplateColumns = 'repeat(4, 4.8cm)';
-             else if (this.tamanoEtiqueta === 'grande') grid.style.gridTemplateColumns = 'repeat(3, 6cm)';
+            grid.style.gap = '0.25cm';
+            if (this.tamanoEtiqueta === 'pequena') grid.style.gridTemplateColumns = 'repeat(4, 4cm)';
+            else if (this.tamanoEtiqueta === 'mediana') grid.style.gridTemplateColumns = 'repeat(4, 4.8cm)';
+            else if (this.tamanoEtiqueta === 'grande') grid.style.gridTemplateColumns = 'repeat(3, 6cm)';
           } else {
-             grid.style.rowGap = '0.5cm';
-             grid.style.columnGap = '0.2cm';
-             if (this.tamanoEtiqueta === 'lomo-delgado') grid.style.gridTemplateColumns = 'repeat(11, 1.5cm)';
-             else if (this.tamanoEtiqueta === 'lomo-estandar') grid.style.gridTemplateColumns = 'repeat(8, 2.0cm)';
-             else if (this.tamanoEtiqueta === 'lomo-ancho') grid.style.gridTemplateColumns = 'repeat(7, 2.5cm)';
+            grid.style.rowGap = '0.5cm';
+            grid.style.columnGap = '0.2cm';
+            if (this.tamanoEtiqueta === 'lomo-delgado') grid.style.gridTemplateColumns = 'repeat(11, 1.5cm)';
+            else if (this.tamanoEtiqueta === 'lomo-estandar') grid.style.gridTemplateColumns = 'repeat(8, 2.0cm)';
+            else if (this.tamanoEtiqueta === 'lomo-ancho') grid.style.gridTemplateColumns = 'repeat(7, 2.5cm)';
           }
 
           const chunk = etiquetasNodes.slice(i, i + itemsPerPage);
           chunk.forEach(nodo => {
-             grid.appendChild(nodo.cloneNode(true));
+            grid.appendChild(nodo.cloneNode(true));
           });
           pageDiv.appendChild(grid);
           offScreenContainer.appendChild(pageDiv);
 
           const canvas = await html2canvas(pageDiv, {
-            scale: 2, 
+            scale: 2,
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff',
             scrollX: 0,
-            scrollY: -window.scrollY 
+            scrollY: -window.scrollY
           });
 
           const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -357,10 +369,10 @@ export default class ImpresionesComponent implements OnInit {
 
         document.body.removeChild(offScreenContainer);
         this.preparandoImpresion = false;
-        
+
         const fecha = new Date().toISOString().slice(0, 10);
         pdf.save(`Etiquetas_${this.modoImpresion}_${fecha}.pdf`);
-        
+
         this.preparandoPDF = false;
         this.cdr.detectChanges();
         this.messageService.add({ severity: 'success', summary: 'Listo', detail: 'PDF generado correctamente.' });
@@ -372,7 +384,7 @@ export default class ImpresionesComponent implements OnInit {
         this.cdr.detectChanges();
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la generación del PDF' });
       }
-    }, 50); 
+    }, 50);
   }
 
   private generarCodigosBarras(tipo: 'preview' | 'print' | 'pdf'): void {
@@ -381,35 +393,64 @@ export default class ImpresionesComponent implements OnInit {
     this.ejemplaresSeleccionados.forEach((ejemplar, index) => {
       const svgId = `barcode-${tipo}-${index}`;
       const svgElement = document.getElementById(svgId);
-      
+
       if (svgElement) {
         try {
-          const config: any = { 
-            format: 'CODE128', 
-            displayValue: false, 
+          const config: any = {
+            format: 'CODE128',
+            displayValue: false,
             margin: 0,
             textMargin: 0,
-            fontSize: 14, 
-            background: '#ffffff' 
+            fontSize: 14,
+            background: '#ffffff'
           };
-          
+
           if (this.tamanoEtiqueta === 'pequena') {
-             config.width = 1.7; 
-             config.height = 25;
+            config.width = 1.7;
+            config.height = 25;
           } else if (this.tamanoEtiqueta === 'mediana') {
-             config.width = 2.0; 
-             config.height = 35;
+            config.width = 2.0;
+            config.height = 35;
           } else {
-             config.width = 2.2; 
-             config.height = 40;
+            config.width = 2.2;
+            config.height = 40;
           }
-          
+
           JsBarcode(svgElement, ejemplar.codigo, config);
         } catch (error) {
           console.error(`Error generando barcode ${ejemplar.codigo}`, error);
         }
       }
     });
+  }
+
+  private formatearISBN(isbn: string | undefined): string | undefined {
+    const tieneX = isbn?.toUpperCase().endsWith('X');
+
+    const numeros = isbn?.replace(/[^0-9]/g, '');
+
+    if (numeros?.length === 13) {
+      return numeros.replace(
+        /(\d{3})(\d{1})(\d{3})(\d{5})(\d{1})/,
+        '$1-$2-$3-$4-$5'
+      );
+    }
+
+    if (numeros?.length === 10) {
+      return numeros.replace(
+        /(\d{1})(\d{3})(\d{5})(\d{1})/,
+        '$1-$2-$3-$4'
+      );
+    }
+
+    if (numeros?.length === 9 && tieneX) {
+      return numeros.replace(
+        /(\d{1})(\d{3})(\d{5})/,
+        '$1-$2-$3-X'
+      );
+    }
+
+    return isbn;
   }
 
   regresar(): void {

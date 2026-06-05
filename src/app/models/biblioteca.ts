@@ -81,7 +81,7 @@ export interface Libro {
   idCategoria: number;
   idEditorial: number;
   idIdioma: number;
-  idProcedenca: number;
+  idProcedencia: number;
   uuid: string;
   areas?: Areas[];
   autores?: Autor[];
