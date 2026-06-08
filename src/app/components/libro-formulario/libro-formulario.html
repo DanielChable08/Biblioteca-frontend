@@ -136,7 +136,7 @@
             </div>
           </div>
 
-          <div class="field">
+          <div class="field" *ngIf="isEditMode">
             <label for="procedencias">Procedencia</label>
             <div class="p-inputgroup">
               <p-select
@@ -441,6 +441,31 @@
                 pInputText
                 formControlName="pasta"
                 placeholder="Ej: 'Dura'"
+                maxlength="50"
+              />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <div class="field">
+              <label for="codigoDewey">Código Dewey</label>
+              <input
+                id="codigoDewey"
+                class="form-comp"
+                pInputText
+                formControlName="codigoDewey"
+                placeholder="Ej: '700', '600'"
+                maxlength="50"
+              />
+            </div>
+            <div class="field">
+              <label for="codigoCutter">Código Cutter</label>
+              <input
+                id="codigoCutter"
+                class="form-comp"
+                pInputText
+                formControlName="codigoCutter"
+                placeholder="Ej: 'P718'"
                 maxlength="50"
               />
             </div>

@@ -247,7 +247,7 @@
                 </div>
                 <div class="etiqueta-barcode"><svg [id]="'barcode-preview-' + i"></svg></div>
                 <div class="etiqueta-info mt-1">
-                  <strong>{{ ejemplar.procedenciaNombre }}</strong>
+                  <strong>{{ libraryName }}</strong>
                 </div>
                 <div class="etiqueta-info">
                   <strong>{{ ejemplar.libroTitulo }}</strong>
@@ -352,22 +352,27 @@
         *ngFor="let ejemplar of ejemplaresSeleccionados; let i = index"
       >
         <div class="flex" [ngClass]="ejemplar.libroISBN === '-' ? 'gap-4' : 'gap-1'">
+          <div class="logo-print">
+            <img src="../../../assets/svg/logoLetras.svg" />
+          </div>
           <div class="left-side">
-            <div class="etiqueta-info-print">
-              <strong>{{ ejemplar.codigo }}</strong>
+            <div class="etiqueta-num-print">
+              <strong>{{ "C. " + ejemplar.numeroCopia }}</strong>
             </div>
             <div class="etiqueta-barcode-print"><svg [id]="'barcode-print-' + i"></svg></div>
             <div class="etiqueta-info-print">
-              <strong>{{ ejemplar.procedenciaNombre }}</strong>
+              <strong>{{ libraryName }}</strong>
+              <strong>{{ ejemplar.codigo }}</strong>
             </div>
             <div class="etiqueta-info-print">
-              <strong>{{ ejemplar.libroTitulo }}</strong>
+              <strong>{{ ejemplar.libroTitulo | truncate:25 }}</strong>
             </div>
           </div>
           <div class="right-side">
             <div class="etiqueta-info-print">
               <div>
-                <strong>{{ ejemplar.libroISBN }}</strong>
+                <strong>{{ ejemplar.codigoDewey }}</strong>
+                <strong>{{ ejemplar.codigoCutter }}</strong>
                 <strong>{{ ejemplar.libro?.anho }}</strong>
               </div>
             </div>
@@ -438,7 +443,7 @@
             </div>
             <div class="etiqueta-barcode-pdf"><svg [id]="'barcode-pdf-' + i"></svg></div>
             <div class="etiqueta-info-pdf">
-              <strong>{{ ejemplar.procedenciaNombre }}</strong>
+              <strong>{{ libraryName }}</strong>
             </div>
             <div class="etiqueta-info-pdf">
               <strong>{{ ejemplar.libroTitulo }}</strong>
