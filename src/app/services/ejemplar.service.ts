@@ -20,5 +20,9 @@ export class EjemplarService {
     return this.http.post<Ejemplar>(this.apiUrl, ejemplarData);
   }
 
+  listarEjemplaresImpresion(): Observable<Ejemplar[]> {
+    return this.http.get<Ejemplar[]>(`${this.apiUrl}/impresion`);
+  }
+
   
 }

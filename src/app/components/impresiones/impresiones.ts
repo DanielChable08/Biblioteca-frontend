@@ -20,14 +20,16 @@ import { EjemplarService } from '../../services/ejemplar.service';
 import { BookService } from '../../services/book.service';
 import { CatalogService } from '../../services/catalog.service';
 import { Ejemplar } from '../../models/biblioteca';
-import { ProcedenciaService } from '../../services/procedencia.service';
+import { environment } from '../../../environments/environment';
+import { TruncatePipe } from '../../pipes/truncate.pipe';
 
 interface EjemplarExtendido extends Ejemplar {
-  libroTitulo?: string;
+  libroTitulo: string;
   libroISBN?: string;
   autoresNombres?: string;
   cutter?: string;
-  procedenciaNombre?: string;
+  codigoDewey?: string;
+  codigoCutter?: string;
 }
 
 @Component({
@@ -42,7 +44,8 @@ interface EjemplarExtendido extends Ejemplar {
     InputTextModule,
     ToastModule,
     TooltipModule,
-    SelectButtonModule
+    SelectButtonModule,
+    TruncatePipe
   ],
   templateUrl: './impresiones.html',
   styleUrls: ['./impresiones.css']
@@ -51,11 +54,11 @@ export default class ImpresionesComponent implements OnInit {
   private ejemplarService = inject(EjemplarService);
   private bookService = inject(BookService);
   private catalogService = inject(CatalogService);
-  private procedenciaService = inject(ProcedenciaService);
   private messageService = inject(MessageService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
+  libraryName = environment.libraryName;
   ejemplares: EjemplarExtendido[] = [];
   ejemplaresFiltrados: EjemplarExtendido[] = [];
   ejemplaresSeleccionados: EjemplarExtendido[] = [];
@@ -121,12 +124,11 @@ export default class ImpresionesComponent implements OnInit {
     this.cargando = true;
 
     forkJoin({
-      ejemplares: this.ejemplarService.getEjemplares(),
+      ejemplares: this.ejemplarService.listarEjemplaresImpresion(),
       libros: this.bookService.getLibros(),
       estados: this.catalogService.getEstadosEjemplares(),
-      procedencias: this.procedenciaService.listarOptionProcedencias()
     }).pipe(
-      map(({ ejemplares, libros, estados, procedencias }) => {
+      map(({ ejemplares, libros, estados }) => {
         const autoresRequests = libros.map(libro =>
           this.bookService.getAutoresForLibro(libro.uuid)
         );
@@ -142,7 +144,6 @@ export default class ImpresionesComponent implements OnInit {
               const libro = librosCompletos.find(l => l.id === ejemplar.idLibro);
               const estado = estados.find(e => e.id === ejemplar.idEstadoEjemplar);
               const autoresStr = this.formatearAutores(libro?.autores || []);
-              const procedencia = procedencias.find(p => p.id === libro?.idProcedencia)
 
               let cutter = 'AAA';
               if (autoresStr && autoresStr !== 'Autor no asignado') {
@@ -159,7 +160,8 @@ export default class ImpresionesComponent implements OnInit {
                 libroISBN: this.formatearISBN(libro?.isbn) || '-',
                 autoresNombres: autoresStr,
                 cutter: cutter,
-                procedenciaNombre: procedencia?.nombre || '-'
+                codigoCutter: libro?.codigoCutter || '-',
+                codigoDewey: libro?.codigoDewey || '-',
               };
             });
 

@@ -49,6 +49,7 @@ export interface Ejemplar {
   estado?: EstadoEjemplar;
   condicionFisica?: CondicionFisica;
   libro?: Libro;
+  numeroCopia?: number;
 }
 
 export interface Persona {
@@ -77,6 +78,8 @@ export interface Libro {
   edicion: string;
   paginas: number;
   pasta: string | null;
+  codigoDewey: string;
+  codigoCutter: string;
   idTipoLibro: number;
   idCategoria: number;
   idEditorial: number;
@@ -102,6 +105,8 @@ export interface LibroPayload {
   resumen: string;
   edicion: string;
   paginas: number;
+  codigoDewey: string;
+  codigoCutter: string;
   idTipoLibro: number;
   idCategoria: number;
   idEditorial: number;

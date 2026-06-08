@@ -111,6 +111,10 @@ export class BookService {
     return this.http.get<Ejemplar>(`${this.ejemplaresUrl}/${uuid}`);
   }
 
+  listarEjemplaresImpresion(): Observable<Ejemplar[]> {
+    return this.http.get<Ejemplar[]>(`${this.ejemplaresUrl}/impresion`);
+  }
+
   getEjemplaresByLibro(libroId: number): Observable<Ejemplar[]> {
     let httpParams = new HttpParams().set('idLibro', libroId.toString());
     return this.http.get<Ejemplar[]>(this.ejemplaresUrl, { params: httpParams });
