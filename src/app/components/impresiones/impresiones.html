@@ -182,8 +182,8 @@
         </div>
         <div class="ejemplar-info">
           <div class="ejemplar-codigo"><i class="pi pi-bookmark"></i> {{ ejemplar.codigo }}</div>
-          <div class="ejemplar-titulo">{{ ejemplar.libroTitulo }}</div>
-          <div class="ejemplar-autor">{{ ejemplar.autoresNombres }}</div>
+          <div class="ejemplar-titulo">{{ ejemplar.titulo }}</div>
+          <div class="ejemplar-autor">{{ formatearAutores(ejemplar.autores) }}</div>
           <div class="ejemplar-ubicacion">
             <i class="pi pi-map-marker"></i> {{ ejemplar.ubicacion || 'Sin ubicación' }}
           </div>
@@ -224,9 +224,9 @@
             <div class="etiqueta-codigo">{{ ejemplar.codigo }}</div>
             <div class="etiqueta-barcode"><svg [id]="'barcode-preview-' + i"></svg></div>
             <div class="etiqueta-info">
-              <strong>{{ ejemplar.libroTitulo }}</strong>
-              <div>{{ ejemplar.autoresNombres }}</div>
-              <div *ngIf="mostrarISBN && ejemplar.libroISBN">ISBN: {{ ejemplar.libroISBN }}</div>
+              <strong>{{ ejemplar.titulo }}</strong>
+              <div>{{ formatearAutores(ejemplar.autores) }}</div>
+              <div *ngIf="mostrarISBN && ejemplar.isbn">ISBN: {{ ejemplar.isbn }}</div>
               <div *ngIf="mostrarUbicacion && ejemplar.ubicacion">{{ ejemplar.ubicacion }}</div>
             </div>
           </div>
@@ -240,24 +240,29 @@
             class="etiqueta-preview etiqueta-compacta"
             *ngFor="let ejemplar of ejemplaresSeleccionados; let i = index"
           >
-            <div class="flex" [ngClass]="ejemplar.libroISBN === '-' ? 'gap-4' : 'gap-2'">
+            <div class="flex">
+              <div class="logo">
+                <img src="../../../assets/svg/logoLetras.svg" />
+              </div>
               <div class="left-side">
-                <div class="etiqueta-info">
-                  <strong>{{ ejemplar.codigo }}</strong>
+                <div class="etiqueta-num">
+                  <strong>{{ 'C. ' + ejemplar.numeroCopia }}</strong>
                 </div>
                 <div class="etiqueta-barcode"><svg [id]="'barcode-preview-' + i"></svg></div>
                 <div class="etiqueta-info mt-1">
                   <strong>{{ libraryName }}</strong>
+                  <strong>{{ ejemplar.codigo }}</strong>
                 </div>
                 <div class="etiqueta-info">
-                  <strong>{{ ejemplar.libroTitulo }}</strong>
+                  <strong>{{ ejemplar.titulo | truncate: 25 }}</strong>
                 </div>
               </div>
               <div class="right-side">
                 <div class="etiqueta-info">
                   <div>
-                    <strong>{{ ejemplar.libroISBN }}</strong>
-                    <strong>{{ ejemplar.libro?.anho }}</strong>
+                    <strong>{{ ejemplar.codigoDewey }}</strong>
+                    <strong>{{ ejemplar.codigoCutter }}</strong>
+                    <strong>{{ ejemplar.anho }}</strong>
                   </div>
                 </div>
               </div>
@@ -280,7 +285,7 @@
                 <span class="lomo-code">{{ ejemplar.codigo }}</span>
               </div>
               <div class="lomo-body">
-                <span class="lomo-title">{{ ejemplar.libroTitulo }}</span>
+                <span class="lomo-title">{{ ejemplar.titulo }}</span>
               </div>
               <div
                 class="lomo-footer"
@@ -335,9 +340,9 @@
         <div class="etiqueta-codigo-print">{{ ejemplar.codigo }}</div>
         <div class="etiqueta-barcode-print"><svg [id]="'barcode-print-' + i"></svg></div>
         <div class="etiqueta-info-print">
-          <strong>{{ ejemplar.libroTitulo }}</strong>
-          <div>{{ ejemplar.autoresNombres }}</div>
-          <div *ngIf="mostrarISBN && ejemplar.libroISBN">ISBN: {{ ejemplar.libroISBN }}</div>
+          <strong>{{ ejemplar.titulo }}</strong>
+          <div>{{ formatearAutores(ejemplar.autores) }}</div>
+          <div *ngIf="mostrarISBN && ejemplar.isbn">ISBN: {{ ejemplar.isbn }}</div>
           <div *ngIf="mostrarUbicacion && ejemplar.ubicacion">{{ ejemplar.ubicacion }}</div>
         </div>
       </div>
@@ -351,13 +356,13 @@
         class="etiqueta-print etiqueta-compacta"
         *ngFor="let ejemplar of ejemplaresSeleccionados; let i = index"
       >
-        <div class="flex" [ngClass]="ejemplar.libroISBN === '-' ? 'gap-4' : 'gap-1'">
+        <div class="flex">
           <div class="logo-print">
             <img src="../../../assets/svg/logoLetras.svg" />
           </div>
           <div class="left-side">
             <div class="etiqueta-num-print">
-              <strong>{{ "C. " + ejemplar.numeroCopia }}</strong>
+              <strong>{{ 'C. ' + ejemplar.numeroCopia }}</strong>
             </div>
             <div class="etiqueta-barcode-print"><svg [id]="'barcode-print-' + i"></svg></div>
             <div class="etiqueta-info-print">
@@ -365,7 +370,7 @@
               <strong>{{ ejemplar.codigo }}</strong>
             </div>
             <div class="etiqueta-info-print">
-              <strong>{{ ejemplar.libroTitulo | truncate:25 }}</strong>
+              <strong>{{ ejemplar.titulo | truncate: 25 }}</strong>
             </div>
           </div>
           <div class="right-side">
@@ -373,7 +378,7 @@
               <div>
                 <strong>{{ ejemplar.codigoDewey }}</strong>
                 <strong>{{ ejemplar.codigoCutter }}</strong>
-                <strong>{{ ejemplar.libro?.anho }}</strong>
+                <strong>{{ ejemplar.anho }}</strong>
               </div>
             </div>
           </div>
@@ -393,7 +398,7 @@
       >
         <div class="contenido-interno-lomo">
           <div class="lomo-print-code">{{ ejemplar.codigo }}</div>
-          <div class="lomo-print-title">{{ ejemplar.libroTitulo }}</div>
+          <div class="lomo-print-title">{{ ejemplar.titulo }}</div>
           <div
             class="lomo-print-cutter"
             *ngIf="!(modoImpresion === 'horizontal' && tamanoEtiqueta === 'lomo-delgado')"
@@ -420,9 +425,9 @@
         <div class="etiqueta-codigo-pdf">{{ ejemplar.codigo }}</div>
         <div class="etiqueta-barcode-pdf"><svg [id]="'barcode-pdf-' + i"></svg></div>
         <div class="etiqueta-info-pdf">
-          <strong>{{ ejemplar.libroTitulo }}</strong>
-          <div>{{ ejemplar.autoresNombres }}</div>
-          <div *ngIf="mostrarISBN && ejemplar.libroISBN">ISBN: {{ ejemplar.libroISBN }}</div>
+          <strong>{{ ejemplar.titulo }}</strong>
+          <div>{{ formatearAutores(ejemplar.autores) }}</div>
+          <div *ngIf="mostrarISBN && ejemplar.isbn">ISBN: {{ ejemplar.isbn }}</div>
           <div *ngIf="mostrarUbicacion && ejemplar.ubicacion">{{ ejemplar.ubicacion }}</div>
         </div>
       </div>
@@ -436,7 +441,7 @@
         class="etiqueta-pdf etiqueta-compacta"
         *ngFor="let ejemplar of ejemplaresSeleccionados; let i = index"
       >
-        <div class="flex" [ngClass]="ejemplar.libroISBN === '-' ? 'gap-4' : 'gap-1'">
+        <div class="flex" [ngClass]="ejemplar.isbn === '-' ? 'gap-4' : 'gap-1'">
           <div class="left-side">
             <div class="etiqueta-info-pdf">
               <strong>{{ ejemplar.codigo }}</strong>
@@ -446,14 +451,14 @@
               <strong>{{ libraryName }}</strong>
             </div>
             <div class="etiqueta-info-pdf">
-              <strong>{{ ejemplar.libroTitulo }}</strong>
+              <strong>{{ ejemplar.titulo }}</strong>
             </div>
           </div>
           <div class="right-side">
             <div class="etiqueta-info-pdf">
               <div>
-                <strong>{{ ejemplar.libroISBN }}</strong>
-                <strong>{{ ejemplar.libro?.anho }}</strong>
+                <strong>{{ ejemplar.isbn }}</strong>
+                <strong>{{ ejemplar.anho }}</strong>
               </div>
             </div>
           </div>
@@ -473,7 +478,7 @@
       >
         <div class="contenido-interno-lomo">
           <div class="lomo-print-code">{{ ejemplar.codigo }}</div>
-          <div class="lomo-print-title">{{ ejemplar.libroTitulo }}</div>
+          <div class="lomo-print-title">{{ ejemplar.titulo }}</div>
           <div
             class="lomo-print-cutter"
             *ngIf="!(modoImpresion === 'horizontal' && tamanoEtiqueta === 'lomo-delgado')"

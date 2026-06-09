@@ -49,7 +49,20 @@ export interface Ejemplar {
   estado?: EstadoEjemplar;
   condicionFisica?: CondicionFisica;
   libro?: Libro;
-  numeroCopia?: number;
+}
+
+export interface EjemplarImpresion {
+  id: number;
+  anho: string;
+  isbn?: string;
+  codigo: string;
+  titulo: string;
+  cutter?: string;
+  ubicacion?: string;
+  codigoDewey?: string;
+  codigoCutter?: string;
+  numeroCopia: number;
+  autores: string[];
 }
 
 export interface Persona {
