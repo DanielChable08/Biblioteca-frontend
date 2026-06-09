@@ -7,30 +7,19 @@ import JsBarcode from 'jsbarcode';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-import { ButtonModule } from 'primeng/button';
-import { SelectModule } from 'primeng/select';
-import { CheckboxModule } from 'primeng/checkbox';
-import { InputTextModule } from 'primeng/inputtext';
-import { ToastModule } from 'primeng/toast';
-import { TooltipModule } from 'primeng/tooltip';
-import { MessageService } from 'primeng/api';
-import { SelectButtonModule } from 'primeng/selectbutton';
-
 import { EjemplarService } from '../../services/ejemplar.service';
-import { BookService } from '../../services/book.service';
-import { CatalogService } from '../../services/catalog.service';
-import { Ejemplar } from '../../models/biblioteca';
 import { environment } from '../../../environments/environment';
+import { EjemplarImpresion } from '../../models/biblioteca';
 import { TruncatePipe } from '../../pipes/truncate.pipe';
 
-interface EjemplarExtendido extends Ejemplar {
-  libroTitulo: string;
-  libroISBN?: string;
-  autoresNombres?: string;
-  cutter?: string;
-  codigoDewey?: string;
-  codigoCutter?: string;
-}
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { InputTextModule } from 'primeng/inputtext';
+import { CheckboxModule } from 'primeng/checkbox';
+import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-impresiones',
@@ -52,16 +41,14 @@ interface EjemplarExtendido extends Ejemplar {
 })
 export default class ImpresionesComponent implements OnInit {
   private ejemplarService = inject(EjemplarService);
-  private bookService = inject(BookService);
-  private catalogService = inject(CatalogService);
   private messageService = inject(MessageService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
   libraryName = environment.libraryName;
-  ejemplares: EjemplarExtendido[] = [];
-  ejemplaresFiltrados: EjemplarExtendido[] = [];
-  ejemplaresSeleccionados: EjemplarExtendido[] = [];
+  ejemplares: EjemplarImpresion[] = [];
+  ejemplaresFiltrados: EjemplarImpresion[] = [];
+  ejemplaresSeleccionados: EjemplarImpresion[] = [];
 
   modoImpresion: 'barras' | 'lomo' | 'horizontal' = 'barras';
 
@@ -123,77 +110,34 @@ export default class ImpresionesComponent implements OnInit {
   cargarEjemplares(): void {
     this.cargando = true;
 
-    forkJoin({
-      ejemplares: this.ejemplarService.listarEjemplaresImpresion(),
-      libros: this.bookService.getLibros(),
-      estados: this.catalogService.getEstadosEjemplares(),
-    }).pipe(
-      map(({ ejemplares, libros, estados }) => {
-        const autoresRequests = libros.map(libro =>
-          this.bookService.getAutoresForLibro(libro.uuid)
-        );
-
-        return forkJoin(autoresRequests).pipe(
-          map(autoresArray => {
-            const librosCompletos = libros.map((libro, index) => ({
-              ...libro,
-              autores: autoresArray[index]
-            }));
-
-            const ejemplaresExtendidos: EjemplarExtendido[] = ejemplares.map(ejemplar => {
-              const libro = librosCompletos.find(l => l.id === ejemplar.idLibro);
-              const estado = estados.find(e => e.id === ejemplar.idEstadoEjemplar);
-              const autoresStr = this.formatearAutores(libro?.autores || []);
-
-              let cutter = 'AAA';
-              if (autoresStr && autoresStr !== 'Autor no asignado') {
-                cutter = autoresStr.substring(0, 3).toUpperCase();
-              } else if (libro?.titulo) {
-                cutter = libro.titulo.substring(0, 3).toUpperCase();
-              }
-
-              return {
-                ...ejemplar,
-                libro: libro,
-                estado: estado,
-                libroTitulo: libro?.titulo || 'Sin título',
-                libroISBN: this.formatearISBN(libro?.isbn) || '-',
-                autoresNombres: autoresStr,
-                cutter: cutter,
-                codigoCutter: libro?.codigoCutter || '-',
-                codigoDewey: libro?.codigoDewey || '-',
-              };
-            });
-
-            return ejemplaresExtendidos;
-          })
-        );
-      })
-    ).subscribe({
-      next: (observable) => {
-        observable.subscribe({
-          next: (ejemplaresCompletos) => {
-            this.ejemplares = ejemplaresCompletos;
-            this.ejemplaresFiltrados = ejemplaresCompletos;
-            this.cargando = false;
-            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Datos cargados correctamente' });
-          },
-          error: (error) => {
-            console.error(error);
-            this.cargando = false;
-          }
-        });
-      },
-      error: (error) => {
-        console.error(error);
-        this.cargando = false;
-      }
-    });
+    this.ejemplarService.listarEjemplaresImpresion()
+      .pipe(
+        map(ejemplares =>
+          ejemplares.map(ejemplar => ({
+            ...ejemplar,
+            isbn: this.formatearISBN(ejemplar.isbn),
+            ubicacion: ejemplar.ubicacion ?? '-',
+            codigoDewey: ejemplar.codigoDewey ?? '-',
+            codigoCutter: ejemplar.codigoCutter ?? '-',
+            cutter: this.formatearAutores(ejemplar.autores).substring(0, 3).toUpperCase()
+          }))
+        )
+      )
+      .subscribe({
+        next: (ejemplaresCompletos) => {
+          this.ejemplares = ejemplaresCompletos;
+          this.ejemplaresFiltrados = ejemplaresCompletos;
+          this.cargando = false;
+        },
+        error: (error) => {
+          console.error(error);
+          this.cargando = false;
+        }
+      });
   }
 
-  private formatearAutores(autores: any[]): string {
-    if (!autores || autores.length === 0) return 'Autor no asignado';
-    return autores.map(a => `${a.nombre} ${a.apPaterno || ''}`.trim()).join(', ');
+  formatearAutores(autores: string[]): string {
+    return autores.join(', ');
   }
 
   filtrarEjemplares(): void {
@@ -204,16 +148,16 @@ export default class ImpresionesComponent implements OnInit {
     }
     this.ejemplaresFiltrados = this.ejemplares.filter(ejemplar => {
       return (ejemplar.codigo?.toLowerCase() || '').includes(filtro) ||
-        (ejemplar.libroTitulo?.toLowerCase() || '').includes(filtro) ||
-        (ejemplar.autoresNombres?.toLowerCase() || '').includes(filtro);
+        (ejemplar.titulo?.toLowerCase() || '').includes(filtro) ||
+        ejemplar.autores.join(' ').toLowerCase().includes(filtro)
     });
   }
 
-  isEjemplarSeleccionado(ejemplar: EjemplarExtendido): boolean {
+  isEjemplarSeleccionado(ejemplar: EjemplarImpresion): boolean {
     return this.ejemplaresSeleccionados.some(e => e.id === ejemplar.id);
   }
 
-  toggleEjemplar(ejemplar: EjemplarExtendido): void {
+  toggleEjemplar(ejemplar: EjemplarImpresion): void {
     const index = this.ejemplaresSeleccionados.findIndex(e => e.id === ejemplar.id);
     if (index > -1) this.ejemplaresSeleccionados.splice(index, 1);
     else this.ejemplaresSeleccionados.push(ejemplar);

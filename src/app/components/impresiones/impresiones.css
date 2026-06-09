@@ -451,8 +451,35 @@
 }
 
 .etiquetas-grid-preview:has(.etiqueta-preview.etiqueta-compacta) {
-  grid-template-columns: repeat(3, 265px);
+  grid-template-columns: repeat(2, 400px);
   gap: 1rem;
+}
+
+.etiqueta-preview.etiqueta-compacta .logo img {
+  width: 105px;
+  height: auto;
+  object-fit: contain;
+}
+
+.etiqueta-preview.etiqueta-compacta .etiqueta-num {
+  font-size: 8pt;
+  line-height: 1.2;
+}
+
+.etiqueta-preview.etiqueta-compacta .etiqueta-num strong {
+  font-size: 0.75rem;
+}
+
+.etiqueta-compacta .etiqueta-num {
+  margin-bottom: 4px;
+  text-align: left;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.etiqueta-compacta .etiqueta-num strong {
+  font-weight: bold;
+  display: block;
 }
 
 .etiqueta-preview {
@@ -489,16 +516,19 @@
 }
 
 .etiqueta-preview.etiqueta-compacta {
-  width: 265px;
+  width: 400px;
 }
 
 .etiqueta-preview.etiqueta-compacta .left-side {
-  width: 70%;
+  width: 45%;
+  margin-right: auto;
+  align-content: center;
 }
 
 .etiqueta-preview.etiqueta-compacta .right-side {
   align-content: center;
-  width: 30%;
+  margin-left: auto;
+  width: 20%;
 }
 
 .etiqueta-codigo {
@@ -774,6 +804,7 @@
 
 .etiqueta-print.etiqueta-compacta .left-side {
   width: 45%;
+  margin-right: auto;
   align-content: center;
 }
 

@@ -1,7 +1,7 @@
 import { environment } from '../../environments/environment';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Ejemplar } from '../models/biblioteca'; 
+import { Ejemplar, EjemplarImpresion } from '../models/biblioteca'; 
 import { Observable } from 'rxjs';
 
 
@@ -20,8 +20,8 @@ export class EjemplarService {
     return this.http.post<Ejemplar>(this.apiUrl, ejemplarData);
   }
 
-  listarEjemplaresImpresion(): Observable<Ejemplar[]> {
-    return this.http.get<Ejemplar[]>(`${this.apiUrl}/impresion`);
+  listarEjemplaresImpresion(): Observable<EjemplarImpresion[]> {
+    return this.http.get<EjemplarImpresion[]>(`${this.apiUrl}/impresion`);
   }
 
   
