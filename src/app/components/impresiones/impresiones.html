@@ -356,21 +356,23 @@
         class="etiqueta-print etiqueta-compacta"
         *ngFor="let ejemplar of ejemplaresSeleccionados; let i = index"
       >
-        <div class="flex">
+        <div class="etiqueta-wrapper-print">
           <div class="logo-print">
             <img src="../../../assets/svg/logoLetras.svg" />
           </div>
           <div class="left-side">
-            <div class="etiqueta-num-print">
-              <strong>{{ 'C. ' + ejemplar.numeroCopia }}</strong>
+            <div class="etiqueta-num-print font-bold">
+              {{ 'C. ' + ejemplar.numeroCopia }}
             </div>
             <div class="etiqueta-barcode-print"><svg [id]="'barcode-print-' + i"></svg></div>
-            <div class="etiqueta-info-print">
-              <strong>{{ libraryName }}</strong>
-              <strong>{{ ejemplar.codigo }}</strong>
+            <div class="etiqueta-info-print font-bold mt-1">
+              {{ libraryName }}
             </div>
-            <div class="etiqueta-info-print">
-              <strong>{{ ejemplar.titulo | truncate: 25 }}</strong>
+            <div class="etiqueta-info-print font-bold">
+              {{ ejemplar.codigo }}
+            </div>
+            <div class="etiqueta-info-print font-bold">
+              {{ ejemplar.titulo | truncate: 30 }}
             </div>
           </div>
           <div class="right-side">

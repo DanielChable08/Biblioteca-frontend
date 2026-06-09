@@ -601,11 +601,15 @@
 }
 
 .etiquetas-grid-print:has(.etiqueta-print.etiqueta-compacta) {
-  grid-template-columns: repeat(2, 10cm);
+  grid-template-columns: repeat(2, 10.5cm);
 }
 
+.etiqueta-compacta .logo-print {
+  display: flex;
+  align-content: center;
+}
 .etiqueta-compacta .logo-print img {
-  width: 100px;
+  width: 80px;
   height: auto;
   object-fit: contain;
 }
@@ -737,10 +741,16 @@
   margin-bottom: 0.08cm;
 }
 
+.etiqueta-print.etiqueta-compacta .etiqueta-wrapper-print {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
 .etiqueta-print.etiqueta-compacta {
-  width: 10cm;
-  height: 3cm;
-  padding: 0.2cm;
+  width: 10.5cm;
+  height: 2.5cm;
 }
 
 .etiqueta-print.etiqueta-compacta .etiqueta-barcode-print {
@@ -748,17 +758,16 @@
 }
 
 .etiqueta-print.etiqueta-compacta .etiqueta-info-print {
-  font-size: 8pt;
+  font-size: 8.5pt;
   line-height: 1.2;
 }
 
 .etiqueta-print.etiqueta-compacta .etiqueta-info-print strong {
   font-size: 8.5pt;
-  margin-bottom: 0.08cm;
 }
 
 .etiqueta-print.etiqueta-compacta .etiqueta-num-print {
-  font-size: 8pt;
+  font-size: 8.5pt;
   line-height: 1.2;
 }
 
@@ -800,6 +809,7 @@
 .etiqueta-barcode-print svg {
   width: 95%;
   max-width: 95%;
+  height: auto;
 }
 
 .etiqueta-print.etiqueta-compacta .left-side {
