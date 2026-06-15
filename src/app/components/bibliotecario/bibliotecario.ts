@@ -1,38 +1,38 @@
+import { finalize, forkJoin, Subscription, filter, Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { ConfirmationService, MessageService, MenuItem } from 'primeng/api';
+import { DialogService, DynamicDialogModule } from 'primeng/dynamicdialog';
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
+import { SecureImagePipe } from '../../pipes/secure-image.pipe';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmPopupModule } from 'primeng/confirmpopup';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { Router, NavigationEnd } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
+import { PaginatorModule } from 'primeng/paginator';
 import { TooltipModule } from 'primeng/tooltip';
 import { PopoverModule } from 'primeng/popover';
-import { DialogService, DynamicDialogModule } from 'primeng/dynamicdialog';
-import { ConfirmationService, MessageService, MenuItem } from 'primeng/api';
-import { ConfirmPopupModule } from 'primeng/confirmpopup';
-import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DividerModule } from 'primeng/divider';
-import { ChipModule } from 'primeng/chip';
+import { CommonModule } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
-import { MenuModule } from 'primeng/menu';
-import { PaginatorModule } from 'primeng/paginator';
+import { FormsModule } from '@angular/forms';
+import { ToastModule } from 'primeng/toast';
 import { TableModule } from 'primeng/table';
-import { Router, NavigationEnd } from '@angular/router';
-import { finalize, forkJoin, map, switchMap, of, Subscription, filter, catchError } from 'rxjs';
-import { SecureImagePipe } from '../../pipes/secure-image.pipe';
+import { ChipModule } from 'primeng/chip';
+import { MenuModule } from 'primeng/menu';
+import { CardModule } from 'primeng/card';
 
-import { BookService } from '../../services/book.service';
-import { CatalogService } from '../../services/catalog.service';
-import { EjemplarService } from '../../services/ejemplar.service';
-import { AuthService } from '../../services/auth.service';
+import { Libro, Catalogo, Areas, LibroListado } from '../../models/biblioteca';
 import { SharedDataService } from '../../services/shared-data.service';
-import { Libro, Catalogo, Autor, Ejemplar, Areas } from '../../models/biblioteca';
+import { CatalogService } from '../../services/catalog.service';
+import { BookService } from '../../services/book.service';
+import { AuthService } from '../../services/auth.service';
 
-import LibroFormularioComponent from '../libro-formulario/libro-formulario';
 import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formulario';
 import LibroDetalleComponent from '../libro-detalle/libro-detalle';
 import { environment } from '../../../environments/environment';
+import { TruncatePipe } from '../../pipes/truncate.pipe';
 
 type CategoriaKey = 'Todas' | string;
 
@@ -44,7 +44,7 @@ type CategoriaKey = 'Todas' | string;
     TooltipModule, PopoverModule, ToastModule, ConfirmPopupModule,
     ConfirmDialogModule, DynamicDialogModule, DividerModule, ChipModule,
     DialogModule, SelectModule, MenuModule, SecureImagePipe, PaginatorModule,
-    TableModule
+    TableModule, TruncatePipe, MultiSelectModule
   ],
   providers: [DialogService, ConfirmationService, MessageService],
   templateUrl: './bibliotecario.html',
@@ -53,42 +53,56 @@ type CategoriaKey = 'Todas' | string;
 export default class BibliotecarioComponent implements OnInit, OnDestroy {
   private bookService = inject(BookService);
   private catalogService = inject(CatalogService);
-  private ejemplarService = inject(EjemplarService);
   private dialogService = inject(DialogService);
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
   private router = inject(Router);
-  private authService = inject(AuthService);
   private sharedDataService = inject(SharedDataService);
 
-  libros: Libro[] = [];
-  allLibros: Libro[] = [];
-  categorias: Catalogo[] = [];
-  areasCat: Areas[] = [];
+  private ejemplaresSubscription?: Subscription;
+  private readonly IMAGES_BASE_URL = environment.plainURL + '/assets/img/';
+  authService = inject(AuthService);
+
+  // Entidades
+  libros: LibroListado[] = [];
   librosSeleccionados: Libro[] = [];
+  librosDesactivados: LibroListado[] = [];
+  //
+  categorias: Catalogo[] = [];
+  categoriaSeleccionadaId: number | null = null;
+  //
+  areasCat: Areas[] = [];
+  areasSeleccionadasIds: number[] = [];
 
   vistaActual: 'cards' | 'tabla' = 'cards';
-  categoriaSeleccionada: CategoriaKey = 'Todas';
-  areasSeleccionadas: Areas[] = [];
 
-  terminoBusqueda = '';
   loading = true;
+  loadingDesactivados = true;
   dropdownOpen = false;
   areasDropdownOpen = false;
+  modalDesactivados = false;
 
-  contadoresCategoria: { [key: string]: number } = {};
+  // Variables de búsqueda
+  entradasTotales: number = 0;
+  currentSort = { field: 'id', order: 'desc' };
+  currentPage = 0;
+  currentSize = 15;
+  globalFilter = '';
+  private searchSubject = new Subject<string>();
+
+  // Variables de búsqueda de desactivados
+  entradasDesactivadasTotales: number = 0;
+  currentDeactivatedSort = { field: 'id', order: 'desc' };
+  currentDeactivatedPage = 0;
+  currentDeactivatedSize = 15;
+  ocultosFilter: string = '';
+  private searchDeactivatedSubject = new Subject<string>();
+
   catalogMenuItems: MenuItem[] = [];
   currentFullName: string = '';
   currentUserRole: string = '';
   currentUserInitials: string = '';
   mostrarStats = true;
-
-  first: number = 0;
-  rows: number = 15;
-
-  private ejemplaresSubscription?: Subscription;
-  private routerSubscription?: Subscription;
-  private readonly IMAGES_BASE_URL = environment.plainURL + '/assets/img/';
 
   get isAdmin(): boolean {
     return this.authService.isAdmin();
@@ -97,34 +111,149 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadUserInfo();
     this.loadInitialData();
+    this.loadLibrosDesactivados();
+    this.loadLibros();
+    this.searchSubject.pipe(debounceTime(500), distinctUntilChanged()).subscribe(search => {
+      this.loadLibros(0, this.currentSize, this.currentSort.field, this.currentSort.order, search);
+    });
+    this.searchDeactivatedSubject.pipe(debounceTime(500), distinctUntilChanged()).subscribe(search => {
+      this.loadLibrosDesactivados(0, this.currentDeactivatedSize, this.currentDeactivatedSort.field, this.currentDeactivatedSort.order, search);
+    });
     this.setupCatalogMenu();
 
     this.ejemplaresSubscription = this.sharedDataService.ejemplaresActualizados$.subscribe(
       (actualizado) => {
-        if (actualizado) this.loadInitialData();
+        if (actualizado) this.recargarLibrosActuales();
       }
     );
-
-    this.routerSubscription = this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: NavigationEnd) => {
-        if (event.url === '/admin' || event.url.includes('/admin') && !event.url.includes('/admin/')) {
-          this.loadInitialData();
-        }
-      });
   }
 
   ngOnDestroy(): void {
     if (this.ejemplaresSubscription) this.ejemplaresSubscription.unsubscribe();
-    if (this.routerSubscription) this.routerSubscription.unsubscribe();
   }
 
-  onPageChange(event: any) {
-    this.first = event.first;
-    this.rows = event.rows;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  loadUserInfo(): void {
+    this.currentFullName = this.authService.getFullName();
+    this.currentUserRole = this.authService.getRoleName();
+    this.currentUserInitials = this.authService.getUserInitials();
   }
 
+  loadInitialData(): void {
+    this.loading = true;
+
+    forkJoin({
+      categorias: this.catalogService.getCategorias(),
+      areas: this.catalogService.getAreas()
+    }).pipe(
+      finalize(() => this.loading = false)
+    ).subscribe({
+      next: ({ categorias, areas }) => {
+        this.categorias = categorias;
+        this.areasCat = areas;
+      },
+      error: (err: any) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los datos.'
+        });
+        console.error(err);
+      }
+    })
+  }
+
+  get categoriasOptions() {
+    return [
+      { label: 'Todas las categorías', value: null },
+      ...this.categorias.map(c => ({
+        label: c.nombre,
+        value: c.id
+      }))
+    ];
+  }
+
+  get categoriaSeleccionadaNombre(): string {
+    if (!this.categoriaSeleccionadaId) {
+      return 'Todas las categorías';
+    }
+
+    return this.categorias.find(
+      c => c.id === this.categoriaSeleccionadaId
+    )?.nombre ?? 'Todas las categorías';
+  }
+
+  get areasOptions() {
+    return this.areasCat.map(a => ({
+      label: a.nombre,
+      value: a.id
+    }));
+  }
+
+  loadLibros(page: number = 0, size: number = 15, sortField: string = 'id', sortOrder: string = 'desc', search: string = ''): void {
+    this.loading = true;
+
+
+
+    this.bookService.listarLibros(page, size, sortField, sortOrder, search, this.categoriaSeleccionadaId, this.areasSeleccionadasIds)
+      .pipe(finalize(() => this.loading = false)).subscribe({
+        next: (data) => {
+          this.libros = data.content.map(libro => {
+            let imagenCorregida = libro.imagen;
+
+            if (libro.imagen && !libro.imagen.startsWith('http')) {
+              imagenCorregida = `${this.IMAGES_BASE_URL}${libro.imagen}`;
+            }
+
+            return {
+              ...libro,
+              imagen: imagenCorregida
+            };
+          });
+          this.entradasTotales = data.totalElements;
+        },
+        error: (err: any) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron cargar los libros.'
+          });
+          console.error(err);
+        }
+      })
+  }
+
+  loadLibrosDesactivados(page: number = 0, size: number = 15, sortField: string = 'id', sortOrder: string = 'desc', search: string = ''): void {
+    this.loadingDesactivados = true;
+
+    this.bookService.listarLibrosDesactivados(page, size, sortField, sortOrder, search)
+      .pipe(finalize(() => this.loadingDesactivados = false)).subscribe({
+        next: (data) => {
+          this.librosDesactivados = data.content.map(libro => {
+            let imagenCorregida = libro.imagen;
+
+            if (libro.imagen && !libro.imagen.startsWith('http')) {
+              imagenCorregida = `${this.IMAGES_BASE_URL}${libro.imagen}`;
+            }
+
+            return {
+              ...libro,
+              imagen: imagenCorregida
+            };
+          });
+          this.entradasDesactivadasTotales = data.totalElements;
+        },
+        error: (err: any) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudieron cargar los libros.'
+          });
+          console.error(err);
+        }
+      })
+  }
+
+  // Menu desplegable para navegar por el sistema
   setupCatalogMenu(): void {
     const userRole = this.authService.getRoleName();
 
@@ -157,99 +286,43 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     this.catalogMenuItems = [...items, logoutItem];
   }
 
-  loadUserInfo(): void {
-    this.currentFullName = this.authService.getFullName();
-    this.currentUserRole = this.authService.getRoleName();
-    this.currentUserInitials = this.authService.getUserInitials();
+  // Métodos de filtros y búsqueda
+  onPageChange(event: any): void {
+    this.currentPage = event.rows > 0 ? Math.floor(event.first / event.rows) : 0;
+    this.currentSize = event.rows;
+    this.currentSort.field = event.sortField || 'id';
+    this.currentSort.order = event.sortOrder === 1 ? 'asc' : 'desc';
+
+    this.loadLibros(this.currentPage, this.currentSize, this.currentSort.field, this.currentSort.order, this.globalFilter);
   }
 
-  loadInitialData(): void {
-    this.loading = true;
+  applyFilterGlobal(): void {
+    this.currentPage = 0;
 
-    forkJoin({
-      libros: this.bookService.getAllLibrosAdmin().pipe(
-        catchError(err => {
-          console.error('Error cargando libros:', err);
-          return of([]);
-        })
-      ),
-      categorias: this.catalogService.getCategorias().pipe(catchError(() => of([]))),
-      areasCat: this.catalogService.getAreas().pipe(catchError(() => of([]))),
-      ejemplares: this.ejemplarService.getEjemplares().pipe(catchError(() => of([]))),
-      estados: this.catalogService.getEstadosEjemplares().pipe(catchError(() => of([])))
-    }).pipe(
-      switchMap(({ libros, categorias, areasCat, ejemplares, estados }) => {
-        if (libros.length === 0) return of({ libros: [], categorias, areasCat });
-
-        const libroDetallesRequests = libros.map(libro =>
-          forkJoin({
-            autores: this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([]))),
-            areas: this.bookService.getAreasForLibro(libro.uuid).pipe(catchError(() => of([])))
-          })
-        );
-
-        return forkJoin(libroDetallesRequests).pipe(
-          map(detallesArray => {
-            const librosCompletos = libros.map((libro, index) => {
-
-              let imagenCorregida = libro.imagen;
-              if (libro.imagen && !libro.imagen.startsWith('http')) {
-                imagenCorregida = `${this.IMAGES_BASE_URL}${libro.imagen}`;
-              }
-
-              const categoriaDelLibro = categorias.find(cat => cat.id === libro.idCategoria);
-              const ejemplaresDelLibro = ejemplares
-                .filter(e => e.idLibro === libro.id)
-                .map(ejemplar => {
-                  const estadoDelEjemplar = estados.find(est => est.id === ejemplar.idEstadoEjemplar);
-                  return { ...ejemplar, estado: estadoDelEjemplar };
-                });
-
-              const estadoDesdeBack = (libro as any).activo;
-
-              return {
-                ...libro,
-                imagen: imagenCorregida,
-                categoria: categoriaDelLibro,
-                autores: detallesArray[index].autores,
-                areas: detallesArray[index].areas,
-                ejemplares: ejemplaresDelLibro,
-                activo: estadoDesdeBack !== false
-              };
-            });
-
-            let librosPermitidos = librosCompletos;
-            if (!this.isAdmin) {
-              librosPermitidos = librosCompletos.filter(libro => libro.activo === true);
-            }
-
-            librosPermitidos.sort((a, b) => b.id - a.id);
-
-            return { libros: librosPermitidos, categorias, areasCat };
-          })
-        );
-      }),
-      finalize(() => this.loading = false)
-    ).subscribe({
-      next: ({ libros, categorias, areasCat }) => {
-        this.allLibros = libros;
-        this.categorias = categorias;
-        this.areasCat = areasCat;
-        this.actualizarContadores();
-        this.filtrarLibros();
-        this.librosSeleccionados = [];
-      },
-      error: (err: any) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos.' });
-      }
-    });
+    this.searchSubject.next(this.globalFilter.trim());
   }
 
-  getEjemplaresDisponibles(libro: Libro): number { return libro.ejemplares?.filter(e => e.estado?.nombre?.toLowerCase() === 'disponible').length || 0; }
-  getEjemplaresPrestados(libro: Libro): number { return libro.ejemplares?.filter(e => e.estado?.nombre?.toLowerCase() === 'prestado').length || 0; }
-  getEjemplaresReparacion(libro: Libro): number { return libro.ejemplares?.filter(e => e.estado?.nombre?.toLowerCase() === 'en reparación').length || 0; }
+  // Métodos de filtros y búsqueda - desactivados
+  onDeactivatedPageChange(event: any): void {
+    this.currentDeactivatedPage = event.rows > 0 ? Math.floor(event.first / event.rows) : 0;
+    this.currentDeactivatedSize = event.rows;
+    this.currentDeactivatedSort.field = event.sortField || 'id';
+    this.currentDeactivatedSort.order = event.sortOrder === 1 ? 'asc' : 'desc';
 
-  getEstadoPrincipal(libro: Libro): { estado: string; cantidad: number; clase: string; icono: string } {
+    this.loadLibros(this.currentDeactivatedPage, this.currentDeactivatedSize, this.currentDeactivatedSort.field, this.currentDeactivatedSort.order, this.ocultosFilter);
+  }
+
+  applyFilterOcultos(): void {
+    this.currentDeactivatedPage = 0;
+
+    this.searchDeactivatedSubject.next(this.ocultosFilter.trim());
+  }
+
+  getEjemplaresDisponibles(libro: LibroListado): number { return libro.ejemplares?.filter(e => e.estadoEjemplar?.toLowerCase() === 'disponible').length || 0; }
+  getEjemplaresPrestados(libro: LibroListado): number { return libro.ejemplares?.filter(e => e.estadoEjemplar?.toLowerCase() === 'prestado').length || 0; }
+  getEjemplaresReparacion(libro: LibroListado): number { return libro.ejemplares?.filter(e => e.estadoEjemplar?.toLowerCase() === 'en reparación').length || 0; }
+
+  getEstadoPrincipal(libro: LibroListado): { estado: string; cantidad: number; clase: string; icono: string } {
     const disponibles = this.getEjemplaresDisponibles(libro);
     const prestados = this.getEjemplaresPrestados(libro);
     const reparacion = this.getEjemplaresReparacion(libro);
@@ -262,7 +335,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     return { estado: 'No disponible', cantidad: 0, clase: 'unavailable', icono: 'pi-times-circle' };
   }
 
-  getTooltipEstados(libro: Libro): string {
+  getTooltipEstados(libro: LibroListado): string {
     const disponibles = this.getEjemplaresDisponibles(libro);
     const prestados = this.getEjemplaresPrestados(libro);
     const reparacion = this.getEjemplaresReparacion(libro);
@@ -278,9 +351,9 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     return html;
   }
 
-  getTotalEjemplaresDisponibles(): number { return this.allLibros.reduce((total, libro) => total + this.getEjemplaresDisponibles(libro), 0); }
-  getTotalEjemplaresPrestados(): number { return this.allLibros.reduce((total, libro) => total + this.getEjemplaresPrestados(libro), 0); }
-  getTotalEjemplaresReparacion(): number { return this.allLibros.reduce((total, libro) => total + this.getEjemplaresReparacion(libro), 0); }
+  getTotalEjemplaresDisponibles(): number { return this.libros.reduce((total, libro) => total + this.getEjemplaresDisponibles(libro), 0); }
+  getTotalEjemplaresPrestados(): number { return this.libros.reduce((total, libro) => total + this.getEjemplaresPrestados(libro), 0); }
+  getTotalEjemplaresReparacion(): number { return this.libros.reduce((total, libro) => total + this.getEjemplaresReparacion(libro), 0); }
 
   agregarLibro(): void { this.router.navigate(['/admin/libros/nuevo']); }
   UsuariosList(): void { this.router.navigate(['/admin/usuarios']); }
@@ -291,41 +364,8 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   irADescargas(): void { this.router.navigate(['/admin/descargas']); }
   logout(): void { this.authService.logout(); }
 
-  filtrarLibros(): void {
-    let resultado = this.allLibros;
 
-    if (this.categoriaSeleccionada !== 'Todas') {
-      resultado = resultado.filter(libro => libro.categoria?.nombre === this.categoriaSeleccionada);
-    }
 
-    if (this.areasSeleccionadas && this.areasSeleccionadas.length > 0) {
-      const nombresAreasSeleccionadas = this.areasSeleccionadas.map(a => a.nombre);
-
-      resultado = resultado.filter(libro => {
-        const areasLibro = (libro as any).areas || [];
-        if (areasLibro.length === 0) return false;
-        const nombresAreasDelLibro = areasLibro.map((a: any) => a?.nombre || a?.area?.nombre || (typeof a === 'string' ? a : ''));
-        return nombresAreasDelLibro.some((nombre: string) => nombresAreasSeleccionadas.includes(nombre));
-      });
-    }
-
-    if (this.terminoBusqueda) {
-      const termino = this.terminoBusqueda.toLowerCase().trim();
-      resultado = resultado.filter(libro =>
-        (libro.titulo || '').toLowerCase().includes(termino) ||
-        this.getAutoresAsString(libro.autores).toLowerCase().includes(termino) ||
-        this.getAreasAsString((libro as any).areas).toLowerCase().includes(termino) ||
-        (libro.isbn || '').toLowerCase().includes(termino)
-      );
-    }
-
-    this.libros = resultado;
-    this.first = 0;
-    this.librosSeleccionados = [];
-  }
-
-  buscar(): void { this.filtrarLibros(); }
-  filtrarCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.filtrarLibros(); }
 
   toggleDropdown(event?: Event): void {
     if (event) event.stopPropagation();
@@ -339,40 +379,15 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     if (this.areasDropdownOpen) this.dropdownOpen = false;
   }
 
-  selectCategoria(categoria: CategoriaKey): void { this.categoriaSeleccionada = categoria; this.dropdownOpen = false; this.filtrarLibros(); }
-  getDropdownText(): string { return this.categoriaSeleccionada === 'Todas' ? 'Todas las categorías' : this.categoriaSeleccionada; }
-  esCategoriaActiva(categoria: CategoriaKey): boolean { return this.categoriaSeleccionada === categoria; }
-
-  esAreaSeleccionada(area: Areas): boolean {
-    return this.areasSeleccionadas.some(a => a.id === area.id);
+  selectCategoria(): void {
+    this.currentPage = 0;
+    this.recargarLibrosActuales();
   }
 
-  toggleArea(area: Areas, event: Event): void {
-    event.stopPropagation();
-    const index = this.areasSeleccionadas.findIndex(a => a.id === area.id);
-    if (index > -1) {
-      this.areasSeleccionadas.splice(index, 1);
-    } else {
-      this.areasSeleccionadas.push(area);
-    }
-    this.filtrarLibros();
-  }
-
-  clearAreas(event: Event): void {
-    event.stopPropagation();
-    this.areasSeleccionadas = [];
-    this.filtrarLibros();
-  }
-
-  getAreasDropdownText(): string {
-    if (this.areasSeleccionadas.length === 0) return 'Todas las áreas';
-    if (this.areasSeleccionadas.length === 1) return this.areasSeleccionadas[0].nombre;
-    return `${this.areasSeleccionadas.length} áreas selec.`;
-  }
-
-  formatIsbn(isbn: string | undefined): string {
-    if (!isbn || isbn.length !== 13) return isbn || 'N/A';
-    return [isbn.slice(0, 3), isbn.slice(3, 6), isbn.slice(6, 9), isbn.slice(9, 12), isbn.slice(12, 13)].join('-');
+  selectAreas(): void {
+    this.areasSeleccionadasIds ??= [];
+    this.currentPage = 0;
+    this.recargarLibrosActuales();
   }
 
   formatearISBN(isbn: string | undefined): string {
@@ -383,50 +398,36 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     return isbn;
   }
 
-  getAutoresAsString(autores?: Autor[]): string {
-    if (!autores || autores.length === 0) return 'Autor no asignado';
-    return autores.map(a => `${a.apPaterno || ''} ${a.apMaterno || ''} ${a.nombre}`).join(', ');
-  }
+  getStringListAsString(entidad: string, stringList?: string[]): string {
+    if (!stringList || stringList.length === 0) {
+      switch (entidad) {
+        case 'autores':
+          return 'Autor no asignado';
+        case 'areas':
+          return 'Sin áreas';
 
-  getAreasAsString(areas?: any[]): string {
-    if (!areas || !Array.isArray(areas) || areas.length === 0) {
-      return 'Sin áreas';
+        default:
+          return 'Sin datos';
+      }
     }
-
-    return areas
-      .map(a => {
-        if (a?.nombre) return a.nombre;
-        if (a?.area?.nombre) return a.area.nombre;
-        if (typeof a === 'string') return a;
-        return '';
-      })
-      .filter(nombre => nombre.trim() !== '')
-      .join(', ') || 'Sin áreas';
+    return stringList.map(sL => `${sL}`).join(', ');
   }
 
-  private actualizarContadores(): void {
-    const contadores: { [key: string]: number } = {};
-    this.categorias.forEach(cat => {
-      contadores[cat.nombre] = this.allLibros.filter(libro => libro.categoria?.id === cat.id).length;
-    });
-    this.contadoresCategoria = contadores;
-  }
+  editarLibro(libro: LibroListado): void { this.router.navigate(['/admin/libros/editar', libro.uuid]); }
 
-  editarLibro(libro: Libro): void { this.router.navigate(['/admin/libros/editar', libro.uuid]); }
-
-  verLibro(libro: Libro): void {
+  verLibro(libro: LibroListado): void {
     this.dialogService.open(LibroDetalleComponent, {
       header: 'Detalles de ' + libro.titulo,
       width: '75%',
       contentStyle: { "max-height": "90vh", "overflow": "auto" },
       baseZIndex: 10000,
-      data: { uuid: libro.uuid, imagenUrl: libro.imagen, estaActivo: libro.activo },
+      data: { uuid: libro.uuid, imagenUrl: libro.imagen, libroListado: libro },
       modal: true,
       closable: true,
     });
   }
 
-  abrirModalAgregarEjemplar(libro: Libro): void {
+  abrirModalAgregarEjemplar(libro: LibroListado): void {
     const ref = this.dialogService.open(EjemplarFormularioComponent, {
       header: `Agregar Ejemplar para: ${libro.titulo}`,
       width: '600px',
@@ -436,11 +437,11 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       focusOnShow: false,
     });
     ref.onClose.subscribe((ejemplarAgregado) => {
-      if (ejemplarAgregado) this.loadInitialData();
+      if (ejemplarAgregado) this.recargarLibrosActuales();
     });
   }
 
-  eliminarLibro(libro: Libro): void {
+  eliminarLibro(libro: LibroListado): void {
     this.confirmationService.confirm({
       key: 'deleteDialog',
       message: `¿Está seguro de desactivar el libro "${libro.titulo}"?`,
@@ -457,7 +458,8 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
         ).subscribe({
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Libro desactivado correctamente.' });
-            this.loadInitialData();
+            this.recargarLibrosActuales();
+            this.recargarLibrosDesactivados();
           },
           error: (err: any) => {
             let errorDetail = 'No se pudo desactivar el libro.';
@@ -485,7 +487,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     });
   }
 
-  reactivarLibro(libro: Libro): void {
+  reactivarLibro(libro: LibroListado): void {
     this.confirmationService.confirm({
       key: 'deleteDialog',
       message: `¿Desea reactivar el libro "${libro.titulo}"?`,
@@ -502,7 +504,8 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
         ).subscribe({
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Libro reactivado correctamente.' });
-            this.loadInitialData();
+            this.recargarLibrosActuales();
+            this.recargarLibrosDesactivados();
           },
           error: (err: any) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo reactivar el libro.' })
         });
@@ -542,7 +545,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
         ).subscribe({
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Libros procesados correctamente.' });
-            this.loadInitialData();
+            this.recargarLibrosActuales();
           },
           error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Ocurrió un error al procesar los libros.' })
         });
@@ -551,4 +554,24 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   }
 
   toggleStats(): void { this.mostrarStats = !this.mostrarStats; }
+
+  private recargarLibrosActuales(): void {
+    this.loadLibros(
+      this.currentPage,
+      this.currentSize,
+      this.currentSort.field,
+      this.currentSort.order,
+      this.globalFilter
+    );
+  }
+
+  private recargarLibrosDesactivados(): void {
+    this.loadLibrosDesactivados(
+      this.currentDeactivatedPage,
+      this.currentDeactivatedSize,
+      this.currentDeactivatedSort.field,
+      this.currentDeactivatedSort.order,
+      this.ocultosFilter
+    );
+  }
 }

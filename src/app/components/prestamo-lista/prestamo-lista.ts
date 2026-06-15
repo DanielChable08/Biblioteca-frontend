@@ -326,7 +326,7 @@ export default class PrestamoListaComponent implements OnInit {
       forkJoin({
         detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
         ejemplares: this.bookService.getEjemplares(),
-        libros: this.bookService.getLibros(),
+        libros: this.bookService.getOptionLibros(),
         estadosEjemplares: this.catalogService.getEstadosEjemplares()
       }).pipe(
         switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {

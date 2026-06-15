@@ -13,11 +13,11 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () => import('./components/login/login').then(m => m.default)
   },
-  {
-    path: 'dashboard',
-    loadComponent: () => import('./components/dashboard/dashboard').then(m => m.default),
-    canActivate: [authGuard] 
-  },
+  // {
+  //   path: 'dashboard',
+  //   loadComponent: () => import('./components/dashboard/dashboard').then(m => m.default),
+  //   canActivate: [authGuard] 
+  // },
   {
     path: 'admin',
     loadComponent: () => import('./components/bibliotecario/bibliotecario').then(m => m.default),

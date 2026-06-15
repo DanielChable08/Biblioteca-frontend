@@ -49,6 +49,7 @@ export interface Ejemplar {
   estado?: EstadoEjemplar;
   condicionFisica?: CondicionFisica;
   libro?: Libro;
+  libroOption?: OptionLibro;
 }
 
 export interface EjemplarImpresion {
@@ -135,6 +136,60 @@ export interface OptionLibro {
   titulo: string;
   edicion: string;
   autores?: Autor[];
+  uuid: string;
+}
+
+export interface LibroListado {
+  id: number;
+  titulo: string;
+  isbn: string;
+  anho: string;
+  resumen: string;
+  edicion: string;
+  paginas: number;
+  pasta: string | null;
+  codigoDewey: string;
+  codigoCutter: string;
+  uuid: string;
+  areas?: string[];
+  autores?: string[];
+  categoria: string;
+  editorial: string;
+  idioma: string;
+  tipoLibro: string;
+  procedencia?: string;
+  imagen?: string;
+  ejemplares?: EjemplarResumen[];
+}
+
+export interface VerLibro {
+  id: number;
+  titulo: string;
+  isbn: string;
+  anho: string;
+  resumen: string;
+  edicion: string;
+  paginas: number;
+  pasta: string | null;
+  codigoDewey: string;
+  codigoCutter: string;
+  uuid: string;
+  activo: boolean;
+  areas?: string[];
+  autores?: string[];
+  categoria: string;
+  editorial: string;
+  idioma: string;
+  tipoLibro: string;
+  procedencia?: string;
+  imagen?: string;
+  ejemplares?: EjemplarResumen[];
+}
+
+export interface EjemplarResumen {
+  codigo: string;
+  ubicacion?: string;
+  estadoEjemplar: string;
 }
 
 export interface EjemplarPayload {

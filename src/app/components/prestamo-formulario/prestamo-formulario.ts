@@ -29,7 +29,8 @@ import {
   EstadoPrestamo,
   Ejemplar,
   PrestamoPayload,
-  Libro
+  Libro,
+  OptionLibro
 } from '../../models/biblioteca';
 
 @Component({
@@ -81,7 +82,7 @@ export default class PrestamoFormularioComponent implements OnInit {
   estadosPrestamo: EstadoPrestamo[] = [];
   
   allEjemplares: Ejemplar[] = [];
-  allLibros: Libro[] = [];
+  allLibros: OptionLibro[] = [];
 
   ejemplaresDisponibles: Ejemplar[] = [];
   ejemplaresFiltrados: Ejemplar[] = [];
@@ -239,7 +240,7 @@ export default class PrestamoFormularioComponent implements OnInit {
       lectores: this.prestamoService.getPersonas(),
       estados: this.catalogService.getEstadosPrestamos(),
       ejemplares: this.ejemplarService.getEjemplares(),
-      libros: this.bookService.getLibros(),
+      libros: this.bookService.getOptionLibros(),
       estadosEjemplares: this.catalogService.getEstadosEjemplares()
     }).subscribe({
       next: ({ lectores, estados, ejemplares, libros, estadosEjemplares }) => {
@@ -263,7 +264,7 @@ export default class PrestamoFormularioComponent implements OnInit {
             const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplar.idEstadoEjemplar);
             return {
                 ...ejemplar,
-                libro: libroDelEjemplar, 
+                libroOption: libroDelEjemplar, 
                 estado: estadoEjemplar
             };
         });
@@ -556,8 +557,8 @@ createPrestamo(payload: PrestamoPayload) {
   }
 
   getAutoresNombres(ejemplar: Ejemplar): string {
-    if (!ejemplar?.libro?.autores || ejemplar.libro.autores.length === 0) return 'Autor no asignado';
-    return ejemplar.libro.autores.map(a => `${a.apPaterno || ''} ${a.apMaterno || ''} ${a.nombre}`).join(', ');
+    if (!ejemplar?.libroOption?.autores || ejemplar.libroOption.autores.length === 0) return 'Autor no asignado';
+    return ejemplar.libroOption.autores.map(a => `${a.apPaterno || ''} ${a.apMaterno || ''} ${a.nombre}`).join(', ');
   }
 
   abrirModalLector() {

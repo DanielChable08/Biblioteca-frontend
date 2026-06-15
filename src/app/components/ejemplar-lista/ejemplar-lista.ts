@@ -70,7 +70,7 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
     this.loading = true;
     forkJoin({
       ejemplares: this.bookService.getEjemplares(),
-      libros: this.bookService.getLibros(),
+      libros: this.bookService.getOptionLibros(),
       estadosEjemplares: this.catalogService.getEstadosEjemplares(),
       condicionesFisicas: this.catalogService.getCondicionesFisicas()
     }).pipe(
@@ -194,23 +194,13 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // === LÓGICA DE IMAGEN COPIADA DE BIBLIOTECARIO ===
-    // Construimos la URL completa antes de abrir el modal
-    let imagenCompleta = ejemplar.libro.imagen;
-
-    if (imagenCompleta && !imagenCompleta.startsWith('http')) {
-      // Concatenamos la base URL
-      imagenCompleta = `${this.IMAGES_BASE_URL}${imagenCompleta}`;
-    }
-
     this.dialogRef = this.dialogService.open(LibroDetalleComponent, {
       header: `Detalles de ${ejemplar.libro.titulo}`,
       width: '75%',
       contentStyle: { 'max-height': '90vh', 'overflow': 'auto' },
       baseZIndex: 10000,
       data: {
-        uuid: ejemplar.libro.uuid,
-        imagenUrl: imagenCompleta // <-- Enviamos la URL ya procesada
+        uuid: ejemplar.libro.uuid// <-- Enviamos la URL ya procesada
       },
       modal: true,
       closable: true

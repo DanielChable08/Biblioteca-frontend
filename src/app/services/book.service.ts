@@ -1,7 +1,8 @@
-import { Libro, LibroPayload, Autor, Ejemplar, EjemplarPayload, Areas, OptionLibro } from '../models/biblioteca';
+import { Libro, LibroPayload, Autor, Ejemplar, EjemplarPayload, Areas, OptionLibro, LibroListado, VerLibro } from '../models/biblioteca';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Injectable, inject } from '@angular/core';
+import { Page } from '../models/page';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -12,16 +13,38 @@ export class BookService {
   private apiUrl = environment.apiURL + '/libros';
   private ejemplaresUrl = environment.apiURL + '/ejemplares';
 
-  getLibros(params?: any): Observable<Libro[]> {
-    let httpParams = new HttpParams();
-    if (params) {
-      Object.keys(params).forEach(key => {
-        if (params[key] !== null && params[key] !== undefined) {
-          httpParams = httpParams.append(key, params[key]);
-        }
-      });
+  listarLibros(page: number = 0, size: number = 15, sortField: string = 'id', sortOrder: string = 'desc', search = '', categoriaId?: number | null, areaIds: number[] = []): Observable<Page<LibroListado>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('size', size)
+      .set('sort', `${sortField},${sortOrder}`);
+
+    if (search.trim()) {
+      params = params.set('search', search.trim());
     }
-    return this.http.get<Libro[]>(this.apiUrl, { params: httpParams });
+
+    if (categoriaId) {
+      params = params.set('categoriaId', categoriaId);
+    }
+
+    areaIds.forEach(id => {
+      params = params.append('areaIds', id);
+    });
+
+    return this.http.get<Page<LibroListado>>(`${this.apiUrl}`, { params });
+  }
+
+  listarLibrosDesactivados(page: number = 0, size: number = 15, sortField: string = 'id', sortOrder: string = 'desc', search = ''): Observable<Page<LibroListado>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('size', size)
+      .set('sort', `${sortField},${sortOrder}`);
+
+    if (search.trim()) {
+      params = params.set('search', search.trim());
+    }
+
+    return this.http.get<Page<LibroListado>>(`${this.apiUrl}/desactivados`, { params });
   }
 
   // Método para mostrar libros en un select/multiselect
@@ -34,7 +57,15 @@ export class BookService {
   }
 
   getLibroByUuid(uuid: string): Observable<Libro> {
-    return this.http.get<Libro>(`${this.apiUrl}/${uuid}`);
+    return this.http.get<Libro>(`${this.apiUrl}/${uuid}/editar`);
+  }
+
+  verLibroPorUuid(uuid: string): Observable<VerLibro> {
+    return this.http.get<VerLibro>(`${this.apiUrl}/${uuid}/ver`);
+  }
+
+  verLibroDesactivadoPorUuid(uuid: string): Observable<VerLibro> {
+    return this.http.get<VerLibro>(`${this.apiUrl}/${uuid}/ver/desactivado`);
   }
 
   private crearFormData(libro: any, file: File | null): FormData {
@@ -143,10 +174,6 @@ export class BookService {
 
   deleteEjemplar(uuid: string): Observable<void> {
     return this.http.delete<void>(`${this.ejemplaresUrl}/${uuid}`);
-  }
-
-  getLibroDesactivadoByUuid(uuid: string): Observable<Libro> {
-    return this.http.get<Libro>(`${this.apiUrl}/${uuid}/desactivado`);
   }
 
   exportarEjemplaresExcel(campos: string[]): Observable<Blob> {

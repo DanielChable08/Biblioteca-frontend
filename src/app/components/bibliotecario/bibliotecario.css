@@ -161,6 +161,12 @@
   transform: rotate(180deg);
 }
 
+.filter-select {
+  display: flex;
+  flex: 1;
+  max-width: 392px;
+}
+
 .custom-filter-dropdown-panel {
   position: absolute;
   top: 100%;
@@ -703,7 +709,17 @@
   gap: 0.2rem;
 }
 
+@media (max-width: 1300px) {
+  .filter-select {
+    max-width: 250px;
+  }
+}
+
 @media (max-width: 960px){
+  .filter-select {
+    max-width: none;
+    width: 100%;
+  }
   :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-thead > tr > th,
   :host ::ng-deep .p-datatable.p-datatable-responsive-stack .p-datatable-tfoot > tr > td {
       display: none !important;

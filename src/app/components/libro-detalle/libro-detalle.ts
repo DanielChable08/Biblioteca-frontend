@@ -10,9 +10,10 @@ import { MessageModule } from 'primeng/message'; // Agrega esto si quieres mensa
 import { BookService } from '../../services/book.service';
 import { EjemplarService } from '../../services/ejemplar.service';
 import { CatalogService } from '../../services/catalog.service';
-import { Libro, Autor } from '../../models/biblioteca';
+import { Libro, Autor, LibroListado, VerLibro } from '../../models/biblioteca';
 import { finalize, forkJoin, map, catchError, of, switchMap } from 'rxjs';
 import { SecureImagePipe } from '../../pipes/secure-image.pipe';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-libro-detalle',
@@ -25,90 +26,85 @@ export default class LibroDetalleComponent implements OnInit {
   private dialogConfig = inject(DynamicDialogConfig);
   private dialogRef = inject(DynamicDialogRef);
   private bookService = inject(BookService);
-  private ejemplarService = inject(EjemplarService);
-  private catalogService = inject(CatalogService);
+  private readonly IMAGES_BASE_URL = environment.plainURL + '/assets/img/';
 
-  libro: Libro | null = null;
+  libro: LibroListado | VerLibro | null = null;
   loading = true;
   error = false;
-  mensajeError = ''; 
+  mensajeError = '';
   imagenUrl?: string;
 
   ngOnInit(): void {
     const uuid = this.dialogConfig.data.uuid;
     this.imagenUrl = this.dialogConfig.data.imagenUrl;
-    const estaActivo = this.dialogConfig.data.estaActivo; 
+    const estaActivo = this.dialogConfig.data.estaActivo;
+    const libroData = this.dialogConfig.data.libroListado || null;
 
     if (uuid) {
-      this.loadBookDetails(uuid, estaActivo);
+      this.loadBookDetails(uuid, estaActivo, libroData);
     }
   }
 
-  loadBookDetails(uuid: string, estaActivo: boolean): void {
+  loadBookDetails(uuid: string, estaActivo: boolean, libroListado?: LibroListado): void {
+    this.loading = true;
+    this.error = false;
 
-    const usarRutaDesactivado = estaActivo === false;
+    if (libroListado) {
+      let imagenCompleta = libroListado.imagen;
 
-    const peticionLibro$ = usarRutaDesactivado 
-        ? this.bookService.getLibroDesactivadoByUuid(uuid) 
-        : this.bookService.getLibroByUuid(uuid);
-
-    peticionLibro$.pipe(
-      catchError((err: any) => {
-        console.error("Fallo al obtener el libro base", err);
-        
-        if (err.status === 403) {
-            this.mensajeError = 'No tienes permisos (ELIMINAR_LIBRO) para ver detalles de libros desactivados.';
-        } else if (err.status === 404 && !usarRutaDesactivado) {
-            return this.bookService.getLibroDesactivadoByUuid(uuid);
-        }
-        
-        this.error = true;
-        this.loading = false;
-        throw err; 
-      }),
-      switchMap((libroObtenido: Libro) => {
-        return forkJoin({
-          libro: of(libroObtenido),
-          autores: this.bookService.getAutoresForLibro(uuid).pipe(catchError(() => of([]))),
-          ejemplares: this.ejemplarService.getEjemplares().pipe(catchError(() => of([]))),
-          estados: this.catalogService.getEstadosEjemplares().pipe(catchError(() => of([])))
-        });
-      }),
-      map(({ libro, autores, ejemplares, estados }) => {
-        const ejemplaresDelLibro = ejemplares
-          .filter((e: any) => e.idLibro === libro.id)
-          .map((ejemplar: any) => ({
-            ...ejemplar,
-            estado: estados.find((est: any) => est.id === ejemplar.idEstadoEjemplar)
-          }));
-        
-        return {
-          ...libro,
-          imagen: this.imagenUrl || libro.imagen,
-          autores: autores,
-          ejemplares: ejemplaresDelLibro
-        };
-      }),
-      finalize(() => this.loading = false)
-    ).subscribe({
-      next: (libroCompleto: any) => {
-        this.libro = libroCompleto;
-        this.error = false;
-      },
-      error: (err: any) => {
-        this.error = true;
+      if (imagenCompleta && !imagenCompleta.startsWith('http')) {
+        imagenCompleta = `${this.IMAGES_BASE_URL}${imagenCompleta}`;
       }
-    });
+
+      this.libro = {
+        ...libroListado,
+        imagen: imagenCompleta,
+      } as any;
+
+      this.loading = false;
+      return;
+    }
+    const usarRutaDesactivado = estaActivo === false;
+    const peticionLibro$ = usarRutaDesactivado ? this.bookService.verLibroDesactivadoPorUuid(uuid) : this.bookService.verLibroPorUuid(uuid);
+
+    peticionLibro$
+      .pipe(
+        map((libro: VerLibro) => {
+          let imagenCompleta = libro.imagen;
+
+          if (imagenCompleta && !imagenCompleta.startsWith('http')) {
+            imagenCompleta = `${this.IMAGES_BASE_URL}${imagenCompleta}`;
+          }
+
+          return {
+            ...libro,
+            imagen: imagenCompleta,
+          };
+        }),
+        finalize(() => this.loading = false)
+      )
+      .subscribe({
+        next: (libroCompleto: any) => {
+          this.libro = libroCompleto;
+          this.error = false;
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.error = true;
+
+          if (err.status === 403) {
+            this.mensajeError = 'No tienes permisos para ver detalles de libros desactivados.';
+          }
+        }
+      });
   }
 
   formatIsbn(isbn: string | undefined): string {
-    if (!isbn || isbn.length !== 13) return isbn || 'N/A';
-    return [isbn.slice(0, 3), isbn.slice(3, 6), isbn.slice(6, 9), isbn.slice(9, 12), isbn.slice(12, 13)].join('-');
-  }
-
-  getAutoresAsString(autores?: Autor[]): string {
-    if (!autores || autores.length === 0) return 'Autor desconocido';
-    return autores.map(a => `${a.apPaterno || ''} ${a.apMaterno || ''} ${a.nombre}`).join(', ');
+    if (!isbn) return 'Sin ISBN';
+    const limpio = isbn.replace(/[^0-9X]/gi, '');
+    if (limpio.length === 10) return `${limpio.substring(0, 1)}-${limpio.substring(1, 4)}-${limpio.substring(4, 9)}-${limpio.substring(9, 10)}`;
+    if (limpio.length === 13) return `${limpio.substring(0, 3)}-${limpio.substring(3, 4)}-${limpio.substring(4, 8)}-${limpio.substring(8, 12)}-${limpio.substring(12, 13)}`;
+    return isbn;
   }
 
   getStatusClass(estadoNombre?: string): string {
@@ -118,6 +114,21 @@ export default class LibroDetalleComponent implements OnInit {
     if (nombre.includes('prestado')) return 'borrowed';
     if (nombre.includes('reparación')) return 'repair';
     return 'unknown';
+  }
+
+  getStringListAsString(entidad: string, stringList?: string[]): string {
+    if (!stringList || stringList.length === 0) {
+      switch (entidad) {
+        case 'autores':
+          return 'Autor no asignado';
+        case 'areas':
+          return 'Sin áreas';
+
+        default:
+          return 'Sin datos';
+      }
+    }
+    return stringList.map(sL => `${sL}`).join(', ');
   }
 
   cerrarModal(): void {
