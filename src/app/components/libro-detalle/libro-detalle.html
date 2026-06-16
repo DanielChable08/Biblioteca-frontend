@@ -17,20 +17,20 @@
       </div>
 
       <div class="book-info-container">
-        <p-tag [value]="libro.categoria?.nombre || 'Sin Categoría'" severity="warning" styleClass="category-tag"></p-tag>
+        <p-tag [value]="libro.categoria || 'Sin Categoría'" severity="warning" styleClass="category-tag"></p-tag>
         <h2 class="book-title">{{ libro.titulo }} - <span class="book-adition">{{ libro.edicion || 'Sin edición' }}</span> </h2>
-        <p class="book-authors">{{ getAutoresAsString(libro.autores) }}</p> 
+        <p class="book-authors">{{ getStringListAsString("autores", libro.autores) }}</p> 
         
         <p-divider></p-divider>
 
         <div class="details-section">
           <div class="detail-item"><span class="detail-label"><i class="pi pi-tag"></i> ISBN</span><span class="detail-value">{{formatIsbn(libro.isbn) }}</span></div>
-          <div class="detail-item"><span class="detail-label"><i class="pi pi-building"></i> Editorial</span><span class="detail-value">{{ libro.editorial?.nombre || 'N/A' }}</span></div>
+          <div class="detail-item"><span class="detail-label"><i class="pi pi-building"></i> Editorial</span><span class="detail-value">{{ libro.editorial || 'N/A' }}</span></div>
           <div class="detail-item"><span class="detail-label"><i class="pi pi-calendar"></i> Año</span><span class="detail-value">{{ libro.anho }}</span></div>
-          <div class="detail-item"><span class="detail-label"><i class="pi pi-globe"></i> Idioma</span><span class="detail-value">{{ libro.idioma?.nombre || 'N/A' }}</span></div>
+          <div class="detail-item"><span class="detail-label"><i class="pi pi-globe"></i> Idioma</span><span class="detail-value">{{ libro.idioma || 'N/A' }}</span></div>
           <div class="detail-item"><span class="detail-label"><i class="pi pi-file"></i> Páginas</span><span class="detail-value">{{ libro.paginas }}</span></div>
           <div class="detail-item"><span class="detail-label"><i class="pi pi-book"></i> Tipo de pasta</span><span class="detail-value">{{ libro.pasta || 'N/A' }}</span></div>
-          <div class="detail-item"><span class="detail-label"><i class="pi pi-flag"></i> Procedencia</span><span class="detail-value">{{ libro.procedencia?.nombre || 'N/A' }}</span></div>
+          <div class="detail-item"><span class="detail-label"><i class="pi pi-flag"></i> Procedencia</span><span class="detail-value">{{ libro.procedencia || 'N/A' }}</span></div>
         </div>
 
         <p-divider></p-divider>
@@ -46,7 +46,7 @@
             <li *ngFor="let ejemplar of libro.ejemplares">
               <span class="ejemplar-code"><i class="pi pi-barcode"></i> {{ ejemplar.codigo }}</span>
               <span class="ejemplar-location"><i class="pi pi-map-marker"></i> {{ ejemplar.ubicacion || 'Sin ubicación' }}</span>
-              <p-tag [value]="ejemplar.estado?.nombre || 'Desconocido'" [ngClass]="getStatusClass(ejemplar.estado?.nombre)"></p-tag>
+              <p-tag [value]="ejemplar.estadoEjemplar || 'Desconocido'" [ngClass]="getStatusClass(ejemplar.estadoEjemplar)"></p-tag>
             </li>
           </ul>
           <ng-template #noEjemplares>

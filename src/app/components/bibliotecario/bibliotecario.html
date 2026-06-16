@@ -40,67 +40,57 @@
           pInputText
           placeholder="Buscar libros, autores, áreas, temas..."
           class="searchbar full-w"
-          [(ngModel)]="terminoBusqueda"
-          (input)="buscar()"
+          [(ngModel)]="globalFilter"
+          (input)="applyFilterGlobal()"
         />
       </div>
 
-      <div class="custom-filter-dropdown-container" (click)="toggleAreasDropdown($event)">
-        <div class="custom-filter-dropdown-trigger">
-          <i class="pi pi-th-large"></i>
-          <span>{{ getAreasDropdownText() }}</span>
-          <i class="pi pi-chevron-down" [class.rotated]="areasDropdownOpen"></i>
-        </div>
-        <div
-          class="custom-filter-dropdown-panel"
-          *ngIf="areasDropdownOpen"
-          (click)="$event.stopPropagation()"
+      <div class="filter-select">
+        <p-multiSelect
+          [(ngModel)]="areasSeleccionadasIds"
+          [options]="areasOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todas las áreas"
+          selectedItemsLabel="{0} áreas seleccionadas"
+          [filter]="true"
+          [showClear]="true"
+          styleClass="w-full"
+          emptyFilterMessage="No se encontraron resultados"
+          emptyMessage="Sin datos"
+          (onChange)="selectAreas()"
+          (onClear)="selectAreas()"
         >
-          <div class="filter-dropdown-option" (click)="clearAreas($event)">
-            <i class="pi pi-filter-slash"></i>
-            <span>Limpiar áreas</span>
-          </div>
-          <div
-            *ngFor="let area of areasCat"
-            class="filter-dropdown-option"
-            [class.selected]="esAreaSeleccionada(area)"
-            (click)="toggleArea(area, $event)"
-          >
-            <i
-              class="pi"
-              [class.pi-check-square]="esAreaSeleccionada(area)"
-              [class.pi-stop]="!esAreaSeleccionada(area)"
-            ></i>
-            <span>{{ area.nombre }}</span>
-          </div>
-        </div>
+        </p-multiSelect>
       </div>
 
-      <div class="custom-filter-dropdown-container" (click)="toggleDropdown($event)">
-        <div class="custom-filter-dropdown-trigger">
-          <i class="pi pi-filter"></i>
-          <span>{{ getDropdownText() }}</span>
-          <i class="pi pi-chevron-down" [class.rotated]="dropdownOpen"></i>
-        </div>
-        <div class="custom-filter-dropdown-panel" *ngIf="dropdownOpen">
-          <div
-            class="filter-dropdown-option"
-            [class.selected]="'Todas' === categoriaSeleccionada"
-            (click)="selectCategoria('Todas'); $event.stopPropagation()"
-          >
-            <i class="pi pi-book"></i>
-            <span>Todas las categorías</span>
-          </div>
-          <div
-            *ngFor="let categoria of categorias"
-            class="filter-dropdown-option"
-            [class.selected]="categoria.nombre === categoriaSeleccionada"
-            (click)="selectCategoria(categoria.nombre); $event.stopPropagation()"
-          >
-            <i class="pi pi-tag"></i>
-            <span>{{ categoria.nombre }}</span>
-          </div>
-        </div>
+      <div class="filter-select">
+        <p-select
+          [(ngModel)]="categoriaSeleccionadaId"
+          [options]="categoriasOptions"
+          [filter]="true"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todas las categorías"
+          styleClass="w-full"
+          emptyFilterMessage="No se encontraron resultados"
+          emptyMessage="Sin datos"
+          (onChange)="selectCategoria()"
+        >
+          <ng-template #selectedItem let-selectedOption>
+            <div class="flex items-center gap-2" *ngIf="selectedOption">
+              <i class="pi pi-filter"></i>
+              <div>{{ selectedOption.label }}</div>
+            </div>
+          </ng-template>
+
+          <ng-template let-categoria #item>
+            <div class="flex items-center gap-2">
+              <i [class]="categoria.value ? 'pi pi-tag' : 'pi pi-filter'"></i>
+              <div>{{ categoria.label }}</div>
+            </div>
+          </ng-template>
+        </p-select>
       </div>
     </div>
 
@@ -109,10 +99,10 @@
     </div>
 
     <div class="info-stats-row">
-      <span class="main-stat">{{ allLibros.length }} libros en catálogo</span>
+      <span class="main-stat">{{ entradasTotales }} libros en catálogo</span>
       <div class="secondary-stats-group">
-        <span class="secondary-stat px-2">Última actualización: Hoy</span>
-        <span class="secondary-stat px-2">Nuevos ingresos: 3 libros esta semana</span>
+        <!-- <span class="secondary-stat px-2">Última actualización: Hoy</span>
+        <span class="secondary-stat px-2">Nuevos ingresos: 3 libros esta semana</span> -->
       </div>
     </div>
   </div>
@@ -202,7 +192,7 @@
           <span class="stat-box-title">Total de Libros</span>
           <i class="pi pi-book gold-icon"></i>
         </div>
-        <div class="stat-box-number">{{ allLibros.length }}</div>
+        <div class="stat-box-number">{{ entradasTotales }}</div>
         <div class="stat-box-subtitle">En toda la biblioteca</div>
       </div>
       <div class="stat-box">
@@ -232,30 +222,18 @@
     </div>
   </div>
 
-  <div class="categories-wrapper">
-    <h3 class="categories-title">Categorías</h3>
+  <!-- <div class="categories-wrapper">
+    <h3 class="categories-title">Filtros & Botones Adicionales</h3>
     <div class="categories-buttons-row">
       <button
         pButton
-        [class]="'category-button ' + (esCategoriaActiva('Todas') ? 'active-category' : '')"
-        (click)="filtrarCategoria('Todas')"
-      >
-        <i class="pi pi-book"></i>
-        <span>Todas</span>
-        <b>{{ allLibros.length }}</b>
-      </button>
-      <button
-        *ngFor="let cat of categorias"
-        pButton
-        [class]="'category-button ' + (esCategoriaActiva(cat.nombre) ? 'active-category' : '')"
-        (click)="filtrarCategoria(cat.nombre)"
-      >
-        <i class="pi pi-tag"></i>
-        <span>{{ cat.nombre }}</span>
-        <b>{{ contadoresCategoria[cat.nombre] || 0 }}</b>
-      </button>
+        class="category-button active-category"
+        label="Lista de Desactivados"
+        icon="pi pi-ban"
+        *ngIf="authService.hasPermission('ELIMINAR_LIBRO')"
+      ></button>
     </div>
-  </div>
+  </div> -->
 
   <div
     style="
@@ -270,15 +248,15 @@
   >
     <div class="catalog-title m-0" style="padding: 0; margin-bottom: 0">
       {{
-        categoriaSeleccionada === 'Todas'
+        categoriaSeleccionadaId === null
           ? 'Catálogo Completo'
-          : 'Categoría: ' + categoriaSeleccionada
+          : 'Categoría: ' + categoriaSeleccionadaNombre
       }}
       ({{ libros.length }} libro{{ libros.length !== 1 ? 's' : '' }})
     </div>
 
     <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap">
-      <div
+      <!-- <div
         *ngIf="isAdmin && vistaActual === 'tabla' && librosSeleccionados.length > 0"
         style="display: flex; gap: 0.5rem"
       >
@@ -296,7 +274,7 @@
           label="Reactivar"
           (click)="procesarMultiples(true)"
         ></button>
-      </div>
+      </div> -->
 
       <div style="display: flex; gap: 0.5rem">
         <!-- <button
@@ -307,6 +285,14 @@
           pTooltip="Eliminar por selección"
           tooltipPosition="top"
         ></button> -->
+        <button
+          pButton
+          icon="pi pi-ban"
+          class="btn-primary"
+          pTooltip="Lista de Desactivados"
+          tooltipPosition="top"
+          (click)="modalDesactivados = true"
+        ></button>
         <button
           pButton
           icon="pi pi-th-large"
@@ -333,11 +319,7 @@
 
   <div *ngIf="!loading && libros.length > 0 && vistaActual === 'cards'">
     <div class="catalog-grid">
-      <p-card
-        *ngFor="let libro of libros.slice(first, first + rows)"
-        class="book-card-compact"
-        [class.inactive-card]="libro['activo'] === false"
-      >
+      <p-card *ngFor="let libro of libros" class="book-card-compact">
         <ng-template pTemplate="header">
           <div class="book-image-container">
             <img
@@ -346,7 +328,7 @@
               class="book-img-compact"
             />
 
-            <div class="book-status-badges" *ngIf="libro['activo'] !== false">
+            <div class="book-status-badges">
               <span
                 [class]="'status-badge ' + getEstadoPrincipal(libro).clase"
                 [pTooltip]="getTooltipEstados(libro)"
@@ -358,10 +340,6 @@
                 {{ getEstadoPrincipal(libro).cantidad }}
               </span>
             </div>
-
-            <div class="inactive-overlay" *ngIf="libro['activo'] === false">
-              <span>DESACTIVADO</span>
-            </div>
           </div>
         </ng-template>
 
@@ -369,17 +347,16 @@
           <h4 class="book-title-compact">{{ libro.titulo }}</h4>
 
           <p class="book-author-compact" style="margin-bottom: 0.2rem">
-            {{ getAutoresAsString(libro.autores) }}
+            {{ getStringListAsString('autores', libro.autores) }}
           </p>
 
           <span class="book-areas-compact">
             <i class="pi pi-th-large" style="font-size: 0.7rem; margin-right: 3px"></i>
-            {{ getAreasAsString($any(libro).areas) }}
+            {{ getStringListAsString('areas', libro.areas) }}
           </span>
 
-          <span class="book-category-compact" [title]="libro.categoria?.nombre">
-            {{ libro.categoria?.nombre | slice: 0 : 22
-            }}{{ (libro.categoria?.nombre?.length || 0) > 22 ? '...' : '' }}
+          <span class="book-category-compact" [title]="libro.categoria">
+            {{ libro.categoria | truncate: 22 }}
           </span>
 
           <div class="book-details-compact">
@@ -393,7 +370,8 @@
               <i class="pi pi-calendar"></i> {{ libro.anho }}
             </span>
             <span class="detail-item-compact">
-              <i class="pi pi-file"></i> {{ libro.paginas }} pages
+              <i class="pi pi-file"></i> {{ libro.paginas }}
+              {{ libro.paginas > 1 ? 'páginas' : 'página' }}
             </span>
           </div>
         </div>
@@ -412,12 +390,11 @@
             icon="pi pi-pen-to-square"
             class="action-btn-compact edit-btn"
             pTooltip="Editar"
-            [disabled]="libro['activo'] === false"
             (click)="editarLibro(libro)"
           ></button>
 
           <button
-            *ngIf="libro['activo'] !== false && isAdmin"
+            *ngIf="isAdmin"
             pButton
             icon="pi pi-trash"
             class="action-btn-compact delete-btn"
@@ -426,20 +403,10 @@
           ></button>
 
           <button
-            *ngIf="libro['activo'] === false && isAdmin"
-            pButton
-            icon="pi pi-refresh"
-            class="action-btn-compact reactivate-btn"
-            pTooltip="Reactivar Libro"
-            (click)="reactivarLibro(libro)"
-          ></button>
-
-          <button
             pButton
             icon="pi pi-file-plus"
             class="action-btn-compact edit-btn"
             pTooltip="Agregar Ejemplar"
-            [disabled]="libro['activo'] === false"
             (click)="abrirModalAgregarEjemplar(libro)"
           ></button>
         </div>
@@ -449,7 +416,7 @@
 
   <div *ngIf="!loading && libros.length > 0 && vistaActual === 'tabla'" style="padding: 0 2rem">
     <p-table
-      [value]="libros.slice(first, first + rows)"
+      [value]="libros"
       [(selection)]="librosSeleccionados"
       dataKey="uuid"
       styleClass="custom-table p-datatable-gridlines p-datatable-striped"
@@ -494,15 +461,17 @@
           </td>
           <td>
             <span class="p-column-title">Autores y Áreas</span>
-            <div style="font-weight: 500">{{ getAutoresAsString(libro.autores) }}</div>
+            <div style="font-weight: 500">
+              {{ getStringListAsString('autores', libro.autores) }}
+            </div>
             <div style="font-size: 0.8rem; color: #7f8c8d; font-style: italic">
               <i class="pi pi-th-large" style="font-size: 0.7rem; margin-right: 3px"></i
-              >{{ getAreasAsString($any(libro).areas) }}
+              >{{ getStringListAsString('areas', libro.areas) }}
             </div>
           </td>
           <td>
             <span class="p-column-title">Categoría</span>
-            <span class="book-category-compact">{{ libro.categoria?.nombre || 'N/A' }}</span>
+            <span class="book-category-compact">{{ libro.categoria || 'N/A' }}</span>
           </td>
           <td>
             <span class="p-column-title">Estado</span>
@@ -554,15 +523,6 @@
                 (click)="eliminarLibro(libro)"
               ></button>
               <button
-                *ngIf="libro.activo === false && isAdmin"
-                pButton
-                icon="pi pi-refresh"
-                class="action-btn-compact reactivate-btn"
-                pTooltip="Reactivar"
-                tooltipPosition="top"
-                (click)="reactivarLibro(libro)"
-              ></button>
-              <button
                 pButton
                 icon="pi pi-file-plus"
                 class="action-btn-compact edit-btn"
@@ -580,11 +540,11 @@
 
   <div class="paginator-container" *ngIf="!loading && libros.length > 0">
     <p-paginator
-      [first]="first"
-      [rows]="rows"
-      [totalRecords]="libros.length"
+      [first]="currentPage * currentSize"
+      [rows]="currentSize"
+      [totalRecords]="entradasTotales"
       (onPageChange)="onPageChange($event)"
-      [rowsPerPageOptions]="[10, 15, 25, 50]"
+      [rowsPerPageOptions]="[15, 25, 50]"
       styleClass="custom-paginator-transparent"
     >
     </p-paginator>
@@ -615,3 +575,115 @@
   </div>
   <br /><br />
 </div>
+
+<p-dialog
+  header="Lista de Libros Desactivados"
+  [(visible)]="modalDesactivados"
+  [modal]="true"
+  [style]="{ width: '80vw' }"
+  [breakpoints]="{ '960px': '75vw', '640px': '95vw' }"
+  [closable]="true"
+  [draggable]="false"
+  [dismissableMask]="false"
+  [focusOnShow]="false"
+  (onHide)="modalDesactivados = false"
+>
+  <div *ngIf="loadingDesactivados" style="text-align: center; padding: 2rem">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2.5rem; color: var(--wine)"></i>
+  </div>
+
+  <div class="search-container mb-4" style="flex: 1; min-width: 250px">
+    <i class="pi pi-search search-icon"></i>
+    <input
+      type="text"
+      pInputText
+      placeholder="Buscar libros, autores, áreas, temas..."
+      class="searchbar full-w"
+      [(ngModel)]="ocultosFilter"
+      (input)="applyFilterOcultos()"
+    />
+  </div>
+
+  <div *ngIf="!loadingDesactivados && librosDesactivados.length > 0">
+    <div class="catalog-grid">
+      <p-card *ngFor="let libro of librosDesactivados" class="book-card-compact">
+        <ng-template pTemplate="header">
+          <div class="book-image-container">
+            <img
+              [src]="libro.imagen | secureImage | async"
+              alt="portada"
+              class="book-img-compact inactive-card"
+            />
+
+            <div class="inactive-overlay">
+              <span>DESACTIVADO</span>
+            </div>
+          </div>
+        </ng-template>
+
+        <div class="book-info-compact">
+          <h4 class="book-title-compact">{{ libro.titulo }}</h4>
+
+          <p class="book-author-compact" style="margin-bottom: 0.2rem">
+            {{ getStringListAsString('autores', libro.autores) }}
+          </p>
+
+          <span class="book-areas-compact">
+            <i class="pi pi-th-large" style="font-size: 0.7rem; margin-right: 3px"></i>
+            {{ getStringListAsString('areas', libro.areas) }}
+          </span>
+
+          <span class="book-category-compact" [title]="libro.categoria">
+            {{ libro.categoria | truncate: 22 }}
+          </span>
+
+          <div class="book-details-compact">
+            <span class="detail-item-compact">
+              <i class="pi pi-barcode"></i> {{ libro.ejemplares?.[0]?.codigo || 'Sin código' }}
+            </span>
+            <span class="detail-item-compact">
+              <i class="pi pi-tag"></i> {{ formatearISBN(libro.isbn) }}
+            </span>
+            <span class="detail-item-compact">
+              <i class="pi pi-calendar"></i> {{ libro.anho }}
+            </span>
+            <span class="detail-item-compact">
+              <i class="pi pi-file"></i> {{ libro.paginas }}
+              {{ libro.paginas > 1 ? 'páginas' : 'página' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="book-actions-compact">
+          <button
+            pButton
+            icon="pi pi-refresh"
+            class="action-btn-compact reactivate-btn"
+            pTooltip="Reactivar Libro"
+            (click)="reactivarLibro(libro)"
+          ></button>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <div class="paginator-container" *ngIf="!loadingDesactivados && librosDesactivados.length > 0">
+    <p-paginator
+      [first]="currentDeactivatedPage * currentDeactivatedSize"
+      [rows]="currentDeactivatedSize"
+      [totalRecords]="entradasDesactivadasTotales"
+      (onPageChange)="onDeactivatedPageChange($event)"
+      [rowsPerPageOptions]="[15, 25, 50]"
+      styleClass="custom-paginator-transparent"
+    >
+    </p-paginator>
+  </div>
+
+  <div *ngIf="!loadingDesactivados && librosDesactivados.length === 0" class="no-books-message">
+    <i class="pi pi-info-circle"></i>
+    <h3>No se encontraron libros desactivados</h3>
+    <p class="text primary">
+      No hay libros desactivados que coincidan con la búsqueda o el filtro aplicado.
+    </p>
+  </div>
+</p-dialog>
