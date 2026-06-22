@@ -1197,7 +1197,7 @@
 
   @page {
     size: letter;
-    margin: 0;
+    margin: -0.25cm 0.15cm;
   }
 
   body {
