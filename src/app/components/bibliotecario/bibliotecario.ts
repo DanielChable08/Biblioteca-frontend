@@ -1,12 +1,12 @@
 import { finalize, forkJoin, Subscription, filter, Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ConfirmationService, MessageService, MenuItem } from 'primeng/api';
 import { DialogService, DynamicDialogModule } from 'primeng/dynamicdialog';
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, Inject } from '@angular/core';
 import { SecureImagePipe } from '../../pipes/secure-image.pipe';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
 import { MultiSelectModule } from 'primeng/multiselect';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { PaginatorModule } from 'primeng/paginator';
 import { TooltipModule } from 'primeng/tooltip';
@@ -33,6 +33,8 @@ import EjemplarFormularioComponent from '../ejemplar-formulario/ejemplar-formula
 import LibroDetalleComponent from '../libro-detalle/libro-detalle';
 import { environment } from '../../../environments/environment';
 import { TruncatePipe } from '../../pipes/truncate.pipe';
+import { StateService } from '../../services/route-state.service';
+import { ListadoLibrosState } from '../../models/listadoState';
 
 type CategoriaKey = 'Todas' | string;
 
@@ -57,7 +59,9 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private sharedDataService = inject(SharedDataService);
+  private stateService = inject(StateService);
 
   private ejemplaresSubscription?: Subscription;
   private readonly IMAGES_BASE_URL = environment.plainURL + '/assets/img/';
@@ -110,11 +114,38 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadUserInfo();
+    const state = this.stateService.restoreState<ListadoLibrosState>(
+      'libros',
+      {
+        page: 0,
+        size: 15,
+        search: '',
+
+        categoriaId: null,
+        areaIds: [],
+
+        sortField: 'id',
+        sortOrder: 'desc'
+      }
+    );
+    this.currentPage = state.page;
+    this.currentSize = state.size;
+
+    this.globalFilter = state.search;
+
+    this.categoriaSeleccionadaId = state.categoriaId;
+    this.areasSeleccionadasIds = state.areaIds;
+
+    this.currentSort.field = state.sortField;
+    this.currentSort.order = state.sortOrder;
     this.loadInitialData();
-    this.loadLibrosDesactivados();
     this.loadLibros();
+    this.loadLibrosDesactivados();
     this.searchSubject.pipe(debounceTime(500), distinctUntilChanged()).subscribe(search => {
-      this.loadLibros(0, this.currentSize, this.currentSort.field, this.currentSort.order, search);
+      this.globalFilter = search;
+      this.currentPage = 0;
+
+      this.loadLibros();
     });
     this.searchDeactivatedSubject.pipe(debounceTime(500), distinctUntilChanged()).subscribe(search => {
       this.loadLibrosDesactivados(0, this.currentDeactivatedSize, this.currentDeactivatedSort.field, this.currentDeactivatedSort.order, search);
@@ -189,12 +220,17 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     }));
   }
 
-  loadLibros(page: number = 0, size: number = 15, sortField: string = 'id', sortOrder: string = 'desc', search: string = ''): void {
+  loadLibros(): void {
     this.loading = true;
 
-
-
-    this.bookService.listarLibros(page, size, sortField, sortOrder, search, this.categoriaSeleccionadaId, this.areasSeleccionadasIds)
+    this.bookService.listarLibros(
+      this.currentPage,
+      this.currentSize,
+      this.currentSort.field,
+      this.currentSort.order,
+      this.globalFilter,
+      this.categoriaSeleccionadaId,
+      this.areasSeleccionadasIds)
       .pipe(finalize(() => this.loading = false)).subscribe({
         next: (data) => {
           this.libros = data.content.map(libro => {
@@ -286,6 +322,25 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     this.catalogMenuItems = [...items, logoutItem];
   }
 
+  guardarEstadoSesion(): void {
+    this.stateService.saveState<ListadoLibrosState>('libros', {
+
+      page: this.currentPage,
+      size: this.currentSize,
+
+      search: this.globalFilter,
+
+      categoriaId: this.categoriaSeleccionadaId,
+
+      areaIds: this.areasSeleccionadasIds,
+
+      sortField: this.currentSort.field,
+
+      sortOrder: this.currentSort.order
+
+    });
+  }
+
   // Métodos de filtros y búsqueda
   onPageChange(event: any): void {
     this.currentPage = event.rows > 0 ? Math.floor(event.first / event.rows) : 0;
@@ -293,13 +348,17 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     this.currentSort.field = event.sortField || 'id';
     this.currentSort.order = event.sortOrder === 1 ? 'asc' : 'desc';
 
-    this.loadLibros(this.currentPage, this.currentSize, this.currentSort.field, this.currentSort.order, this.globalFilter);
+    this.guardarEstadoSesion();
+
+    this.loadLibros();
   }
 
   applyFilterGlobal(): void {
     this.currentPage = 0;
 
     this.searchSubject.next(this.globalFilter.trim());
+
+    this.guardarEstadoSesion();
   }
 
   // Métodos de filtros y búsqueda - desactivados
@@ -309,7 +368,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     this.currentDeactivatedSort.field = event.sortField || 'id';
     this.currentDeactivatedSort.order = event.sortOrder === 1 ? 'asc' : 'desc';
 
-    this.loadLibros(this.currentDeactivatedPage, this.currentDeactivatedSize, this.currentDeactivatedSort.field, this.currentDeactivatedSort.order, this.ocultosFilter);
+    this.loadLibros();
   }
 
   applyFilterOcultos(): void {
@@ -355,39 +414,47 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   getTotalEjemplaresPrestados(): number { return this.libros.reduce((total, libro) => total + this.getEjemplaresPrestados(libro), 0); }
   getTotalEjemplaresReparacion(): number { return this.libros.reduce((total, libro) => total + this.getEjemplaresReparacion(libro), 0); }
 
-  agregarLibro(): void { this.router.navigate(['/admin/libros/nuevo']); }
+  agregarLibro(): void {
+    this.stateService.saveState<ListadoLibrosState>('libros', {
+
+      page: this.currentPage,
+      size: this.currentSize,
+
+      search: this.globalFilter,
+
+      categoriaId: this.categoriaSeleccionadaId,
+
+      areaIds: this.areasSeleccionadasIds,
+
+      sortField: this.currentSort.field,
+
+      sortOrder: this.currentSort.order
+
+    });
+    this.router.navigate(['/admin/libros/nuevo']);
+  }
   UsuariosList(): void { this.router.navigate(['/admin/usuarios']); }
   PrestamosList(): void { this.router.navigate(['/admin/prestamos']); }
   PersonasList(): void { this.router.navigate(['/admin/personas']); }
   Impresiones(): void { this.router.navigate(['/admin/impresiones']); }
   irAPoliticas(): void { this.router.navigate(['/admin/politicas']); }
   irADescargas(): void { this.router.navigate(['/admin/descargas']); }
-  logout(): void { this.authService.logout(); }
-
-
-
-
-  toggleDropdown(event?: Event): void {
-    if (event) event.stopPropagation();
-    this.dropdownOpen = !this.dropdownOpen;
-    if (this.dropdownOpen) this.areasDropdownOpen = false;
-  }
-
-  toggleAreasDropdown(event: Event): void {
-    event.stopPropagation();
-    this.areasDropdownOpen = !this.areasDropdownOpen;
-    if (this.areasDropdownOpen) this.dropdownOpen = false;
+  logout(): void {
+    this.stateService.clearState('libros');
+    this.authService.logout();
   }
 
   selectCategoria(): void {
     this.currentPage = 0;
     this.recargarLibrosActuales();
+    this.guardarEstadoSesion();
   }
 
   selectAreas(): void {
     this.areasSeleccionadasIds ??= [];
     this.currentPage = 0;
     this.recargarLibrosActuales();
+    this.guardarEstadoSesion();
   }
 
   formatearISBN(isbn: string | undefined): string {
@@ -413,7 +480,26 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     return stringList.map(sL => `${sL}`).join(', ');
   }
 
-  editarLibro(libro: LibroListado): void { this.router.navigate(['/admin/libros/editar', libro.uuid]); }
+  editarLibro(libro: LibroListado): void {
+    this.stateService.saveState<ListadoLibrosState>('libros', {
+
+      page: this.currentPage,
+      size: this.currentSize,
+
+      search: this.globalFilter,
+
+      categoriaId: this.categoriaSeleccionadaId,
+
+      areaIds: this.areasSeleccionadasIds,
+
+      sortField: this.currentSort.field,
+
+      sortOrder: this.currentSort.order
+
+    });
+
+    this.router.navigate(['/admin/libros/editar', libro.uuid]);
+  }
 
   verLibro(libro: LibroListado): void {
     this.dialogService.open(LibroDetalleComponent, {
@@ -556,13 +642,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   toggleStats(): void { this.mostrarStats = !this.mostrarStats; }
 
   private recargarLibrosActuales(): void {
-    this.loadLibros(
-      this.currentPage,
-      this.currentSize,
-      this.currentSort.field,
-      this.currentSort.order,
-      this.globalFilter
-    );
+    this.loadLibros();
   }
 
   private recargarLibrosDesactivados(): void {
