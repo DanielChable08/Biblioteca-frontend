@@ -604,6 +604,7 @@
   grid-template-columns: repeat(2, 10.2cm);
   column-gap: 0.45cm;
   row-gap: 0;
+  justify-content: start;
 }
 
 .etiqueta-compacta .logo-print {
@@ -1154,7 +1155,7 @@
 
   .etiquetas-grid-print {
     display: grid !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     gap: 0.25cm;
   }
 
