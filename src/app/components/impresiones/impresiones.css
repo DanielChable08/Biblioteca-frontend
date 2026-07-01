@@ -601,7 +601,7 @@
 }
 
 .etiquetas-grid-print:has(.etiqueta-print.etiqueta-compacta) {
-  grid-template-columns: repeat(2, 10.2cm);
+  grid-template-columns: repeat(2, 10.4cm);
   column-gap: 0.45cm;
   row-gap: 0;
   justify-content: start;
@@ -752,7 +752,7 @@
 }
 
 .etiqueta-print.etiqueta-compacta {
-  width: 10.2cm;
+  width: 10.4cm;
   height: 2.6cm;
 }
 
@@ -1198,7 +1198,7 @@
 
   @page {
     size: letter;
-    margin: 0 0.4cm;
+    margin: 0.2cm 0.5cm;
     /* margin: -0.25cm 0.15cm; */
   }
 
