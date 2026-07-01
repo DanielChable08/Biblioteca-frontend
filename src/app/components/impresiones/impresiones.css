@@ -601,7 +601,7 @@
 }
 
 .etiquetas-grid-print:has(.etiqueta-print.etiqueta-compacta) {
-  grid-template-columns: repeat(2, 9.8cm);
+  grid-template-columns: repeat(2, 10.4cm);
   column-gap: 0.45cm;
   row-gap: 0;
 }
@@ -618,7 +618,7 @@
 
 .etiqueta-print {
   border: 1.5px solid #000;
-  border-radius: 3px;
+  border-radius: 8px;
   background: white;
   display: flex;
   flex-direction: column;
@@ -751,8 +751,8 @@
 }
 
 .etiqueta-print.etiqueta-compacta {
-  width: 9.8cm;
-  height: 2.4cm;
+  width: 10.4cm;
+  height: 2.5cm;
 }
 
 .etiqueta-print.etiqueta-compacta .etiqueta-barcode-print {
