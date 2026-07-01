@@ -617,7 +617,7 @@
 }
 
 .etiqueta-print {
-  border: 1.5px solid #000;
+  border: 1.6px solid #000;
   border-radius: 8px;
   background: white;
   display: flex;
@@ -1197,7 +1197,7 @@
 
   @page {
     size: letter;
-    margin: 0;
+    margin: 0 0.4cm;
     /* margin: -0.25cm 0.15cm; */
   }
 
