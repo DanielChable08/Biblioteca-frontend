@@ -580,8 +580,8 @@
 
 .etiquetas-grid-print {
   display: grid;
-  justify-content: center;
-  align-items: flex-start;
+  justify-content: flex-start;
+  align-items: start;
 }
 
 .etiquetas-grid-print:has(.etiqueta-print.pequena) {
@@ -601,16 +601,11 @@
 }
 
 .etiquetas-grid-print:has(.etiqueta-print.etiqueta-compacta) {
-  grid-template-columns: repeat(2, 10.4cm);
+  grid-template-columns: repeat(2, 10.25cm);
   column-gap: 0.45cm;
   row-gap: 0;
-  justify-content: start;
 }
 
-.etiqueta-compacta .logo-print {
-  display: flex;
-  align-content: center;
-}
 .etiqueta-compacta .logo-print img {
   width: 80px;
   height: auto;
@@ -629,6 +624,10 @@
   page-break-inside: avoid;
   break-inside: avoid;
   flex-shrink: 0;
+}
+
+.etiqueta-print.etiqueta-compacta {
+  border: 1.6px solid transparent;
 }
 
 .etiqueta-print.pequena {
@@ -744,6 +743,13 @@
   margin-bottom: 0.08cm;
 }
 
+.etiqueta-print.etiqueta-compacta {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
 .etiqueta-print.etiqueta-compacta .etiqueta-wrapper-print {
   width: 100%;
   height: 100%;
@@ -752,7 +758,7 @@
 }
 
 .etiqueta-print.etiqueta-compacta {
-  width: 10.4cm;
+  width: 10.25cm;
   height: 2.6cm;
 }
 
@@ -1198,8 +1204,7 @@
 
   @page {
     size: letter;
-    margin: 0.2cm 0.5cm;
-    /* margin: -0.25cm 0.15cm; */
+    margin: 0 0 0 0;
   }
 
   body {

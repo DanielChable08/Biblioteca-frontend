@@ -52,7 +52,7 @@
           >Diseño visual optimizado para lectura y presentación.</small
         >
       </div>
-      <div class="form-field" *ngIf="estiloSeleccionado === 'moderna'">
+      <div class="form-field" *ngIf="estiloSeleccionado !== 'compacta' || modoImpresion === 'lomo' || modoImpresion === 'horizontal'">
         <label><i class="pi pi-arrows-h"></i> Tamaño de Etiqueta</label>
         <p-select
           [(ngModel)]="tamanoEtiqueta"
