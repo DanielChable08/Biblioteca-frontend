@@ -112,8 +112,16 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     return this.authService.isAdmin();
   }
 
+  get isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
   ngOnInit(): void {
-    this.loadUserInfo();
+    if (this.isAuthenticated) {
+      this.loadUserInfo();
+      this.setupCatalogMenu();
+    }
+
     const state = this.stateService.restoreState<ListadoLibrosState>(
       'libros',
       {
@@ -140,17 +148,19 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     this.currentSort.order = state.sortOrder;
     this.loadInitialData();
     this.loadLibros();
-    this.loadLibrosDesactivados();
+
+    if (this.isAdmin) {
+      this.loadLibrosDesactivados();
+      this.searchDeactivatedSubject.pipe(debounceTime(500), distinctUntilChanged()).subscribe(search => {
+        this.loadLibrosDesactivados(0, this.currentDeactivatedSize, this.currentDeactivatedSort.field, this.currentDeactivatedSort.order, search);
+      });
+    }
     this.searchSubject.pipe(debounceTime(500), distinctUntilChanged()).subscribe(search => {
       this.globalFilter = search;
       this.currentPage = 0;
 
       this.loadLibros();
     });
-    this.searchDeactivatedSubject.pipe(debounceTime(500), distinctUntilChanged()).subscribe(search => {
-      this.loadLibrosDesactivados(0, this.currentDeactivatedSize, this.currentDeactivatedSort.field, this.currentDeactivatedSort.order, search);
-    });
-    this.setupCatalogMenu();
 
     this.ejemplaresSubscription = this.sharedDataService.ejemplaresActualizados$.subscribe(
       (actualizado) => {
@@ -170,14 +180,10 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   }
 
   loadInitialData(): void {
-    this.loading = true;
-
     forkJoin({
       categorias: this.catalogService.getCategorias(),
       areas: this.catalogService.getAreas()
-    }).pipe(
-      finalize(() => this.loading = false)
-    ).subscribe({
+    }).subscribe({
       next: ({ categorias, areas }) => {
         this.categorias = categorias;
         this.areasCat = areas;
@@ -439,6 +445,7 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
   Impresiones(): void { this.router.navigate(['/admin/impresiones']); }
   irAPoliticas(): void { this.router.navigate(['/admin/politicas']); }
   irADescargas(): void { this.router.navigate(['/admin/descargas']); }
+  login(): void { this.router.navigate(['login']); }
   logout(): void {
     this.stateService.clearState('libros');
     this.authService.logout();

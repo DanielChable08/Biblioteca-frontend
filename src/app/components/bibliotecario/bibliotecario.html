@@ -7,7 +7,7 @@
       <div class="brand-info">
         <span class="brand-title">
           Biblioteca Joseph Ratzinger
-          <span class="admin-badge">
+          <span class="admin-badge" *ngIf="isAuthenticated">
             <p-chip [label]="currentUserRole" icon="pi pi-shield" class="chip-admin chip-compact" />
           </span>
         </span>
@@ -16,6 +16,7 @@
     </div>
 
     <div
+      *ngIf="isAuthenticated"
       class="header-user-section"
       (click)="menu.toggle($event)"
       pTooltip="Catálogos y Opciones"
@@ -27,6 +28,15 @@
         <span class="user-role">{{ currentUserRole }}</span>
       </div>
     </div>
+
+    <button
+      *ngIf="!isAuthenticated"
+      pButton
+      label="Iniciar Sesión"
+      icon="pi pi-sign-in"
+      class="btn-primary outlined ani-one"
+      (click)="login()"
+    ></button>
   </div>
 
   <p-menu #menu [model]="catalogMenuItems" [popup]="true" [appendTo]="'body'"></p-menu>
@@ -107,7 +117,7 @@
     </div>
   </div>
 
-  <div class="admin-dashboard-panel">
+  <div class="admin-dashboard-panel" *ngIf="isAuthenticated">
     <div class="panel-title-section">
       <div class="panel-texts">
         <h2 class="panel-main-title">Panel de Administración</h2>
@@ -236,6 +246,7 @@
   </div> -->
 
   <div
+    [ngClass]="isAuthenticated ? '' : 'mt-4'"
     style="
       display: flex;
       justify-content: space-between;
@@ -286,6 +297,7 @@
           tooltipPosition="top"
         ></button> -->
         <button
+          *ngIf="isAdmin"
           pButton
           icon="pi pi-ban"
           class="btn-primary"
@@ -302,6 +314,7 @@
           tooltipPosition="top"
         ></button>
         <button
+          *ngIf="isAuthenticated"
           pButton
           icon="pi pi-list"
           [class]="vistaActual === 'tabla' ? 'btn-primary' : 'p-button-outlined'"
@@ -386,6 +399,7 @@
           ></button>
 
           <button
+            *ngIf="isAuthenticated"
             pButton
             icon="pi pi-pen-to-square"
             class="action-btn-compact edit-btn"
@@ -403,6 +417,7 @@
           ></button>
 
           <button
+            *ngIf="isAuthenticated"
             pButton
             icon="pi pi-file-plus"
             class="action-btn-compact edit-btn"
@@ -505,6 +520,7 @@
                 (click)="verLibro(libro)"
               ></button>
               <button
+                *ngIf="isAuthenticated"
                 pButton
                 icon="pi pi-pen-to-square"
                 class="action-btn-compact edit-btn"
@@ -523,6 +539,7 @@
                 (click)="eliminarLibro(libro)"
               ></button>
               <button
+                *ngIf="isAuthenticated"
                 pButton
                 icon="pi pi-file-plus"
                 class="action-btn-compact edit-btn"
@@ -577,6 +594,7 @@
 </div>
 
 <p-dialog
+  *ngIf="isAdmin"
   header="Lista de Libros Desactivados"
   [(visible)]="modalDesactivados"
   [modal]="true"

@@ -1,19 +1,18 @@
-<p-toast></p-toast> 
+<p-toast></p-toast>
 
 <div class="login-container">
   <div class="right-column">
-    
     <p-card styleClass="biblioteca-card">
       <ng-template pTemplate="header">
         <div class="card-header">
           <div class="library-icon">
-            <img src="assets/img/Logo-Dorado.png" class="logo-dorado" alt="logo">
+            <img src="assets/img/Logo-Dorado.png" class="logo-dorado" alt="logo" />
           </div>
           <h2>Biblioteca Joseph Ratzinger</h2>
           <p>Ingresa a tu cuenta para acceder al catálogo</p>
         </div>
       </ng-template>
-      
+
       <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
         <div class="form-field">
           <label for="email" class="field-label">Correo electrónico</label>
@@ -22,14 +21,16 @@
             <input
               pInputText
               id="email"
-              formControlName="email" placeholder="tu@iglesia.com"
+              formControlName="email"
+              placeholder="tu@iglesia.com"
               type="email"
               class="input-with-icon"
               [class.ng-invalid]="isFieldInvalid('email')"
               [class.ng-dirty]="isFieldInvalid('email')"
             />
           </div>
-          <small class="p-error" *ngIf="isFieldInvalid('email')"> Por favor ingresa un email válido
+          <small class="p-error" *ngIf="isFieldInvalid('email')">
+            Por favor ingresa un email válido
           </small>
         </div>
 
@@ -62,6 +63,10 @@
           [loading]="loading"
         >
         </p-button>
+
+        <div>
+          <button class="btn-link" type="button" pButton link (click)="goHomePage()">Regresar</button>
+        </div>
       </form>
     </p-card>
   </div>
