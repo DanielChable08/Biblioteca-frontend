@@ -167,4 +167,8 @@ export default class Login implements OnInit {
     const field = this.loginForm.get(fieldName);
     return !!(field && field.invalid && field.touched);
   }
+
+  goHomePage() {
+    this.router.navigate(['/']);
+  }
 }

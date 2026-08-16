@@ -177,6 +177,6 @@ export class AuthService {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('userData');
     this.isAuthenticatedSubject.next(false);
-    this.router.navigate(['/login']);
+    this.router.navigate(['']);
   }
 }

@@ -179,6 +179,21 @@ body {
 .btn-danger:active {
   background: var(--red-900) !important;
 }
+/* Botón Link */
+.btn-link {
+  color: var(--wine) !important;
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+.btn-link:hover {
+  color: var(--wine-darken-1) !important;
+  text-decoration: underline !important;
+}
+.btn-link:active {
+  color: var(--wine-darken-2) !important;
+}
 /*Animación de Botón*/
 button.ani-one {
   transition: all 0.4s !important;
