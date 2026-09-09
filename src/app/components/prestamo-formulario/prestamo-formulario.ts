@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -54,7 +54,7 @@ import {
   styleUrls: ['./prestamo-formulario.css'],
   providers: [MessageService]
 })
-export default class PrestamoFormularioComponent implements OnInit {
+export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private prestamoService = inject(PrestamoService);
   private catalogService = inject(CatalogService);
@@ -104,7 +104,8 @@ export default class PrestamoFormularioComponent implements OnInit {
   idPersonaBibliotecario!: number;
 
   private scanBuffer = '';
-  private scanTimeout: any;
+  private scanTimeout?: ReturnType<typeof setTimeout>;
+  catalogosListos = false;
 
   ngOnInit(): void {
     this.initForms();
@@ -115,16 +116,21 @@ export default class PrestamoFormularioComponent implements OnInit {
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    const target = event.target as HTMLElement;
+    const target = event.target instanceof HTMLElement ? event.target : null;
     
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+    if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.isComposing ||
+        this.displayLectorModal || this.displayCatalogoModal || this.isSubmitting ||
+        target?.closest('input, textarea, select, [contenteditable="true"], [role="combobox"]')) {
+        this.limpiarEscaneo();
         return;
     }
 
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' || event.key === 'Tab') {
         if (this.scanBuffer.length > 0) {
-            this.agregarPorEscaneo(this.scanBuffer);
-            this.scanBuffer = '';
+            event.preventDefault();
+            const codigo = this.scanBuffer;
+            this.limpiarEscaneo();
+            this.agregarPorEscaneo(codigo);
         }
     } else if (event.key.length === 1) {
         this.scanBuffer += event.key;
@@ -136,18 +142,42 @@ export default class PrestamoFormularioComponent implements OnInit {
     }
   }
 
-  agregarPorEscaneo(codigo: string): void {
-    if (!codigo) return;
+  private limpiarEscaneo(): void {
+    clearTimeout(this.scanTimeout);
+    this.scanBuffer = '';
+  }
 
-    if (this.ejemplaresSeleccionados.length >= this.MAX_EJEMPLARES) {
-        this.messageService.add({ severity: 'warn', summary: 'Límite alcanzado', detail: `Máximo ${this.MAX_EJEMPLARES} libros.` });
-        return;
+  ngOnDestroy(): void {
+    this.limpiarEscaneo();
+  }
+
+  escanearDesdeCampo(event: KeyboardEvent, campo: HTMLInputElement): void {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+    if (event.key === 'Tab' && !campo.value.trim()) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.limpiarEscaneo();
+    this.agregarPorEscaneo(campo.value);
+    campo.value = '';
+    if (this.displayEjemplarModal) {
+      this.ejemplarFilter = '';
+      this.filtrarEjemplares();
+    }
+  }
+
+  agregarPorEscaneo(codigo: string): void {
+    codigo = codigo.trim();
+    if (!codigo) return;
+    if (this.isSubmitting) return;
+    if (!this.catalogosListos) {
+      this.messageService.add({ severity: 'warn', summary: 'Catálogos no disponibles', detail: 'Espera a que carguen los datos antes de escanear. Si la carga falló, recarga la página.' });
+      return;
     }
 
-    const ejemplar = this.ejemplaresDisponibles.find(e => e.codigo.toLowerCase() === codigo.toLowerCase());
+    const ejemplar = this.ejemplaresDisponibles.find(e => e.codigo?.trim().toLowerCase() === codigo.toLowerCase());
 
     if (!ejemplar) {
-        const existePeroOcupado = this.allEjemplares.find(e => e.codigo.toLowerCase() === codigo.toLowerCase());
+        const existePeroOcupado = this.allEjemplares.find(e => e.codigo?.trim().toLowerCase() === codigo.toLowerCase());
         if (existePeroOcupado) {
             this.messageService.add({ severity: 'error', summary: 'No disponible', detail: `El libro ${existePeroOcupado.codigo} ya está prestado o no disponible.` });
         } else {
@@ -156,13 +186,22 @@ export default class PrestamoFormularioComponent implements OnInit {
         return;
     }
 
+    if (this.displayEjemplarModal && this.modoReemplazo) {
+      this.toggleEjemplar(ejemplar);
+      return;
+    }
+
     if (this.ejemplaresSeleccionados.some(e => e.id === ejemplar.id)) {
         this.messageService.add({ severity: 'warn', summary: 'Ya agregado', detail: 'Este libro ya está en la lista actual.' });
         return;
     }
 
-    this.ejemplaresSeleccionados.push(ejemplar);
-    this.messageService.add({ severity: 'success', summary: 'Agregado', detail: `${ejemplar.libro?.titulo} agregado.` });
+    if (!this.canAddMoreEjemplares()) {
+      this.messageService.add({ severity: 'warn', summary: 'Límite alcanzado', detail: `Máximo ${this.MAX_EJEMPLARES} libros.` });
+      return;
+    }
+    this.ejemplaresSeleccionados = [...this.ejemplaresSeleccionados, ejemplar];
+    this.messageService.add({ severity: 'success', summary: 'Agregado', detail: `${ejemplar.libro?.titulo || ejemplar.libroOption?.titulo || ejemplar.codigo} agregado.` });
   }
 
   private setIdBibliotecario(): void {
@@ -236,6 +275,7 @@ export default class PrestamoFormularioComponent implements OnInit {
   }
 
   loadCatalogos(): void {
+    this.catalogosListos = false;
     forkJoin({
       lectores: this.prestamoService.getPersonas(),
       estados: this.catalogService.getEstadosPrestamos(),
@@ -269,12 +309,13 @@ export default class PrestamoFormularioComponent implements OnInit {
             };
         });
 
-        const estadoDisponible = estadosEjemplares.find(e => e.nombre.toLowerCase() === 'disponible');
+        const estadoDisponible = estadosEjemplares.find(e => e.nombre.trim().toLowerCase() === 'disponible');
         this.ejemplaresDisponibles = this.allEjemplares.filter(e => e.idEstadoEjemplar === estadoDisponible?.id);
         
         this.ejemplaresFiltrados = [...this.ejemplaresDisponibles];
         this.cargarAutoresParaEjemplares(this.ejemplaresDisponibles);
         this.checkEditMode();
+        if (!this.isEditMode) this.catalogosListos = true;
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos iniciales.' });
@@ -336,6 +377,7 @@ export default class PrestamoFormularioComponent implements OnInit {
         }, { emitEvent: false });
         
         this.reconstruirEjemplaresSeleccionados(detalles);
+        this.catalogosListos = true;
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el préstamo.' });
@@ -419,7 +461,7 @@ export default class PrestamoFormularioComponent implements OnInit {
     const filter = this.ejemplarFilter.toLowerCase();
     this.ejemplaresFiltrados = this.ejemplaresDisponibles.filter(ejemplar =>
       ejemplar.codigo.toLowerCase().includes(filter) ||
-      ejemplar.libro?.titulo.toLowerCase().includes(filter) ||
+      (ejemplar.libro?.titulo || ejemplar.libroOption?.titulo)?.toLowerCase().includes(filter) ||
       ejemplar.libro?.autores?.some(a =>
         `${a.nombre} ${a.apPaterno}`.toLowerCase().includes(filter)
       )
