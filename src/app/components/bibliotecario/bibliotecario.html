@@ -263,7 +263,8 @@
           ? 'Catálogo Completo'
           : 'Categoría: ' + categoriaSeleccionadaNombre
       }}
-      ({{ libros.length }} libro{{ libros.length !== 1 ? 's' : '' }})
+      <br />
+      <span class="text-base">Se encontraron {{ libros.length }} libro{{ libros.length !== 1 ? 's' : '' }}</span>
     </div>
 
     <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap">

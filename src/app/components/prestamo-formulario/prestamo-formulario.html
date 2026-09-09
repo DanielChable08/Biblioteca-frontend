@@ -10,8 +10,8 @@
           class="p-button-text back-button"
           (click)="regresar()"
           pTooltip="Regresar"
-          tooltipPosition="bottom">
-        </button>
+          tooltipPosition="bottom"
+        ></button>
         <h2>
           <i class="pi pi-book"></i>
           {{ isEditMode ? 'Editar Préstamo' : 'Nuevo Préstamo' }}
@@ -23,7 +23,6 @@
 
 <div class="form-page-container">
   <form [formGroup]="prestamoForm" (ngSubmit)="onSubmit()" class="form-container">
-
     <div class="form-section">
       <h3 class="section-title">
         <i class="pi pi-info-circle"></i>
@@ -44,14 +43,21 @@
             appendTo="body"
             [showTime]="true"
             hourFormat="24"
-            [minDate]="!isEditMode ? minFechaPrestamo : null" 
-            styleClass="w-full">
+            [minDate]="!isEditMode ? minFechaPrestamo : null"
+            styleClass="w-full"
+          >
           </p-datePicker>
-          <small class="p-error" *ngIf="prestamoForm.get('fechaPrestamo')?.invalid && prestamoForm.get('fechaPrestamo')?.touched">
+          <small
+            class="p-error"
+            *ngIf="
+              prestamoForm.get('fechaPrestamo')?.invalid &&
+              prestamoForm.get('fechaPrestamo')?.touched
+            "
+          >
             La fecha de préstamo es requerida
           </small>
         </div>
-        
+
         <div class="form-field">
           <label for="fechaLimite">
             <i class="pi pi-calendar"></i> Fecha Límite <span class="required">*</span>
@@ -66,9 +72,15 @@
             [showTime]="true"
             hourFormat="24"
             [minDate]="minFechaLimite"
-            styleClass="w-full">
+            styleClass="w-full"
+          >
           </p-datePicker>
-          <small class="p-error" *ngIf="prestamoForm.get('fechaLimite')?.invalid && prestamoForm.get('fechaLimite')?.touched">
+          <small
+            class="p-error"
+            *ngIf="
+              prestamoForm.get('fechaLimite')?.invalid && prestamoForm.get('fechaLimite')?.touched
+            "
+          >
             La fecha límite es requerida
           </small>
         </div>
@@ -90,7 +102,8 @@
               [filter]="true"
               filterBy="nombreCompleto"
               appendTo="body"
-              styleClass="w-full">
+              styleClass="w-full"
+            >
               <ng-template let-persona pTemplate="item">
                 <div class="flex align-items-center gap-2">
                   <i class="pi pi-user"></i>
@@ -104,10 +117,13 @@
               icon="pi pi-plus"
               class="p-button-wine btn-add-catalog"
               pTooltip="Agregar lector"
-              (click)="abrirModalLector()">
-            </button>
+              (click)="abrirModalLector()"
+            ></button>
           </div>
-          <small class="p-error" *ngIf="prestamoForm.get('idLector')?.invalid && prestamoForm.get('idLector')?.touched">
+          <small
+            class="p-error"
+            *ngIf="prestamoForm.get('idLector')?.invalid && prestamoForm.get('idLector')?.touched"
+          >
             El lector es requerido
           </small>
         </div>
@@ -125,7 +141,8 @@
               optionValue="id"
               placeholder="Selecciona un estado"
               appendTo="body"
-              styleClass="w-full">
+              styleClass="w-full"
+            >
             </p-select>
           </div>
         </div>
@@ -144,19 +161,41 @@
           label="Buscar Manualmente"
           icon="pi pi-search"
           class="p-button-outlined btn-add-ejemplar"
-          (click)="abrirModalEjemplar()">
-        </button>
+          (click)="abrirModalEjemplar()"
+        ></button>
       </div>
 
-      <div class="scanner-info mb-3 text-center" style="color: #6b7280; font-style: italic;">
-         <i class="pi pi-wifi"></i> Listo para escanear. Simplemente dispara el lector.
+      <div class="scanner-info mb-3 text-center" style="color: #6b7280; font-style: italic">
+        <label for="codigoEscaneado"
+          >Escanear código de ejemplar <br>
+          <input
+            #campoEscaneo
+            id="codigoEscaneado"
+            pInputText
+            type="text"
+            class="my-1 w-300-px"
+            autocomplete="off"
+            placeholder="Escanea aquí y termina con Enter o Tab"
+            [disabled]="!catalogosListos || isSubmitting"
+            (keydown)="escanearDesdeCampo($event, campoEscaneo)"
+          />
+          <br />
+          <small>{{
+            catalogosListos
+              ? 'Haz clic en este campo antes de usar el lector.'
+              : 'Esperando la carga de los catálogos.'
+          }}</small></label
+        >
       </div>
 
       <div class="ejemplares-counter" *ngIf="ejemplaresSeleccionados.length > 0">
         <span class="counter-text">
           {{ ejemplaresSeleccionados.length }} de {{ MAX_EJEMPLARES }} libros seleccionados
         </span>
-        <span class="counter-badge" [class.warning]="ejemplaresSeleccionados.length >= MAX_EJEMPLARES">
+        <span
+          class="counter-badge"
+          [class.warning]="ejemplaresSeleccionados.length >= MAX_EJEMPLARES"
+        >
           {{ ejemplaresSeleccionados.length }}/{{ MAX_EJEMPLARES }}
         </span>
       </div>
@@ -169,33 +208,35 @@
               <strong>{{ ejemplar.codigo }}</strong>
             </div>
             <div class="ejemplar-details">
-              <span class="libro-titulo">{{ ejemplar.libro?.titulo }}</span>
+              <span class="libro-titulo">{{
+                ejemplar.libro?.titulo || ejemplar.libroOption?.titulo
+              }}</span>
               <span class="libro-meta">
                 {{ getAutoresNombres(ejemplar) }}
               </span>
             </div>
           </div>
-          
-          <div class="ejemplar-actions">
-              <button
-                type="button"
-                pButton
-                icon="pi pi-pencil"
-                class="p-button-rounded p-button-text p-button-warning action-icon"
-                pTooltip="Cambiar libro"
-                tooltipPosition="left"
-                (click)="iniciarReemplazo(i)">
-              </button>
 
-              <button
-                type="button"
-                pButton
-                icon="pi pi-times"
-                class="p-button-rounded p-button-text p-button-danger action-icon"
-                pTooltip="Eliminar"
-                tooltipPosition="left"
-                (click)="removerEjemplar(i)">
-              </button>
+          <div class="ejemplar-actions">
+            <button
+              type="button"
+              pButton
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-text p-button-warning action-icon"
+              pTooltip="Cambiar libro"
+              tooltipPosition="left"
+              (click)="iniciarReemplazo(i)"
+            ></button>
+
+            <button
+              type="button"
+              pButton
+              icon="pi pi-times"
+              class="p-button-rounded p-button-text p-button-danger action-icon"
+              pTooltip="Eliminar"
+              tooltipPosition="left"
+              (click)="removerEjemplar(i)"
+            ></button>
           </div>
         </div>
       </div>
@@ -214,8 +255,8 @@
         label="Cancelar"
         icon="pi pi-times"
         class="p-button-text p-button-secondary"
-        (click)="regresar()">
-      </button>
+        (click)="regresar()"
+      ></button>
       <button
         type="submit"
         pButton
@@ -223,8 +264,8 @@
         icon="pi pi-check"
         class="p-button-wine btn-primary"
         [loading]="isSubmitting"
-        [disabled]="prestamoForm.invalid || ejemplaresSeleccionados.length === 0">
-      </button>
+        [disabled]="prestamoForm.invalid || ejemplaresSeleccionados.length === 0"
+      ></button>
     </div>
   </form>
 </div>
@@ -236,59 +277,71 @@
   [style]="{ width: '900px', maxHeight: '93vh' }"
   [draggable]="false"
   [dismissableMask]="false"
-  (onHide)="cerrarModalEjemplar()">
-
+  (onHide)="cerrarModalEjemplar()"
+>
   <div class="ejemplar-modal-content">
     <div class="reemplazo-banner" *ngIf="modoReemplazo">
-        <i class="pi pi-info-circle"></i>
-        <span>Selecciona el nuevo libro para reemplazar al actual.</span>
+      <i class="pi pi-info-circle"></i>
+      <span>Selecciona el nuevo libro para reemplazar al actual.</span>
     </div>
 
     <div class="search-container">
       <span class="p-input-icon-left w-full">
         <i class="pi pi-search"></i>
         <input
+          #busquedaEjemplar
           pInputText
           type="text"
           [(ngModel)]="ejemplarFilter"
           (input)="filtrarEjemplares()"
+          (keydown)="escanearDesdeCampo($event, busquedaEjemplar)"
           placeholder="    Buscar por código, título o autor..."
           class="w-full"
         />
       </span>
     </div>
 
-    <div class="ejemplares-grid" style="max-height: 400px; overflow-y: auto;">
+    <div class="ejemplares-grid" style="max-height: 400px; overflow-y: auto">
       <div
         class="ejemplar-item"
         *ngFor="let ejemplar of ejemplaresFiltrados"
         [class.selected]="isEjemplarSeleccionado(ejemplar)"
-        [class.disabled]="!modoReemplazo && !isEjemplarSeleccionado(ejemplar) && !canAddMoreEjemplares()"
-        (click)="toggleEjemplar(ejemplar)">
-        
+        [class.disabled]="
+          !modoReemplazo && !isEjemplarSeleccionado(ejemplar) && !canAddMoreEjemplares()
+        "
+        (click)="toggleEjemplar(ejemplar)"
+      >
         <div class="ejemplar-checkbox" *ngIf="!modoReemplazo">
           <p-checkbox
             [binary]="true"
             [ngModel]="isEjemplarSeleccionado(ejemplar)"
             (ngModelChange)="toggleEjemplar(ejemplar)"
             [disabled]="!isEjemplarSeleccionado(ejemplar) && !canAddMoreEjemplares()"
-            (click)="$event.stopPropagation()">
+            (click)="$event.stopPropagation()"
+          >
           </p-checkbox>
         </div>
-        
+
         <div class="ejemplar-select-icon" *ngIf="modoReemplazo">
-            <i class="pi" [ngClass]="isEjemplarSeleccionado(ejemplar) ? 'pi-check-circle text-wine' : 'pi-circle'"></i>
+          <i
+            class="pi"
+            [ngClass]="isEjemplarSeleccionado(ejemplar) ? 'pi-check-circle text-wine' : 'pi-circle'"
+          ></i>
         </div>
-        
+
         <div class="ejemplar-content">
           <div class="ejemplar-code">
             <i class="pi pi-bookmark"></i>
             <strong>{{ ejemplar.codigo }}</strong>
           </div>
-          <div class="ejemplar-title">{{ ejemplar.libro?.titulo }}</div>
+          <div class="ejemplar-title">
+            {{ ejemplar.libro?.titulo || ejemplar.libroOption?.titulo }}
+          </div>
           <div class="ejemplar-authors">{{ getAutoresNombres(ejemplar) }}</div>
           <div class="ejemplar-meta">
-            <span class="badge badge-Disponible">{{ ejemplar.estado?.nombre || 'Disponible' }}</span>
+            <span class="badge badge-Disponible">{{
+              ejemplar.estado?.nombre || 'Disponible'
+            }}</span>
             <span class="ubicacion" *ngIf="ejemplar.ubicacion">
               <i class="pi pi-map-marker"></i> {{ ejemplar.ubicacion }}
             </span>
@@ -297,31 +350,38 @@
       </div>
     </div>
 
-  <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
-          <button 
-            type="button" 
-            pButton 
-            label="Cancelar" 
-            icon="pi pi-times" 
-            class="p-button-text p-button-secondary" 
-            (click)="cerrarModalEjemplar()">
-          </button>
-          
-          <button 
-            *ngIf="!modoReemplazo" 
-            type="button" 
-            pButton 
-            label="Confirmar" 
-            icon="pi pi-check" 
-            class="p-button-wine btn-primary" 
-            [disabled]="ejemplaresSeleccionados.length === 0" 
-            (click)="confirmarEjemplares()">
-          </button>
-      </div>
+    <div
+      style="
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+      "
+    >
+      <button
+        type="button"
+        pButton
+        label="Cancelar"
+        icon="pi pi-times"
+        class="p-button-text p-button-secondary"
+        (click)="cerrarModalEjemplar()"
+      ></button>
 
+      <button
+        *ngIf="!modoReemplazo"
+        type="button"
+        pButton
+        label="Confirmar"
+        icon="pi pi-check"
+        class="p-button-wine btn-primary"
+        [disabled]="ejemplaresSeleccionados.length === 0"
+        (click)="confirmarEjemplares()"
+      ></button>
+    </div>
   </div>
 </p-dialog>
-
 
 <p-dialog
   header="Registrar Nuevo Lector"
@@ -329,13 +389,14 @@
   [modal]="true"
   [style]="{ width: '90%', maxWidth: '800px' }"
   [draggable]="false"
-  [dismissableMask]="true">
-  
+  [dismissableMask]="true"
+>
   <div class="p-4" *ngIf="displayLectorModal">
-    <app-persona-formulario 
+    <app-persona-formulario
       [esModalParaLector]="true"
       (onGuardadoExitoso)="onLectorGuardado($event)"
-      (onCancelar)="displayLectorModal = false">
+      (onCancelar)="displayLectorModal = false"
+    >
     </app-persona-formulario>
   </div>
 </p-dialog>

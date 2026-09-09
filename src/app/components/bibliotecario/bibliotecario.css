@@ -871,6 +871,10 @@
     display: none;
   }
 
+  .info-stats-row {
+    margin-top: 0.5rem;
+  }
+
   .book-actions-compact {
     flex-wrap: wrap;
     padding: 0.9rem 0.8rem;
