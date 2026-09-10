@@ -51,7 +51,7 @@ export default class Login implements OnInit {
     
     if (this.authService.isAuthenticated()) {
       const role = this.authService.getUserRole();
-      if (role === 'ADMIN' || role === 'BIBLIOTECARIO') {
+      if (role === 'ADMIN' || role === 'BIBLIOTECARIO' || role === 'PRESTAMISTA') {
         this.router.navigate(['/admin']);
       } else {
         this.router.navigate(['/dashboard']);
@@ -99,7 +99,7 @@ export default class Login implements OnInit {
         });
 
         setTimeout(() => {
-            if (role === 'ADMIN' || role === 'BIBLIOTECARIO') {
+            if (role === 'ADMIN' || role === 'BIBLIOTECARIO' || role === 'PRESTAMISTA') {
                 this.router.navigate(['/admin']);
             } else {
                 this.router.navigate(['/dashboard']);

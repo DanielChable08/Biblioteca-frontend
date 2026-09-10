@@ -44,7 +44,7 @@ export class MultaListaComponent implements OnInit {
   private prestamoService = inject(PrestamoService);
   private router = inject(Router);
   private confirmationService = inject(ConfirmationService);
-  private authService = inject(AuthService);
+  authService = inject(AuthService);
   private messageService = inject(MessageService);
 
   get isAdmin(): boolean {

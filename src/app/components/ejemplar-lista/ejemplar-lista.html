@@ -130,7 +130,7 @@
                 pTooltip="Ver Libro"
                 (click)="verLibro(ejemplar)"
               ></button>
-              <button
+              <button *ngIf="authService.hasPermission('ELIMINAR_EJEMPLAR')"
                 pButton
                 icon="pi pi-refresh"
                 class="action-btn-compact reactivate-btn"
@@ -179,7 +179,7 @@
           *ngIf="authService.hasPermission('ELIMINAR_EJEMPLAR')"
           (click)="abrirModalDesactivados()"
         ></p-button>
-        <p-button
+        <p-button *ngIf="authService.hasPermission('CREAR_EJEMPLAR')"
           label="Nuevo Ejemplar"
           icon="pi pi-plus"
           styleClass="p-button-wine"
@@ -296,21 +296,21 @@
               pTooltip="Ver Libro"
               (click)="verLibro(ejemplar)"
             ></button>
-            <button
+            <button *ngIf="authService.hasPermission('ACTUALIZAR_EJEMPLAR')"
               pButton
               icon="pi pi-pencil"
               class="action-btn-compact edit-btn"
               pTooltip="Editar"
               (click)="editarEjemplar(ejemplar)"
             ></button>
-            <button
+            <button *ngIf="authService.hasPermission('ELIMINAR_EJEMPLAR')"
               pButton
               icon="pi pi-ban"
               class="action-btn-compact delete-btn"
               pTooltip="Desactivar"
               (click)="desactivarEjemplar(ejemplar)"
             ></button>
-            <button
+            <button *ngIf="authService.hasPermission('ELIMINAR_EJEMPLAR')"
               pButton
               icon="pi pi-trash"
               class="action-btn-compact delete-btn"

@@ -53,6 +53,10 @@ export interface Ejemplar {
 }
 
 export interface EjemplarImpresion {
+  areas?: string[];
+  categoria?: string;
+  estadoEjemplar?: string;
+  condicionFisica?: string;
   id: number;
   anho: string;
   isbn?: string;
@@ -230,7 +234,13 @@ export interface DetallePrestamo {
   idEjemplar: number;
   fechaDevolucion?: string | null;
   idEstadoPrestamo: number;
-  ejemplar?: Ejemplar;
+  ejemplar?: {
+    id: number;
+    codigo: string;
+    ubicacion?: string;
+    libro?: Pick<Libro, 'id' | 'uuid' | 'titulo' | 'autores'>;
+    estadoEjemplar?: EstadoEjemplar;
+  };
   estadoPrestamo?: EstadoPrestamo;
   multa?: Multa;
 }

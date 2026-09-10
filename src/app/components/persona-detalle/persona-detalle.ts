@@ -1,3 +1,4 @@
+import { AuthService } from '../../services/auth.service';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -28,6 +29,7 @@ import { Persona, TipoPersona } from '../../models/biblioteca';
   styleUrls: ['./persona-detalle.css']
 })
 export default class PersonaDetalleComponent implements OnInit {
+  authService = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private personaService = inject(PersonaService);

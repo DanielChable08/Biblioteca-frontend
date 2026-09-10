@@ -122,6 +122,7 @@ export default class ProcedenciasComponent implements OnInit {
   }
 
   loadDeactivatedData(page: number = 0, size: number = 15, sortField: string = 'nombre', sortOrder: string = 'asc', search = ''): void {
+    if (!this.authService.hasPermission('ELIMINAR_PROCEDENCIA')) return;
     this.procedenciaService.listarProcedenciasDesactivadas(page, size, sortField, sortOrder, search).subscribe({
       next: (data) => {
         this.procedenciasDesactivadas = data.content;

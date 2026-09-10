@@ -1,3 +1,4 @@
+import { AuthService } from '../../services/auth.service';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
@@ -30,6 +31,7 @@ import { PoliticaMulta } from '../../models/biblioteca';
   styleUrls: ['./politicas-multas.css']
 })
 export class PoliticasMultasComponent implements OnInit {
+  authService = inject(AuthService);
   private multaService = inject(MultaService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);

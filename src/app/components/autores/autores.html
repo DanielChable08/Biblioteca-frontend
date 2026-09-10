@@ -23,7 +23,7 @@
       </div>
 
       <div class="header-right">
-        <p-button
+        <p-button *ngIf="authService.hasPermission('CREAR_AUTOR')"
           label="Agregar Autor"
           icon="pi pi-user-plus"
           styleClass="p-button-wine"
@@ -95,14 +95,14 @@
         <td>{{ autor.apMaterno || 'N/A' }}</td>
         <td>
           <div class="table-actions">
-            <button
+            <button *ngIf="authService.hasPermission('ACTUALIZAR_AUTOR')"
               pButton
               icon="pi pi-pencil"
               class="action-btn-compact edit-btn"
               pTooltip="Editar"
               (click)="abrirModalEditar(autor)"
             ></button>
-            <button
+            <button *ngIf="authService.hasPermission('ELIMINAR_AUTOR')"
               pButton
               icon="pi pi-trash"
               class="action-btn-compact delete-btn"

@@ -9,7 +9,7 @@
                 <h2><i class="pi pi-sliders-h user-icon"></i> Políticas de Multas</h2>
             </div>
             <div class="header-right flex gap-2">
-                <p-button label="Nueva Política" icon="pi pi-plus" styleClass="p-button-wine w-full-mobile" (click)="abrirModalCrear()"></p-button>
+                <p-button *ngIf="authService.hasPermission('CREAR_POLITICA_MULTA')" label="Nueva Política" icon="pi pi-plus" styleClass="p-button-wine w-full-mobile" (click)="abrirModalCrear()"></p-button>
             </div>
         </div>
     </div>
@@ -82,10 +82,10 @@
                 <td class="col-acciones">
                     <span class="p-column-title">Acciones</span>
                     <div class="table-actions">
-                        <button pButton icon="pi pi-pencil" class="action-btn-compact edit-btn" 
+                        <button *ngIf="authService.hasPermission('ACTUALIZAR_POLITICA_MULTA')" pButton icon="pi pi-pencil" class="action-btn-compact edit-btn"
                                 pTooltip="Editar" tooltipPosition="top" (click)="abrirModalEditar(p)">
                         </button>
-                        <button pButton icon="pi pi-trash" class="action-btn-compact delete-btn" 
+                        <button *ngIf="authService.hasPermission('ELIMINAR_POLITICA_MULTA')" pButton icon="pi pi-trash" class="action-btn-compact delete-btn"
                                 pTooltip="Eliminar" tooltipPosition="top" (click)="eliminar(p)">
                         </button>
                     </div>

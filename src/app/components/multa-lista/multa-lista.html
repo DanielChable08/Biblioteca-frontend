@@ -110,7 +110,7 @@
         <td class="col-acciones">
             <span class="p-column-title">Acciones</span>
             <div class="table-actions">
-                <button 
+                <button *ngIf="authService.hasPermission('CREAR_PAGO')"
                     pButton 
                     icon="pi pi-money-bill" 
                     class="action-btn-compact pay-btn" 

@@ -172,7 +172,7 @@ export class CatalogService {
 
   //Tipos de personas
   getRoles(): Observable<Rol[]> {
-    return this.http.get<Rol[]>(`${this.apiUrl}/rol`);
+    return this.http.get<Rol[]>(`${this.apiUrl}/roles`);
   }
 
   getTiposPersonas(): Observable<TipoPersona[]> {

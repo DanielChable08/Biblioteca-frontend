@@ -116,6 +116,10 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
     return this.authService.isAuthenticated();
   }
 
+  get canAddEjemplar(): boolean {
+    return this.authService.hasPermission('CREAR_EJEMPLAR');
+  }
+
   ngOnInit(): void {
     if (this.isAuthenticated) {
       this.loadUserInfo();
@@ -314,12 +318,12 @@ export default class BibliotecarioComponent implements OnInit, OnDestroy {
       { label: 'Estados de Ejemplar', icon: 'pi pi-check-circle', command: () => this.router.navigate(['/admin/estados']) },
       { label: 'Condición Física', icon: 'pi pi-clipboard', command: () => this.router.navigate(['/admin/condiciones']) },
       { separator: true },
-      { label: 'Políticas', icon: 'pi pi-chart-bar', visible: userRole === 'Administrador', command: () => this.router.navigate(['/admin/politicas']) },
+      { label: 'Políticas', icon: 'pi pi-chart-bar', visible: this.authService.hasPermission('VER_POLITICA_MULTA'), command: () => this.router.navigate(['/admin/politicas']) },
       { label: 'Préstamos', icon: 'pi pi-book', command: () => this.router.navigate(['/admin/prestamos']) },
       { label: 'Multas', icon: 'pi pi-receipt', command: () => this.router.navigate(['/admin/multas']) },
-      { label: 'Pagos', icon: 'pi pi-money-bill', visible: userRole === 'Administrador', command: () => this.router.navigate(['/admin/pagos']) },
+      { label: 'Pagos', icon: 'pi pi-money-bill', visible: this.authService.hasPermission('VER_PAGO'), command: () => this.router.navigate(['/admin/pagos']) },
       { separator: true, visible: userRole === 'Administrador' },
-      { label: 'Personas', icon: 'pi pi-users', visible: userRole === 'Administrador', command: () => this.router.navigate(['/admin/personas']) },
+      { label: 'Personas', icon: 'pi pi-users', visible: this.authService.hasPermission('VER_PERSONA'), command: () => this.router.navigate(['/admin/personas']) },
       { label: 'Usuarios', icon: 'pi pi-address-book', visible: userRole === 'Administrador', command: () => this.router.navigate(['/admin/usuarios']) },
       { separator: true }
     ];

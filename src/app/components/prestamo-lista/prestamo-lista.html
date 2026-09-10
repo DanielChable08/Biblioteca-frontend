@@ -16,13 +16,13 @@
       </div>
 
       <div class="header-actions">
-        <p-button
+        <p-button *ngIf="authService.hasPermission('CREAR_PRESTAMO')"
           label="Nuevo Préstamo"
           icon="pi pi-plus"
           styleClass="p-button-wine w-full-mobile"
           (click)="agregarPrestamo()"
         ></p-button>
-        <p-button
+        <p-button *ngIf="authService.hasPermission('VER_MULTA')"
           label="Multas"
           icon="pi pi-dollar"
           styleClass="p-button-wine w-full-mobile"
@@ -156,7 +156,7 @@
             </td>
             <td>
               <span class="estado-ejemplar-badge">
-                {{ detalle.estadoEjemplar?.nombre || 'N/A' }}
+                {{ detalle.ejemplar?.estadoEjemplar?.nombre || 'N/A' }}
               </span>
             </td>
           </tr>
@@ -296,7 +296,7 @@
             <td>{{ getAutoresNombres(detalle) }}</td>
             <td>
               <span class="estado-ejemplar-badge">
-                {{ detalle.estadoEjemplar?.nombre || 'N/A' }}
+                {{ detalle.ejemplar?.estadoEjemplar?.nombre || 'N/A' }}
               </span>
             </td>
           </tr>
@@ -511,7 +511,7 @@
               (click)="imprimirTicketPrestamo(prestamo)"
             ></button>
 
-            <button
+            <button *ngIf="authService.hasPermission('ACTUALIZAR_PRESTAMO')"
               pButton
               icon="pi pi-arrow-right-arrow-left"
               class="action-btn-compact return-btn"
@@ -520,7 +520,7 @@
               (click)="abrirModalDevolucion(prestamo)"
             ></button>
 
-            <button
+            <button *ngIf="authService.hasPermission('ACTUALIZAR_PRESTAMO')"
               pButton
               icon="pi pi-pencil"
               class="action-btn-compact edit-btn"

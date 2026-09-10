@@ -158,11 +158,39 @@
           pInputText
           type="text"
           [(ngModel)]="filtroTexto"
-          (input)="filtrarEjemplares()"
-          placeholder="    Buscar..."
-          class="w-full"
+          (ngModelChange)="filtrarEjemplares()"
+          placeholder="Buscar por título, autor, ISBN, año, área, clasificación o ejemplar..."
+          aria-label="Buscar libros y ejemplares"
+          class="w-full pl-5"
         />
       </span>
+    </div>
+
+    <div class="filtros-impresion">
+      <div class="form-field">
+        <label for="filtro-areas">Áreas</label>
+        <p-multiSelect inputId="filtro-areas" [options]="areasOptions"
+          [(ngModel)]="areasSeleccionadas" (ngModelChange)="filtrarEjemplares()"
+          placeholder="Todas las áreas" [filter]="true" [showClear]="true"
+          selectedItemsLabel="{0} áreas seleccionadas" styleClass="w-full" />
+      </div>
+      <div class="form-field" *ngFor="let campo of camposCatalogo">
+        <label [for]="'filtro-' + campo.campo">{{ campo.label }}</label>
+        <p-select [inputId]="'filtro-' + campo.campo" [options]="campo.opciones"
+          [(ngModel)]="filtros[campo.campo]" (ngModelChange)="filtrarEjemplares()"
+          placeholder="Todos" [filter]="true" [showClear]="true" styleClass="w-full" />
+      </div>
+      <div class="form-field" *ngFor="let campo of camposEjemplar">
+        <label [for]="'filtro-' + campo.campo">{{ campo.label }}</label>
+        <input pInputText [id]="'filtro-' + campo.campo" type="text"
+          [attr.inputmode]="campo.campo === 'numeroCopia' ? 'numeric' : 'text'"
+          [(ngModel)]="filtros[campo.campo]" (ngModelChange)="filtrarEjemplares()" />
+      </div>
+    </div>
+    <div class="section-header">
+      <span aria-live="polite">{{ ejemplaresFiltrados.length }} de {{ ejemplares.length }} ejemplares</span>
+      <button pButton type="button" label="Limpiar filtros" icon="pi pi-filter-slash"
+        class="p-button-outlined" (click)="limpiarFiltros()"></button>
     </div>
 
     <div class="ejemplares-grid" *ngIf="ejemplaresFiltrados.length > 0">
@@ -184,6 +212,7 @@
           <div class="ejemplar-codigo"><i class="pi pi-bookmark"></i> {{ ejemplar.codigo }}</div>
           <div class="ejemplar-titulo">{{ ejemplar.titulo }}</div>
           <div class="ejemplar-autor">{{ formatearAutores(ejemplar.autores) }}</div>
+          <div class="ejemplar-autor">{{ ejemplar.estadoEjemplar }} · {{ ejemplar.condicionFisica }} · Copia {{ ejemplar.numeroCopia }}</div>
           <div class="ejemplar-ubicacion">
             <i class="pi pi-map-marker"></i> {{ ejemplar.ubicacion || 'Sin ubicación' }}
           </div>
@@ -191,7 +220,11 @@
       </div>
     </div>
 
-    <div class="empty-state" *ngIf="ejemplaresFiltrados.length === 0 && !cargando">
+    <div class="empty-state" *ngIf="errorCarga">
+      <p>No se pudieron cargar los ejemplares o sus catálogos.</p>
+      <button pButton type="button" label="Reintentar" (click)="cargarEjemplares()"></button>
+    </div>
+    <div class="empty-state" *ngIf="ejemplaresFiltrados.length === 0 && !cargando && !errorCarga">
       <i class="pi pi-inbox"></i>
       <p>No se encontraron ejemplares</p>
     </div>
