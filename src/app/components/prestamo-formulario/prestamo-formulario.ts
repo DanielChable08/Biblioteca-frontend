@@ -61,7 +61,7 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   private usuarioService = inject(UsuarioService);
   private bookService = inject(BookService);
   private ejemplarService = inject(EjemplarService);
-  private authService = inject(AuthService);
+  authService = inject(AuthService);
   private sharedDataService = inject(SharedDataService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);

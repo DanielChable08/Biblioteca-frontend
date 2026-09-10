@@ -87,6 +87,13 @@ export class AuthService {
 
     if (isBibliotecario) return 'BIBLIOTECARIO';
 
+    const isPrestamista = userData.roles.some((role: any) => {
+      const roleName = typeof role === 'string' ? role : role.name;
+      return roleName === 'Prestamista';
+    });
+
+    if (isPrestamista) return 'PRESTAMISTA';
+
     return 'USER';
   }
 
@@ -97,7 +104,7 @@ export class AuthService {
 
   canAccessAdminPanel(): boolean {
     const role = this.getUserRole();
-    return role === 'ADMIN' || role === 'BIBLIOTECARIO';
+    return role === 'ADMIN' || role === 'BIBLIOTECARIO' || role === 'PRESTAMISTA';
   }
 
   getRoleName(): string {

@@ -130,7 +130,7 @@
           *ngIf="authService.hasPermission('ELIMINAR_PROCEDENCIA')"
           (click)="modalDesactivados = true"
         ></p-button>
-        <p-button
+        <p-button *ngIf="authService.hasPermission('CREAR_PROCEDENCIA')"
           label="Agregar Procedencia"
           icon="pi pi-plus"
           styleClass="p-button-wine"
@@ -198,14 +198,14 @@
         <td>{{ procedencia.descripcion }}</td>
         <td>
           <div class="table-actions">
-            <button
+            <button *ngIf="authService.hasPermission('ACTUALIZAR_PROCEDENCIA')"
               pButton
               icon="pi pi-pencil"
               class="action-btn-compact edit-btn"
               pTooltip="Editar"
               (click)="abrirModalEditar(procedencia)"
             ></button>
-            <button
+            <button *ngIf="authService.hasPermission('ELIMINAR_PROCEDENCIA')"
               pButton
               icon="pi pi-trash"
               class="action-btn-compact delete-btn"

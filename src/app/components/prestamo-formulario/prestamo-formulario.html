@@ -111,7 +111,7 @@
                 </div>
               </ng-template>
             </p-select>
-            <button
+            <button *ngIf="authService.hasPermission('CREAR_PERSONA')"
               type="button"
               pButton
               icon="pi pi-plus"

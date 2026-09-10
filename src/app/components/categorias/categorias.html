@@ -23,7 +23,7 @@
       </div>
 
       <div class="header-right">
-        <p-button
+        <p-button *ngIf="authService.hasPermission('CREAR_CATEGORIA')"
           label="Agregar Categoría"
           icon="pi pi-plus"
           styleClass="p-button-wine"
@@ -88,14 +88,14 @@
         <td>{{ categoria.nombre }}</td>
         <td>
           <div class="table-actions">
-            <button
+            <button *ngIf="authService.hasPermission('ACTUALIZAR_CATEGORIA')"
               pButton
               icon="pi pi-pencil"
               class="action-btn-compact edit-btn"
               pTooltip="Editar"
               (click)="abrirModalEditar(categoria)"
             ></button>
-            <button
+            <button *ngIf="authService.hasPermission('ELIMINAR_CATEGORIA')"
               pButton
               icon="pi pi-trash"
               class="action-btn-compact delete-btn"

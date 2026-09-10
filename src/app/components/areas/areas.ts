@@ -1,3 +1,4 @@
+import { AuthService } from '../../services/auth.service';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -48,6 +49,7 @@ import { Areas } from '../../models/biblioteca';
   ],
 })
 export default class AreasComponent implements OnInit {
+  authService = inject(AuthService);
   private catalogService = inject(CatalogService);
   private router = inject(Router);
   private fb = inject(FormBuilder);

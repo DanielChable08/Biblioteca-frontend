@@ -15,7 +15,7 @@
         ></button>
         <h2><i class="pi pi-users"></i> Gestión de Personas</h2>
       </div>
-      <button
+      <button *ngIf="authService.hasPermission('CREAR_PERSONA')"
         pButton
         label="Nueva Persona"
         icon="pi pi-user-plus"
@@ -124,7 +124,7 @@
               tooltipPosition="top"
             ></button>
             
-            <button
+            <button *ngIf="authService.hasPermission('ACTUALIZAR_PERSONA')"
               pButton
               icon="pi pi-pencil"
               class="p-button-rounded p-button-text action-btn-compact edit-btn"
@@ -132,7 +132,7 @@
               pTooltip="Editar"
               tooltipPosition="top"
             ></button>
-            <button
+            <button *ngIf="authService.hasPermission('ELIMINAR_PERSONA')"
               pButton
               icon="pi pi-trash"
               class="p-button-rounded p-button-text action-btn-compact delete-btn"

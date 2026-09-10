@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:access": "ng test --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.access-tests.json --include=src/app/components/impresiones/impresiones.spec.ts --include=src/app/guards/role.guard.spec.ts"
   },
   "prettier": {
     "printWidth": 100,

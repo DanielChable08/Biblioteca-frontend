@@ -133,7 +133,7 @@
           pTooltip="Mostrar u ocultar estadísticas"
           tooltipPosition="bottom"
         ></button>
-        <button
+        <button *ngIf="authService.hasPermission('CREAR_LIBRO')"
           pButton
           label="Agregar Libro"
           icon="pi pi-plus"
@@ -142,7 +142,7 @@
           (click)="agregarLibro()"
           tooltipPosition="bottom"
         ></button>
-        <button
+        <button *ngIf="authService.hasPermission('VER_PRESTAMO')"
           pButton
           label="Prestamos"
           icon="pi pi-book"
@@ -163,7 +163,7 @@
           tooltipPosition="bottom"
         ></button>
         <button
-          *ngIf="isAdmin"
+          *ngIf="authService.hasPermission('VER_PERSONA')"
           pButton
           label="Personas"
           icon="pi pi-users"
@@ -173,7 +173,7 @@
           tooltipPosition="bottom"
         ></button>
 
-        <button
+        <button *ngIf="authService.hasPermission('VER_EJEMPLAR')"
           pButton
           label="Impresiones"
           icon="pi pi-print"
@@ -400,7 +400,7 @@
           ></button>
 
           <button
-            *ngIf="isAuthenticated"
+            *ngIf="(isAuthenticated) && authService.hasPermission('ACTUALIZAR_LIBRO')"
             pButton
             icon="pi pi-pen-to-square"
             class="action-btn-compact edit-btn"
@@ -418,7 +418,7 @@
           ></button>
 
           <button
-            *ngIf="isAuthenticated"
+            *ngIf="canAddEjemplar"
             pButton
             icon="pi pi-file-plus"
             class="action-btn-compact edit-btn"
@@ -521,7 +521,7 @@
                 (click)="verLibro(libro)"
               ></button>
               <button
-                *ngIf="isAuthenticated"
+                *ngIf="(isAuthenticated) && authService.hasPermission('ACTUALIZAR_LIBRO')"
                 pButton
                 icon="pi pi-pen-to-square"
                 class="action-btn-compact edit-btn"

@@ -105,6 +105,7 @@ export default class EjemplarListaComponent implements OnInit, OnDestroy {
   }
 
   loadDeactivatedData(): void {
+    if (!this.authService.hasPermission('ELIMINAR_EJEMPLAR')) return;
     this.loading = true;
     forkJoin({
       ejemplaresDesactivados: this.bookService.getEjemplaresDesactivados(),

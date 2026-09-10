@@ -23,7 +23,7 @@
       </div>
 
       <div class="header-right">
-        <p-button
+        <p-button *ngIf="authService.hasPermission('CREAR_TIPO_LIBRO')"
           label="Agregar Facultad"
           icon="pi pi-plus"
           styleClass="p-button-wine"
@@ -83,14 +83,14 @@
         <td>{{ tipo.nombre }}</td>
         <td>
           <div class="table-actions">
-            <button 
+            <button *ngIf="authService.hasPermission('ACTUALIZAR_TIPO_LIBRO')"
               pButton 
               icon="pi pi-pencil" 
               class="action-btn-compact edit-btn" 
               pTooltip="Editar" 
               (click)="abrirModalEditar(tipo)">
             </button>
-            <button 
+            <button *ngIf="authService.hasPermission('ELIMINAR_TIPO_LIBRO')"
               pButton 
               icon="pi pi-trash" 
               class="action-btn-compact delete-btn" 

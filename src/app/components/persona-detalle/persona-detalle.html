@@ -7,7 +7,7 @@
         <button pButton icon="pi pi-arrow-left" class="p-button-text back-button" (click)="volver()" pTooltip="Volver a la lista" tooltipPosition="bottom"></button>
         <h2><i class="pi pi-id-card"></i> Perfil del Usuario</h2>
       </div>
-      <button pButton label="Editar Persona" icon="pi pi-pencil" class="p-button-outlined-wine" (click)="volver()"></button>
+      <button pButton *ngIf="authService.hasPermission('ACTUALIZAR_PERSONA')" label="Editar Persona" icon="pi pi-pencil" class="p-button-outlined-wine" (click)="volver()"></button>
     </div>
   </div>
 </div>

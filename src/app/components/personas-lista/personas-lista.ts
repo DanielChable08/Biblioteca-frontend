@@ -1,3 +1,4 @@
+import { AuthService } from '../../services/auth.service';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -38,6 +39,7 @@ import { Persona, TipoPersona } from '../../models/biblioteca';
   styleUrls: ['./personas-lista.css']
 })
 export default class PersonasListComponent implements OnInit {
+  authService = inject(AuthService);
   private personaService = inject(PersonaService);
   private catalogService = inject(CatalogService);
   private router = inject(Router);

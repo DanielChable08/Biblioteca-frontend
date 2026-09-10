@@ -2,12 +2,13 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { map } from 'rxjs';
+import { forkJoin, map, tap } from 'rxjs';
 import JsBarcode from 'jsbarcode';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 import { EjemplarService } from '../../services/ejemplar.service';
+import { CatalogService } from '../../services/catalog.service';
 import { environment } from '../../../environments/environment';
 import { EjemplarImpresion } from '../../models/biblioteca';
 import { TruncatePipe } from '../../pipes/truncate.pipe';
@@ -20,6 +21,7 @@ import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 @Component({
   selector: 'app-impresiones',
@@ -29,6 +31,7 @@ import { ToastModule } from 'primeng/toast';
     FormsModule,
     ButtonModule,
     SelectModule,
+    MultiSelectModule,
     CheckboxModule,
     InputTextModule,
     ToastModule,
@@ -41,6 +44,7 @@ import { ToastModule } from 'primeng/toast';
 })
 export default class ImpresionesComponent implements OnInit {
   private ejemplarService = inject(EjemplarService);
+  private catalogService = inject(CatalogService);
   private messageService = inject(MessageService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
@@ -82,12 +86,26 @@ export default class ImpresionesComponent implements OnInit {
   mostrarISBN = true;
   mostrarUbicacion = true;
   filtroTexto = '';
+  areasSeleccionadas: string[] = [];
+  filtros = { categoria: '', codigo: '', ubicacion: '', estadoEjemplar: '', condicionFisica: '', numeroCopia: '' };
+  areasOptions: string[] = [];
+  camposCatalogo = [
+    { campo: 'categoria' as const, label: 'Categoría', opciones: [] as string[] },
+    { campo: 'estadoEjemplar' as const, label: 'Estado del ejemplar', opciones: [] as string[] },
+    { campo: 'condicionFisica' as const, label: 'Condición física', opciones: [] as string[] }
+  ];
+  camposEjemplar = [
+    { campo: 'codigo' as const, label: 'Código del ejemplar' },
+    { campo: 'ubicacion' as const, label: 'Ubicación' },
+    { campo: 'numeroCopia' as const, label: 'Número de copia' }
+  ];
 
   vistaPrevia = false;
   preparandoImpresion = false;
   preparandoPDF = false;
   progresoPDF: string = '';
   cargando = false;
+  errorCarga = false;
 
   ngOnInit(): void {
     this.cargarEjemplares();
@@ -109,10 +127,23 @@ export default class ImpresionesComponent implements OnInit {
 
   cargarEjemplares(): void {
     this.cargando = true;
+    this.errorCarga = false;
 
-    this.ejemplarService.listarEjemplaresImpresion()
+    forkJoin({
+      ejemplares: this.ejemplarService.listarEjemplaresImpresion(),
+      areas: this.catalogService.getAreas(),
+      categoria: this.catalogService.getCategorias(),
+      estadoEjemplar: this.catalogService.getEstadosEjemplares(),
+      condicionFisica: this.catalogService.getCondicionesFisicas()
+    })
       .pipe(
-        map(ejemplares =>
+        tap(catalogos => {
+          this.areasOptions = catalogos.areas.map(a => a.nombre).sort();
+          this.camposCatalogo.forEach(campo => {
+            campo.opciones = catalogos[campo.campo].map(c => c.nombre).sort();
+          });
+        }),
+        map(({ ejemplares }) =>
           ejemplares.map(ejemplar => ({
             ...ejemplar,
             isbn: this.formatearISBN(ejemplar.isbn),
@@ -126,31 +157,54 @@ export default class ImpresionesComponent implements OnInit {
       .subscribe({
         next: (ejemplaresCompletos) => {
           this.ejemplares = ejemplaresCompletos;
-          this.ejemplaresFiltrados = ejemplaresCompletos;
+          this.filtrarEjemplares();
           this.cargando = false;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           console.error(error);
           this.cargando = false;
+          this.errorCarga = true;
+          this.messageService.add({ severity: 'error', summary: 'Error al cargar impresiones', detail: 'No se pudieron cargar los ejemplares o sus catálogos. Intenta nuevamente.' });
+          this.cdr.markForCheck();
         }
       });
   }
 
-  formatearAutores(autores: string[]): string {
-    return autores.join(', ');
+  formatearAutores(autores: string[] | null | undefined): string {
+    return (autores ?? []).join(', ');
   }
 
   filtrarEjemplares(): void {
-    const filtro = this.filtroTexto.toLowerCase().trim();
-    if (!filtro) {
-      this.ejemplaresFiltrados = this.ejemplares;
-      return;
-    }
+    const filtro = this.normalizar(this.filtroTexto);
     this.ejemplaresFiltrados = this.ejemplares.filter(ejemplar => {
-      return (ejemplar.codigo?.toLowerCase() || '').includes(filtro) ||
-        (ejemplar.titulo?.toLowerCase() || '').includes(filtro) ||
-        ejemplar.autores.join(' ').toLowerCase().includes(filtro)
+      const texto = this.normalizar([
+        ejemplar.codigo, ejemplar.titulo, ...(ejemplar.autores ?? []), ...(ejemplar.areas ?? []),
+        ejemplar.categoria, ejemplar.isbn, ejemplar.isbn?.replace(/[^0-9X]/gi, ''),
+        ejemplar.anho, ejemplar.codigoDewey, ejemplar.codigoCutter, ejemplar.ubicacion,
+        ejemplar.estadoEjemplar, ejemplar.condicionFisica
+      ].join(' '));
+      return (!filtro || texto.includes(filtro)) &&
+        (!this.areasSeleccionadas?.length || this.areasSeleccionadas.some(a => ejemplar.areas?.includes(a))) &&
+        this.camposCatalogo.every(c => !this.filtros[c.campo] || ejemplar[c.campo] === this.filtros[c.campo]) &&
+        this.camposEjemplar.every(c => {
+          const valor = this.normalizar(this.filtros[c.campo]);
+          return !valor || (c.campo === 'numeroCopia'
+            ? String(ejemplar.numeroCopia) === valor
+            : this.normalizar(ejemplar[c.campo]).includes(valor));
+        });
     });
+  }
+
+  private normalizar(valor: unknown): string {
+    return String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  }
+
+  limpiarFiltros(): void {
+    this.filtroTexto = '';
+    this.areasSeleccionadas = [];
+    this.filtros = { categoria: '', codigo: '', ubicacion: '', estadoEjemplar: '', condicionFisica: '', numeroCopia: '' };
+    this.filtrarEjemplares();
   }
 
   isEjemplarSeleccionado(ejemplar: EjemplarImpresion): boolean {

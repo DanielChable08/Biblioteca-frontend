@@ -5,6 +5,15 @@
   color: var(--wine);
 }
 
+.filtros-impresion {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.filtros-impresion .form-field { min-width: 0; }
+
 .header-container {
   background-color: white;
   margin-bottom: 2rem;

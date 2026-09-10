@@ -1,8 +1,9 @@
+import { AuthService } from '../../services/auth.service';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { map, finalize, switchMap, catchError } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
+import { map, finalize } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 
 import { TableModule } from 'primeng/table';
@@ -19,7 +20,7 @@ import { DividerModule } from 'primeng/divider';
 
 import { PrestamoService } from '../../services/prestamo.service';
 import { CatalogService } from '../../services/catalog.service';
-import { BookService } from '../../services/book.service';
+
 import { PrintTicketService } from '../../services/print-ticket.service';
 import { Prestamo, DetallePrestamo } from '../../models/biblioteca';
 
@@ -46,9 +47,10 @@ import { Prestamo, DetallePrestamo } from '../../models/biblioteca';
   styleUrls: ['./prestamo-lista.css']
 })
 export default class PrestamoListaComponent implements OnInit {
+  authService = inject(AuthService);
   private prestamoService = inject(PrestamoService);
   private catalogService = inject(CatalogService);
-  private bookService = inject(BookService);
+
   private router = inject(Router);
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
@@ -125,59 +127,7 @@ export default class PrestamoListaComponent implements OnInit {
   private cargarDetalles(prestamo: Prestamo): void {
     this.loadingDetalles = true;
 
-    forkJoin({
-      detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
-      ejemplares: this.bookService.getTodosEjemplares(),
-      libros: this.bookService.getAllLibrosAdmin(),
-      estadosEjemplares: this.catalogService.getEstadosEjemplares()
-    }).pipe(
-      switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
-        const idsEjemplaresEnPrestamo = new Set(detalles.map(d => d.idEjemplar));
-        const ejemplaresDelPrestamo = ejemplares.filter(e => idsEjemplaresEnPrestamo.has(e.id));
-        const libroIds = [...new Set(ejemplaresDelPrestamo.map(e => e.idLibro))];
-
-        const autorRequests = libroIds.map(idLibro => {
-          const libro = libros.find(l => l.id === idLibro);
-          if (libro?.uuid) {
-            return this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([])));
-          }
-          return of([]);
-        });
-
-        return forkJoin(autorRequests.length > 0 ? autorRequests : [of([])]).pipe(
-          map(autoresArray => {
-            const autoresPorLibro = new Map<number, any[]>();
-            libroIds.forEach((id, index) => {
-              autoresPorLibro.set(id, autoresArray[index]);
-            });
-
-            const detallesMapeados = detalles.map(detalle => {
-              const ejemplarEncontrado = ejemplares.find(e => e.id === detalle.idEjemplar);
-              const libroOriginal = libros.find(l => l.id === ejemplarEncontrado?.idLibro);
-              const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplarEncontrado?.idEstadoEjemplar);
-
-              const libroConAutores = libroOriginal ? {
-                ...libroOriginal,
-                autores: autoresPorLibro.get(libroOriginal.id) || []
-              } : undefined;
-
-              const ejemplarCompleto = ejemplarEncontrado ? {
-                ...ejemplarEncontrado,
-                libro: libroConAutores,
-                estadoEjemplar: estadoEjemplar
-              } : undefined;
-
-              return {
-                ...detalle,
-                ejemplar: ejemplarCompleto,
-                estadoEjemplar: estadoEjemplar
-              } as DetallePrestamo;
-            });
-
-            return detallesMapeados;
-          })
-        );
-      }),
+    this.prestamoService.getDetallesPrestamo(prestamo.uuid!).pipe(
       finalize(() => this.loadingDetalles = false)
     ).subscribe({
       next: (detallesMapeados) => {
@@ -196,62 +146,8 @@ export default class PrestamoListaComponent implements OnInit {
     this.mostrarModalDevolucion = true;
     this.loadingDevolucion = true;
 
-    forkJoin({
-      detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
-      ejemplares: this.bookService.getTodosEjemplares(),
-      libros: this.bookService.getAllLibrosAdmin(),
-      estadosEjemplares: this.catalogService.getEstadosEjemplares()
-    }).pipe(
-      switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
-        const idsEjemplaresEnPrestamo = new Set(detalles.map(d => d.idEjemplar));
-        const ejemplaresDelPrestamo = ejemplares.filter(e => idsEjemplaresEnPrestamo.has(e.id));
-        const libroIds = [...new Set(ejemplaresDelPrestamo.map(e => e.idLibro))];
-
-        const autorRequests = libroIds.map(idLibro => {
-          const libro = libros.find(l => l.id === idLibro);
-          if (libro?.uuid) {
-            return this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([])));
-          }
-          return of([]);
-        });
-
-        return forkJoin(autorRequests.length > 0 ? autorRequests : [of([])]).pipe(
-          map(autoresArray => {
-            const autoresPorLibro = new Map<number, any[]>();
-            libroIds.forEach((id, index) => {
-              autoresPorLibro.set(id, autoresArray[index]);
-            });
-
-            const detallesMapeados = detalles
-              .filter(detalle => !detalle.fechaDevolucion)
-              .map(detalle => {
-                const ejemplarEncontrado = ejemplares.find(e => e.id === detalle.idEjemplar);
-                const libroOriginal = libros.find(l => l.id === ejemplarEncontrado?.idLibro);
-                const estadoEjemplar = estadosEjemplares.find(e => e.id === ejemplarEncontrado?.idEstadoEjemplar);
-
-                const libroConAutores = libroOriginal ? {
-                  ...libroOriginal,
-                  autores: autoresPorLibro.get(libroOriginal.id) || []
-                } : undefined;
-
-                const ejemplarCompleto = ejemplarEncontrado ? {
-                  ...ejemplarEncontrado,
-                  libro: libroConAutores,
-                  estadoEjemplar: estadoEjemplar
-                } : undefined;
-
-                return {
-                  ...detalle,
-                  ejemplar: ejemplarCompleto,
-                  estadoEjemplar: estadoEjemplar,
-                  seleccionado: false
-                };
-              });
-
-            return detallesMapeados;
-          })
-        );
-      }),
+    this.prestamoService.getDetallesPrestamo(prestamo.uuid!).pipe(
+      map(detalles => detalles.filter(d => !d.fechaDevolucion).map(d => ({ ...d, seleccionado: false }))),
       finalize(() => this.loadingDevolucion = false)
     ).subscribe({
       next: (detallesMapeados) => {
@@ -323,37 +219,7 @@ export default class PrestamoListaComponent implements OnInit {
     if (prestamo && (!this.detallesPrestamo.length || this.prestamoActual?.uuid !== prestamo.uuid)) {
       this.loadingDetalles = true;
 
-      forkJoin({
-        detalles: this.prestamoService.getDetallesPrestamo(prestamo.uuid!),
-        ejemplares: this.bookService.getEjemplares(),
-        libros: this.bookService.getOptionLibros(),
-        estadosEjemplares: this.catalogService.getEstadosEjemplares()
-      }).pipe(
-        switchMap(({ detalles, ejemplares, libros, estadosEjemplares }) => {
-          const idsEjemplaresEnPrestamo = new Set(detalles.map(d => d.idEjemplar));
-          const ejemplaresDelPrestamo = ejemplares.filter(e => idsEjemplaresEnPrestamo.has(e.id));
-          const libroIds = [...new Set(ejemplaresDelPrestamo.map(e => e.idLibro))];
-
-          const autorRequests = libroIds.map(idLibro => {
-            const libro = libros.find(l => l.id === idLibro);
-            return libro?.uuid ? this.bookService.getAutoresForLibro(libro.uuid).pipe(catchError(() => of([]))) : of([]);
-          });
-
-          return forkJoin(autorRequests.length > 0 ? autorRequests : [of([])]).pipe(
-            map(autoresArray => {
-              const autoresPorLibro = new Map<number, any[]>();
-              libroIds.forEach((id, index) => autoresPorLibro.set(id, autoresArray[index]));
-
-              return detalles.map(detalle => {
-                const ejemplar = ejemplares.find(e => e.id === detalle.idEjemplar);
-                const libro = libros.find(l => l.id === ejemplar?.idLibro);
-                const libroConAutores = libro ? { ...libro, autores: autoresPorLibro.get(libro.id) || [] } : undefined;
-                const ejemplarCompleto = ejemplar ? { ...ejemplar, libro: libroConAutores } : undefined;
-                return { ...detalle, ejemplar: ejemplarCompleto };
-              });
-            })
-          );
-        }),
+      this.prestamoService.getDetallesPrestamo(prestamo.uuid!).pipe(
         finalize(() => this.loadingDetalles = false)
       ).subscribe({
         next: (detalles) => this.generarTicket(prestamoAImprimir, detalles),
