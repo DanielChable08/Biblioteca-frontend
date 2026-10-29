@@ -59,7 +59,6 @@
 
     <ng-template pTemplate="header">
       <tr>
-        <th pSortableColumn="id" style="width: 80px;">ID <p-sortIcon field="id"></p-sortIcon></th>
         <th pSortableColumn="lectorNombre">Lector <p-sortIcon field="lectorNombre"></p-sortIcon></th>
         <th pSortableColumn="motivoMulta.nombre">Motivo <p-sortIcon field="motivoMulta.nombre"></p-sortIcon></th>
         <th pSortableColumn="diasRetraso">Días Atraso <p-sortIcon field="diasRetraso"></p-sortIcon></th>
@@ -72,10 +71,6 @@
 
     <ng-template pTemplate="body" let-multa>
       <tr>
-        <td>
-            <span class="p-column-title">ID</span>
-            {{ multa.id }}
-        </td>
         <td>
             <span class="p-column-title">Lector</span>
             <div style="display: flex; align-items: center; gap: 0.5rem;">

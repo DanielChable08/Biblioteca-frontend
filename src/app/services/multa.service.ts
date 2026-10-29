@@ -4,6 +4,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { 
   Multa, 
+  CondonarMultaPayload,
   MultaPayload,
   MotivoMulta,
   EstadoMulta,
@@ -29,12 +30,12 @@ export class MultaService {
     return this.http.get<Multa[]>(`${this.apiUrl}/multas`, { headers: this.getHeaders() });
   }
 
-  getMultaById(id: number): Observable<Multa> {
-    return this.http.get<Multa>(`${this.apiUrl}/multas/${id}`, { headers: this.getHeaders() });
+  getMultaById(uuid: string): Observable<Multa> {
+    return this.http.get<Multa>(`${this.apiUrl}/multas/${uuid}`, { headers: this.getHeaders() });
   }
 
-  condonarMulta(id: number): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/multas/${id}/condonar`, {}, { headers: this.getHeaders() });
+  condonarMulta(uuid: string, payload: CondonarMultaPayload): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/multas/${uuid}/condonar`, payload, { headers: this.getHeaders() });
   }
 
 

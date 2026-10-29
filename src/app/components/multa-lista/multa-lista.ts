@@ -109,6 +109,16 @@ export class MultaListaComponent implements OnInit {
   }
 
   condonarMulta(multa: any): void {
+    const cajeroId = this.authService.getCurrentPersonaId();
+    if (!multa?.uuid || cajeroId === null) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo identificar la multa o el cajero que registra la condonación.'
+      });
+      return;
+    }
+
     this.confirmationService.confirm({
       message: `¿Estás seguro de condonar esta multa de $${multa.monto}?`,
       header: 'Confirmar Condonación',
@@ -119,7 +129,7 @@ export class MultaListaComponent implements OnInit {
       rejectButtonStyleClass: 'p-button-text custom-reject-button',
       accept: () => {
         this.loading = true;
-        this.multaService.condonarMulta(multa.id).pipe(
+        this.multaService.condonarMulta(multa.uuid, { cajero: cajeroId }).pipe(
           finalize(() => this.loading = false)
         ).subscribe({
           next: () => {

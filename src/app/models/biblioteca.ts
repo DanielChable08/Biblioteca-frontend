@@ -270,6 +270,7 @@ export interface PoliticaMulta {
 
 export interface Multa {
   id: number;
+  uuid: string;
   monto: number;
   fechaEmision: string;
   idPrestamoDetalle: number;
@@ -282,6 +283,10 @@ export interface Multa {
   estadoMulta?: EstadoMulta;
   prestamoDetalle?: DetallePrestamo;
   lector?: Persona;
+}
+
+export interface CondonarMultaPayload {
+  cajero: number;
 }
 
 export interface MultaPayload {
