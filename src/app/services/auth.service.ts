@@ -134,6 +134,12 @@ export class AuthService {
     return 'Usuario';
   }
 
+  getCurrentPersonaId(): number | null {
+    const userData = this.getUserData();
+    const personaId = Number(userData?.idPersona ?? userData?.id);
+    return Number.isInteger(personaId) && personaId > 0 ? personaId : null;
+  }
+
   getUserInitials(): string {
     const userData = this.getUserData();
     if (!userData) return 'U';
