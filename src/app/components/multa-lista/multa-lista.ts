@@ -2,7 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { map, finalize } from 'rxjs/operators';
+import { map, finalize, switchMap } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 
 import { TableModule } from 'primeng/table';
@@ -17,7 +18,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MultaService } from '../../services/multa.service';
 import { PrestamoService } from '../../services/prestamo.service';
 import { AuthService } from '../../services/auth.service';
-import { Multa } from '../../models/biblioteca';
+import { CatalogService } from '../../services/catalog.service';
+import { DetallePrestamo, Multa, Prestamo } from '../../models/biblioteca';
+import { PrestamoDetalleComponent } from '../prestamo-detalle/prestamo-detalle';
 
 @Component({
   selector: 'app-multa-lista',
@@ -33,7 +36,8 @@ import { Multa } from '../../models/biblioteca';
     ToastModule,
     ConfirmDialogModule,
     InputTextModule,
-    DatePipe
+    DatePipe,
+    PrestamoDetalleComponent
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './multa-lista.html',
@@ -44,6 +48,7 @@ export class MultaListaComponent implements OnInit {
   private prestamoService = inject(PrestamoService);
   private router = inject(Router);
   private confirmationService = inject(ConfirmationService);
+  private catalogService = inject(CatalogService);
   authService = inject(AuthService);
   private messageService = inject(MessageService);
 
@@ -55,6 +60,12 @@ export class MultaListaComponent implements OnInit {
   loading = false;
   globalFilter: string = '';
   private origenNavegacion: 'admin' | 'prestamos' = 'admin';
+  mostrarDetallePrestamo = false;
+  prestamoDetalleActual: Prestamo | null = null;
+  detallesPrestamoActual: DetallePrestamo[] = [];
+  loadingDetallesPrestamo = false;
+  highlightPrestamoDetalleId: number | null = null;
+  private detallePrestamoRequestId = 0;
 
   ngOnInit(): void {
     const origen = sessionStorage.getItem('multasOrigen');
@@ -156,6 +167,88 @@ export class MultaListaComponent implements OnInit {
   registrarPago(multa: any): void {
     sessionStorage.setItem('multaIdSeleccionada', multa.id.toString());
     this.router.navigate(['admin/multas/pagar']);
+  }
+
+  verDetallesPrestamo(multa: Multa): void {
+    if (!multa?.uuid || multa.idPrestamoDetalle === undefined || multa.idPrestamoDetalle === null) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo identificar el préstamo asociado a esta multa.'
+      });
+      return;
+    }
+
+    const requestId = ++this.detallePrestamoRequestId;
+    this.prestamoDetalleActual = null;
+    this.detallesPrestamoActual = [];
+    this.highlightPrestamoDetalleId = multa.idPrestamoDetalle;
+    this.mostrarDetallePrestamo = true;
+    this.loadingDetallesPrestamo = true;
+
+    this.multaService.getMultaById(multa.uuid).pipe(
+      switchMap(multaCompleta => {
+        const idPrestamo = multaCompleta.prestamoDetalle?.idPrestamo;
+        if (idPrestamo === undefined || idPrestamo === null) {
+          return throwError(() => new Error('La multa no contiene el préstamo relacionado.'));
+        }
+
+        return forkJoin({
+          prestamos: this.prestamoService.getPrestamos(),
+          personas: this.prestamoService.getPersonas(),
+          estados: this.catalogService.getEstadosPrestamos()
+        }).pipe(
+          switchMap(({ prestamos, personas, estados }) => {
+            const prestamo = prestamos.find(item => item.id === idPrestamo);
+            if (!prestamo?.uuid) {
+              return throwError(() => new Error('No se encontró el préstamo relacionado.'));
+            }
+
+            return this.prestamoService.getDetallesPrestamo(prestamo.uuid).pipe(
+              map(detalles => ({
+                prestamo: {
+                  ...prestamo,
+                  lector: personas.find(persona => persona.id === prestamo.idLector),
+                  bibliotecario: personas.find(persona => persona.id === prestamo.idBibliotecario),
+                  estadoPrestamo: estados.find(estado => estado.id === prestamo.idEstadoPrestamo)
+                },
+                detalles
+              }))
+            );
+          })
+        );
+      }),
+      finalize(() => {
+        if (requestId === this.detallePrestamoRequestId) {
+          this.loadingDetallesPrestamo = false;
+        }
+      })
+    ).subscribe({
+      next: ({ prestamo, detalles }) => {
+        if (requestId !== this.detallePrestamoRequestId) return;
+        this.prestamoDetalleActual = prestamo;
+        this.detallesPrestamoActual = detalles;
+      },
+      error: error => {
+        if (requestId !== this.detallePrestamoRequestId) return;
+        this.mostrarDetallePrestamo = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los detalles del préstamo asociado a esta multa.'
+        });
+        console.error('Error al cargar el préstamo asociado a la multa:', error);
+      }
+    });
+  }
+
+  cerrarDetallePrestamo(): void {
+    this.detallePrestamoRequestId++;
+    this.mostrarDetallePrestamo = false;
+    this.prestamoDetalleActual = null;
+    this.detallesPrestamoActual = [];
+    this.highlightPrestamoDetalleId = null;
+    this.loadingDetallesPrestamo = false;
   }
 
   regresar(): void {
