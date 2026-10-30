@@ -22,6 +22,35 @@
         </div>
     </div>
 
+    <div *ngIf="intentoPendiente && intentoDeUsuarioActual" class="pago-intento-alert pago-intento-alert-warn" role="status">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <span>
+            No pudimos confirmar el resultado de un pago pendiente. Se conservaron la misma clave y los datos
+            originales. Reintenta para consultar la operación sin generar un nuevo cobro.
+        </span>
+        <p-button
+            label="Reintentar pago pendiente"
+            icon="pi pi-refresh"
+            styleClass="p-button-wine"
+            (onClick)="procesarPago()"
+            [loading]="procesando"
+            [disabled]="procesando || loading || !intentoDeUsuarioActual">
+        </p-button>
+    </div>
+
+    <div *ngIf="intentoPendiente && !intentoDeUsuarioActual" class="pago-intento-alert pago-intento-alert-error" role="alert">
+        <i class="pi pi-lock" aria-hidden="true"></i>
+        <span>El intento pendiente pertenece a otra cuenta. Inicia sesión con esa cuenta para recuperarlo.</span>
+    </div>
+
+    <div *ngIf="intentoNoRecuperable" class="pago-intento-alert pago-intento-alert-error" role="alert">
+        <i class="pi pi-times-circle" aria-hidden="true"></i>
+        <span>
+            Hay un intento de pago guardado que no se pudo leer. No se iniciará otro pago desde esta sesión.
+            Consulta el estado de las multas antes de continuar.
+        </span>
+    </div>
+
     <div class="pago-resumen">
         <div class="resumen-card">
             <div class="resumen-item">
@@ -36,6 +65,8 @@
                     currency="USD" 
                     locale="en-US"
                     (ngModelChange)="calcularCambio()"
+                    (keydown.enter)="$event.preventDefault(); procesarPago()"
+                    [disabled]="edicionBloqueada || loading"
                     [min]="0"
                     styleClass="monto-input w-full">
                 </p-inputNumber>
@@ -90,6 +121,7 @@
                     <p-checkbox 
                         [ngModel]="todosSeleccionados()" 
                         [binary]="true"
+                        [disabled]="edicionBloqueada || loading"
                         (onChange)="toggleSeleccionTodos($event)">
                     </p-checkbox>
                 </th>
@@ -107,6 +139,7 @@
                     <span class="p-column-title">Seleccionar</span> <p-checkbox 
                         [(ngModel)]="multa.seleccionada" 
                         [binary]="true"
+                        [disabled]="edicionBloqueada || loading"
                         (ngModelChange)="actualizarTotal()">
                     </p-checkbox>
                 </td>
@@ -154,7 +187,7 @@
             styleClass="p-button-wine w-full-mobile" 
             (onClick)="procesarPago()"
             [loading]="procesando"
-            [disabled]="multasSeleccionadas.length === 0 || montoRecibido < totalSeleccionado">
+            [disabled]="edicionBloqueada || loading || multasSeleccionadas.length === 0 || montoRecibido < totalSeleccionado">
         </p-button>
     </div>
 </div>

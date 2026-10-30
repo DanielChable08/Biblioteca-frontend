@@ -248,6 +248,32 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.pago-intento-alert {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+}
+
+.pago-intento-alert > span {
+    flex: 1;
+}
+
+.pago-intento-alert-warn {
+    color: #795600;
+    background: #fff7dc;
+    border-color: #ead18a;
+}
+
+.pago-intento-alert-error {
+    color: #8c2c32;
+    background: #fff0f0;
+    border-color: #e7b5b8;
+}
+
 .selected-row {
     background-color: #e3f2fd !important;
 }
@@ -336,6 +362,11 @@
     }
 
     .pago-footer {
+        flex-direction: column;
+    }
+
+    .pago-intento-alert {
+        align-items: stretch;
         flex-direction: column;
     }
 }
