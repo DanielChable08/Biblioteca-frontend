@@ -1,6 +1,8 @@
 import { AuthService } from '../../services/auth.service';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { PrestamoDetalleComponent } from '../prestamo-detalle/prestamo-detalle';
+import { getEstadoPrestamoClass } from '../../utils/estado-prestamo';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { map, finalize } from 'rxjs/operators';
@@ -29,6 +31,7 @@ import { Prestamo, DetallePrestamo } from '../../models/biblioteca';
   standalone: true,
   imports: [
     CommonModule,
+    PrestamoDetalleComponent,
     FormsModule,
     TableModule,
     DialogModule,
@@ -296,18 +299,7 @@ export default class PrestamoListaComponent implements OnInit {
   clearFilter(table: any): void { this.globalFilter = ''; table.clear(); }
 
   getEstadoClass(estadoNombre: string = ''): string {
-    const estado = estadoNombre.toLowerCase();
-    switch (estado) {
-      case 'activo': return 'status-activo';
-      case 'devuelto':
-      case 'devuelto a tiempo':
-      case 'completado a tiempo': return 'status-devuelto';
-      case 'atrasado':
-      case 'devuelto tarde':
-      case 'completado con retardo': return 'status-atrasado';
-      case 'parcialmente devuelto': return 'status-parcial';
-      default: return 'status-desconocido';
-    }
+    return getEstadoPrestamoClass(estadoNombre);
   }
 
   getAutoresNombres(detalle: any): string {
