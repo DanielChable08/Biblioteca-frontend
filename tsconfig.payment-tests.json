@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/components/multa-pago/multa-pago.spec.ts",
+    "src/app/services/pago.service.spec.ts",
+    "src/app/services/pago-intento.service.spec.ts"
+  ]
+}

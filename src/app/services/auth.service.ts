@@ -140,6 +140,17 @@ export class AuthService {
     return Number.isInteger(personaId) && personaId > 0 ? personaId : null;
   }
 
+  getCurrentUserScope(): string | null {
+    const userId = this.getUserData()?.id;
+    if (typeof userId === 'number') {
+      return Number.isInteger(userId) && userId > 0 ? `user:${userId}` : null;
+    }
+    if (typeof userId === 'string' && userId.trim()) {
+      return `user:${userId.trim()}`;
+    }
+    return null;
+  }
+
   getUserInitials(): string {
     const userData = this.getUserData();
     if (!userData) return 'U';

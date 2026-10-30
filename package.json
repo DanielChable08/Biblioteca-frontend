@@ -7,7 +7,8 @@
     "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:access": "ng test --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.access-tests.json --include=src/app/components/impresiones/impresiones.spec.ts --include=src/app/guards/role.guard.spec.ts"
+    "test:access": "ng test --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.access-tests.json --include=src/app/components/impresiones/impresiones.spec.ts --include=src/app/guards/role.guard.spec.ts",
+    "test:payments": "ng test --watch=false --browsers=ChromeHeadlessNoSandbox --ts-config=tsconfig.payment-tests.json --include=src/app/components/multa-pago/multa-pago.spec.ts --include=src/app/services/pago.service.spec.ts --include=src/app/services/pago-intento.service.spec.ts"
   },
   "prettier": {
     "printWidth": 100,

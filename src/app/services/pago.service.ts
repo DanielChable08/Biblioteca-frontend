@@ -32,8 +32,9 @@ export class PagoService {
     return this.http.get<PagoMultaDetalle>(`${this.apiUrl}/pagos/${id}`, { headers: this.getHeaders() });
   }
 
-  registrarPago(pago: PagoMultaPayload): Observable<PagoMulta> {
-    return this.http.post<PagoMulta>(`${this.apiUrl}/pagos`, pago, { headers: this.getHeaders() });
+  registrarPago(pago: PagoMultaPayload, idempotencyKey: string): Observable<PagoMulta> {
+    const headers = this.getHeaders().set('Idempotency-Key', idempotencyKey);
+    return this.http.post<PagoMulta>(`${this.apiUrl}/pagos`, pago, { headers });
   }
 
   getPagosPorCajero(idCajero: number): Observable<PagoMulta[]> {
