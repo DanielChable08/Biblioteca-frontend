@@ -2,6 +2,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { HttpParams } from '@angular/common/http';
+import { Page } from '../models/page';
 import { 
   Multa, 
   CondonarMultaPayload,
@@ -26,8 +28,26 @@ export class MultaService {
     });
   }
 
-  getMultas(): Observable<Multa[]> {
-    return this.http.get<Multa[]>(`${this.apiUrl}/multas`, { headers: this.getHeaders() });
+  getMultas(options: {
+    page?: number; size?: number; sortBy?: string; sortDirection?: string; search?: string;
+    estadoId?: number; lectorId?: number; estadoNombre?: string[];
+  } = {}): Observable<Page<Multa>> {
+    let params = new HttpParams()
+      .set('page', options.page ?? 0)
+      .set('size', options.size ?? 15)
+      .set('sortBy', options.sortBy ?? 'id')
+      .set('sortDirection', options.sortDirection ?? 'desc');
+    if (options.search?.trim()) params = params.set('search', options.search.trim());
+    if (options.estadoId !== undefined) params = params.set('estadoId', options.estadoId);
+    if (options.lectorId !== undefined) params = params.set('lectorId', options.lectorId);
+    for (const estado of options.estadoNombre ?? []) params = params.append('estadoNombre', estado);
+    return this.http.get<Page<Multa>>(`${this.apiUrl}/multas`, { headers: this.getHeaders(), params });
+  }
+
+  getMultasByIds(ids: number[]): Observable<Multa[]> {
+    let params = new HttpParams();
+    for (const id of [...new Set(ids)]) params = params.append('ids', id);
+    return this.http.get<Multa[]>(`${this.apiUrl}/multas/seleccionadas`, { headers: this.getHeaders(), params });
   }
 
   getMultaById(uuid: string): Observable<Multa> {

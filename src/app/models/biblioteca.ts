@@ -271,12 +271,16 @@ export interface PoliticaMulta {
 export interface Multa {
   id: number;
   uuid: string;
+  uuidPrestamo?: string;
   monto: number;
   fechaEmision: string;
   idPrestamoDetalle: number;
   idMotivoMulta: number;
   idEstadoMulta: number;
   idPersona?: number;
+  lectorNombre?: string;
+  estadoMultaNombre?: string;
+  motivoMultaNombre?: string;
   diasRetraso?: number;
   montoPorDia?: number;
   motivoMulta?: MotivoMulta;
@@ -309,7 +313,8 @@ export interface PagoMulta {
   motivoAnulacion?: string;
   fechaAnulacion?: string;
   uuid: string;
-  lectorPago: Persona;
+  lectorPago: number | Persona;
+  lectorNombre?: string;
   cajero: Persona;
   anuladoPor?: Persona;
 }

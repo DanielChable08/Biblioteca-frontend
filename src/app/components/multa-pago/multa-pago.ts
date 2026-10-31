@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { forkJoin, map } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { Subscription, Subject, of } from 'rxjs';
+import { catchError, debounceTime, finalize } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 
 import { TableModule } from 'primeng/table';
@@ -17,12 +17,13 @@ import { InputNumberModule } from 'primeng/inputnumber';
 
 import { MultaService } from '../../services/multa.service';
 import { PagoService } from '../../services/pago.service';
-import { PrestamoService } from '../../services/prestamo.service';
 import { PrintTicketService } from '../../services/print-ticket.service';
 import { PagoIntentoService } from '../../services/pago-intento.service';
 import { PagoIntento } from '../../models/pago-intento';
 import { PagoMulta, PagoMultaPayload } from '../../models/biblioteca';
 import { AuthService } from '../../services/auth.service';
+import { Multa } from '../../models/biblioteca';
+import { Page } from '../../models/page';
 
 const RESULTADO_INCIERTO =
   'No pudimos confirmar el resultado del pago. Puedes volver a consultar la operación sin generar un nuevo cobro.';
@@ -46,20 +47,23 @@ const RESULTADO_INCIERTO =
   templateUrl: './multa-pago.html',
   styleUrls: ['./multa-pago.css']
 })
-export class MultaPagoComponent implements OnInit {
+export class MultaPagoComponent implements OnInit, OnDestroy {
   private multaService = inject(MultaService);
   private pagoService = inject(PagoService);
-  private prestamoService = inject(PrestamoService);
   private router = inject(Router);
   private messageService = inject(MessageService);
   private printService = inject(PrintTicketService);
   private authService = inject(AuthService);
   private pagoIntentoService = inject(PagoIntentoService);
+  private pageRequest?: Subscription;
+  private restoreRequest?: Subscription;
+  private searchSubscription?: Subscription;
+  private searchRequests$ = new Subject<string>();
   private intentoUserScope: string | null = null;
 
   multas: any[] = [];
   multasSeleccionadas: any[] = [];
-  private catalogoMultas: any[] = [];
+  private multasSeleccionadasPorId = new Map<number, any>();
   loading = false;
   procesando = false;
   intentoPendiente: PagoIntento | null = null;
@@ -68,6 +72,9 @@ export class MultaPagoComponent implements OnInit {
   totalSeleccionado = 0;
   cambio = 0;
   globalFilter = '';
+  totalRecords = 0;
+  page = 0;
+  pageSize = 10;
 
   get edicionBloqueada(): boolean {
     return this.procesando || this.intentoPendiente !== null || this.intentoNoRecuperable;
@@ -90,68 +97,67 @@ export class MultaPagoComponent implements OnInit {
         this.intentoNoRecuperable = true;
       }
     }
+    this.searchSubscription = this.searchRequests$.pipe(debounceTime(300)).subscribe(search => {
+      this.globalFilter = search;
+      this.page = 0;
+      this.loadMultasPendientes();
+    });
     this.loadMultasPendientes();
+  }
+
+  ngOnDestroy(): void {
+    this.pageRequest?.unsubscribe();
+    this.restoreRequest?.unsubscribe();
+    this.searchSubscription?.unsubscribe();
   }
 
   loadMultasPendientes(): void {
     this.loading = true;
-    forkJoin({
-      multas: this.multaService.getMultas(),
-      estados: this.multaService.getEstadosMultas(),
-      motivos: this.multaService.getMotivosMultas(),
-      personas: this.prestamoService.getPersonas()
+    this.pageRequest?.unsubscribe();
+    this.pageRequest = this.multaService.getMultas({
+      page: this.page, size: this.pageSize, sortBy: 'fechaEmision', sortDirection: 'desc',
+      search: this.globalFilter, estadoNombre: ['Emitida', 'Pendiente']
     }).pipe(
-      map(({ multas, estados, motivos, personas }) => {
-        const personasMap = new Map(personas.map(p => [p.id, p]));
-        const todasLasMultas = multas.map(m => ({
-          ...m,
-          estadoMulta: estados.find(e => e.id === m.idEstadoMulta),
-          motivoMulta: motivos.find(mo => mo.id === m.idMotivoMulta),
-          lector: m.idPersona ? personasMap.get(m.idPersona) : null,
-          seleccionada: false
-        }));
-
-        return {
-          todasLasMultas,
-          multasPendientes: todasLasMultas.filter(m =>
-            m.estadoMulta?.nombre === 'Emitida' || m.estadoMulta?.nombre === 'Pendiente'
-          )
-        };
+      catchError((err: unknown) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las multas.' });
+        console.error('Error al cargar multas:', err);
+        return of(null);
       }),
       finalize(() => this.loading = false)
-    ).subscribe({
-      next: ({ todasLasMultas, multasPendientes }) => {
-        this.catalogoMultas = todasLasMultas;
-        this.multas = multasPendientes;
-
-        if (this.intentoPendiente) {
-          this.restaurarDatosDelIntento();
-        } else if (!this.intentoNoRecuperable) {
-          const multaId = sessionStorage.getItem('multaIdSeleccionada');
-          if (multaId) {
-            const multa = this.multas.find(m => m.id === +multaId);
-            if (multa) {
-              multa.seleccionada = true;
-              this.actualizarTotal();
-            }
-            sessionStorage.removeItem('multaIdSeleccionada');
-          }
+    ).subscribe((response: Page<Multa> | null) => {
+        if (!response) return;
+        if (response.content.length === 0 && response.totalElements > 0 && this.page > 0) {
+          this.page = Math.max(0, response.totalPages - 1);
+          this.loadMultasPendientes();
+          return;
         }
-      },
-      error: (err: unknown) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se pudieron cargar las multas.'
-        });
-        console.error('Error al cargar multas:', err);
-      }
-    });
+        this.totalRecords = response.totalElements;
+        this.multas = response.content.map(multa => ({
+          ...multa,
+          lector: { nombre: multa.lectorNombre || 'N/A' },
+          motivoMulta: { nombre: multa.motivoMultaNombre || 'N/A' },
+          estadoMulta: { nombre: multa.estadoMultaNombre || 'N/A' },
+          seleccionada: this.multasSeleccionadasPorId.has(multa.id)
+        }));
+        this.sincronizarSeleccionPagina();
+        const multaId = sessionStorage.getItem('multaIdSeleccionada');
+        if (multaId && !this.intentoPendiente && !this.intentoNoRecuperable) {
+          this.restaurarSeleccionInicial(Number(multaId));
+        }
+        if (this.intentoPendiente) this.restaurarDatosDelIntento();
+      });
+  }
+
+  onPageChange(event: any): void {
+    this.pageSize = event.rows || this.pageSize;
+    this.page = Math.floor((event.first || 0) / this.pageSize);
+    this.loadMultasPendientes();
   }
 
   actualizarTotal(): void {
     if (this.edicionBloqueada) return;
-    this.multasSeleccionadas = this.multas.filter(m => m.seleccionada);
+    this.sincronizarSeleccionPagina();
+    this.multasSeleccionadas = [...this.multasSeleccionadasPorId.values()];
     this.totalSeleccionado = this.multasSeleccionadas.reduce((sum, m) => sum + m.monto, 0);
     this.calcularCambio();
   }
@@ -164,17 +170,20 @@ export class MultaPagoComponent implements OnInit {
   toggleSeleccionTodos(event: any): void {
     if (this.edicionBloqueada || this.loading) return;
     const checked = event.checked;
-    this.multas.forEach(m => m.seleccionada = checked);
+    this.multas.forEach(m => {
+      m.seleccionada = checked;
+      if (checked) this.multasSeleccionadasPorId.set(m.id, m);
+      else this.multasSeleccionadasPorId.delete(m.id);
+    });
     this.actualizarTotal();
   }
 
   todosSeleccionados(): boolean {
-    return this.multas.length > 0 && this.multas.every(m => m.seleccionada);
+    return this.multas.length > 0 && this.multas.every(m => this.multasSeleccionadasPorId.has(m.id));
   }
 
   getNombreLector(multa: any): string {
-    if (!multa.lector) return 'N/A';
-    return `${multa.lector.nombre} ${multa.lector.apPaterno || ''}`.trim();
+    return multa.lectorNombre || multa.lector?.nombre || 'N/A';
   }
 
   procesarPago(): void {
@@ -293,6 +302,7 @@ export class MultaPagoComponent implements OnInit {
     }
 
     this.multasSeleccionadas = [];
+    this.multasSeleccionadasPorId.clear();
     this.multas.forEach(m => m.seleccionada = false);
     this.totalSeleccionado = 0;
     this.montoRecibido = 0;
@@ -380,9 +390,27 @@ export class MultaPagoComponent implements OnInit {
     const intento = this.intentoPendiente;
     if (!intento) return;
 
-    const ids = new Set(intento.payload.idsMultas);
-    for (const multa of this.multas) multa.seleccionada = ids.has(multa.id);
-    this.multasSeleccionadas = this.catalogoMultas.filter(m => ids.has(m.id));
+    if (!this.multasSeleccionadasPorId.size) {
+      this.restoreRequest?.unsubscribe();
+      this.restoreRequest = this.multaService.getMultasByIds(intento.payload.idsMultas).subscribe({
+        next: multas => {
+          this.multasSeleccionadasPorId = new Map(multas.map(multa => [multa.id, {
+            ...multa,
+            lector: { nombre: multa.lectorNombre || 'N/A' },
+            motivoMulta: { nombre: multa.motivoMultaNombre || 'N/A' },
+            estadoMulta: { nombre: multa.estadoMultaNombre || 'N/A' },
+            seleccionada: true
+          }]));
+          this.multasSeleccionadas = intento.payload.idsMultas
+            .map(id => this.multasSeleccionadasPorId.get(id)).filter(Boolean);
+          this.sincronizarSeleccionPagina();
+        },
+        error: error => console.error('No se pudieron restaurar las multas del intento de pago:', error)
+      });
+    }
+    for (const multa of this.multas) multa.seleccionada = this.multasSeleccionadasPorId.has(multa.id);
+    this.multasSeleccionadas = intento.payload.idsMultas
+      .map(id => this.multasSeleccionadasPorId.get(id)).filter(Boolean);
     this.totalSeleccionado = intento.totalSeleccionado;
     this.montoRecibido = intento.payload.montoRecibido;
     this.cambio = this.montoRecibido - this.totalSeleccionado;
@@ -413,6 +441,32 @@ export class MultaPagoComponent implements OnInit {
       /no se encuentra en un estado válido para recibir pagos/i.test(mensaje);
   }
 
+  private sincronizarSeleccionPagina(): void {
+    for (const multa of this.multas) {
+      if (multa.seleccionada) this.multasSeleccionadasPorId.set(multa.id, multa);
+      else this.multasSeleccionadasPorId.delete(multa.id);
+    }
+  }
+
+  private restaurarSeleccionInicial(id: number): void {
+    this.restoreRequest?.unsubscribe();
+    this.restoreRequest = this.multaService.getMultasByIds([id]).subscribe({
+      next: multas => {
+        const multa = multas[0];
+        if (!multa) return;
+        const seleccionada = { ...multa, motivoMulta: { nombre: multa.motivoMultaNombre || 'N/A' }, seleccionada: true };
+        this.multasSeleccionadasPorId.set(id, seleccionada);
+        const current = this.multas.find(item => item.id === id);
+        if (current) current.seleccionada = true;
+        this.multasSeleccionadas = [...this.multasSeleccionadasPorId.values()];
+        this.totalSeleccionado = this.multasSeleccionadas.reduce((sum, item) => sum + item.monto, 0);
+        this.calcularCambio();
+        sessionStorage.removeItem('multaIdSeleccionada');
+      },
+      error: error => console.error('No se pudo recuperar la multa seleccionada:', error)
+    });
+  }
+
   private imprimirTicketPago(
     multasSeleccionadas: any[],
     totalSeleccionado: number,
@@ -440,14 +494,15 @@ export class MultaPagoComponent implements OnInit {
     this.router.navigate(['/admin/multas']);
   }
 
-  applyFilterGlobal(table: any, event: Event): void {
-    const filterValue = (event.target as HTMLInputElement).value;
-    table.filterGlobal(filterValue, 'contains');
+  applyFilterGlobal(_table: any, event: Event): void {
+    this.searchRequests$.next((event.target as HTMLInputElement).value);
   }
 
   clearFilter(table: any): void {
     this.globalFilter = '';
     table.clear();
+    this.page = 0;
+    this.loadMultasPendientes();
   }
 
   irAlIndexPagos(): void {

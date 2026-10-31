@@ -1,9 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
-import { map, finalize } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
+import { catchError, finalize, switchMap } from 'rxjs/operators';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -11,140 +11,96 @@ import { TagModule } from 'primeng/tag';
 import { CardModule } from 'primeng/card';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { environment } from '../../../environments/environment';
+import { PagoService } from '../../services/pago.service';
+import { PersonaService } from '../../services/persona.service';
+import { PagoMulta } from '../../models/biblioteca';
 
-interface Pago {
-  id: number;
-  fechaPago: string;
-  total: number;
-  montoRecibido: number;
-  cambio: number;
-  moneda: string;
-  metodoPago: string;
-  folio: string;
-  anulado: boolean;
-  motivoAnulacion: string | null;
-  fechaAnulacion: string | null;
-  uuid: string;
-  lectorPago: number;
-  cajero: number;
-  anuladoPor: number | null;
-}
-
-interface Persona {
-  id: number;
-  nombre: string;
-  apPaterno: string;
-  apMaterno: string;
-}
+interface PageRequest { page: number; size: number; }
 
 @Component({
   selector: 'app-historial-pagos',
   standalone: true,
-  imports: [
-    CommonModule,
-    TableModule,
-    ButtonModule,
-    TagModule,
-    CardModule,
-    ToastModule
-  ],
+  imports: [CommonModule, TableModule, ButtonModule, TagModule, CardModule, ToastModule],
   providers: [MessageService],
   templateUrl: './historial-pagos.html',
   styleUrls: ['./historial-pagos.css']
 })
 export default class HistorialPagosComponent implements OnInit {
-  private http = inject(HttpClient);
+  private destroyRef = inject(DestroyRef);
+  private pagoService = inject(PagoService);
+  private personaService = inject(PersonaService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private messageService = inject(MessageService);
+  private pageRequests$ = new Subject<PageRequest>();
 
-  pagos: Pago[] = [];
+  pagos: PagoMulta[] = [];
   loading = false;
   lectorId!: number;
-  nombreLector: string = 'Cargando...';
-  totalPagado = 0;
+  nombreLector = 'Cargando...';
   totalPagos = 0;
-
-  private apiUrl = environment.apiURL;
+  page = 0;
+  pageSize = 10;
 
   ngOnInit(): void {
     this.lectorId = Number(this.route.snapshot.params['idLector']);
-    
     this.nombreLector = sessionStorage.getItem(`lector_${this.lectorId}`) || `Lector ${this.lectorId}`;
-    
+
+    this.pageRequests$.pipe(
+      switchMap(request => {
+        this.loading = true;
+        return this.pagoService.getPagos({
+          page: request.page, size: request.size, sortBy: 'fechaPago', sortDirection: 'desc', lectorId: this.lectorId
+        }).pipe(
+          catchError(error => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial de pagos.' });
+            console.error('Error al cargar pagos del lector:', error);
+            return of(null);
+          }),
+          finalize(() => this.loading = false)
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(response => {
+      if (!response) return;
+      if (!response.content.length && response.totalElements > 0 && this.page > 0) {
+        this.page = Math.max(0, response.totalPages - 1);
+        this.cargarHistorialPagos();
+        return;
+      }
+      this.pagos = response.content;
+      this.totalPagos = response.totalElements;
+    });
+
+    if (!sessionStorage.getItem(`lector_${this.lectorId}`)) {
+      this.personaService.getPersonaById(this.lectorId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: persona => {
+          this.nombreLector = `${persona.nombre} ${persona.apPaterno || ''}`.trim();
+          sessionStorage.setItem(`lector_${this.lectorId}`, this.nombreLector);
+        },
+        error: () => this.nombreLector = `Lector ${this.lectorId}`
+      });
+    }
     this.cargarHistorialPagos();
   }
 
   cargarHistorialPagos(): void {
-    this.loading = true;
-
-    forkJoin({
-      pagos: this.http.get<Pago[]>(`${this.apiUrl}/pagos`),
-      personas: this.http.get<Persona[]>(`${this.apiUrl}/personas`)
-    })
-      .pipe(
-        map(({ pagos, personas }) => {
-          const personasMap = new Map(personas.map(p => [p.id, p]));
-          
-          const pagosEnriquecidos = pagos.map(pago => ({
-            ...pago,
-            lectorNombre: personasMap.get(pago.lectorPago)?.nombre || `Lector ${pago.lectorPago}`
-          }));
-
-          if (!sessionStorage.getItem(`lector_${this.lectorId}`)) {
-            const lector = personas.find(p => p.id === this.lectorId);
-            if (lector) {
-              this.nombreLector = `${lector.nombre} ${lector.apPaterno || ''}`.trim();
-              sessionStorage.setItem(`lector_${this.lectorId}`, this.nombreLector);
-            }
-          }
-
-          return pagosEnriquecidos;
-        }),
-        finalize(() => (this.loading = false))
-      )
-      .subscribe({
-        next: (todosLosPagos) => {
-          this.pagos = todosLosPagos
-            .filter(p => p.lectorPago === this.lectorId)
-            .sort((a, b) => new Date(b.fechaPago).getTime() - new Date(a.fechaPago).getTime());
-
-          this.totalPagos = this.pagos.length;
-          this.totalPagado = this.pagos
-            .filter(p => !p.anulado)
-            .reduce((sum, p) => sum + p.total, 0);
-        },
-        error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo cargar el historial de pagos'
-          });
-        }
-      });
+    this.pageRequests$.next({ page: this.page, size: this.pageSize });
   }
 
-  formatearFecha(fecha: string): string {
-    return new Date(fecha).toLocaleString('es-MX');
+  onPageChange(event: any): void {
+    this.pageSize = event.rows || this.pageSize;
+    this.page = Math.floor((event.first || 0) / this.pageSize);
+    this.cargarHistorialPagos();
   }
+
+  formatearFecha(fecha: string): string { return new Date(fecha).toLocaleString('es-MX'); }
 
   formatearMoneda(monto: number): string {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN'
-    }).format(monto);
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(monto);
   }
 
-  getEstadoSeverity(anulado: boolean): string {
-    return anulado ? 'danger' : 'success';
-  }
-
-  getEstadoTexto(anulado: boolean): string {
-    return anulado ? 'ANULADO' : 'PAGADO';
-  }
-
-  volver(): void {
-    this.router.navigate(['/admin/pagos']);
-  }
+  getEstadoSeverity(anulado: boolean): string { return anulado ? 'danger' : 'success'; }
+  getEstadoTexto(anulado: boolean): string { return anulado ? 'ANULADO' : 'PAGADO'; }
+  volver(): void { this.router.navigate(['/admin/pagos']); }
 }

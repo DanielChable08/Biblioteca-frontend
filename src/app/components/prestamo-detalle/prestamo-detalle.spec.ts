@@ -11,7 +11,8 @@ describe('PrestamoDetalleComponent', () => {
     fechaLimite: '2026-10-08T10:00:00',
     idBibliotecario: 1,
     idLector: 2,
-    idEstadoPrestamo: 1
+    idEstadoPrestamo: 1,
+    estadoPrestamo: { id: 1, nombre: 'Activo', uuid: 'estado-activo' }
   };
 
   const detalle = (id: number): DetallePrestamo => ({

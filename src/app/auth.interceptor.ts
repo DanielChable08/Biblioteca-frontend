@@ -24,15 +24,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      
-      
       const esMetodoDeEscritura = req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE';
       const esErrorDeAutores = req.url.includes('/autores');
       const esErrorDeRoles = req.url.includes('/roles');
 
+      const errorBody = error.error;
+      const autenticacionInvalida = error.status === 401
+        && errorBody !== null
+        && typeof errorBody === 'object'
+        && errorBody.code === 'INVALID_AUTHENTICATION';
 
-      if (error.status === 401 && !esMetodoDeEscritura && !esErrorDeAutores && !esErrorDeRoles) {
-        authService.logout();
+      if (autenticacionInvalida && !esMetodoDeEscritura && !esErrorDeAutores && !esErrorDeRoles) {
+        authService.logout(false);
         router.navigate(['/login'], { queryParams: { expired: 'true' } });
       }
 

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/auth.interceptor.spec.ts",
+    "src/app/components/multa-lista/multa-lista.spec.ts",
+    "src/app/components/multa-pago/multa-pago.spec.ts",
+    "src/app/components/pagos-index/pagos-index.spec.ts",
+    "src/app/components/historial-pagos/historial-pagos.spec.ts",
+    "src/app/components/persona-detalle/persona-detalle.spec.ts",
+    "src/app/services/pago.service.spec.ts",
+    "src/app/services/pago-intento.service.spec.ts"
+  ]
+}

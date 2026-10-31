@@ -27,11 +27,15 @@
     [value]="pagos"
     [loading]="loading"
     [paginator]="true"
-    [rows]="10"
+    [lazy]="true"
+    [lazyLoadOnInit]="false"
+    [first]="page * pageSize"
+    [totalRecords]="totalRecords"
+    [rows]="pageSize"
     [showCurrentPageReport]="true"
     currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pagos"
     [rowsPerPageOptions]="[10, 25, 50]"
-    [globalFilterFields]="['folio', 'lectorNombre', 'metodoPago']"
+    (onLazyLoad)="onPageChange($event)"
     responsiveLayout="scroll"
     styleClass="custom-table p-datatable-gridlines p-datatable-striped"
   >
@@ -45,7 +49,8 @@
               pInputText
               type="text"
               class="table-search-input"
-              (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+              [value]="globalFilter"
+              (input)="buscar($event)"
               placeholder="Buscar por folio, lector, método..."
             />
           </span>
@@ -53,7 +58,7 @@
             pButton
             icon="pi pi-filter-slash"
             class="p-button-outlined clear-filter-button"
-            (click)="dt.clear()"
+            (click)="limpiarBusqueda()"
             pTooltip="Limpiar filtros">
           </button>
         </div>
@@ -63,7 +68,7 @@
     <ng-template pTemplate="header">
       <tr>
         <th pSortableColumn="folio">Folio <p-sortIcon field="folio"></p-sortIcon></th>
-        <th pSortableColumn="lectorNombre">Lector <p-sortIcon field="lectorNombre"></p-sortIcon></th>
+        <th pSortableColumn="lectorPago.nombre">Lector <p-sortIcon field="lectorPago.nombre"></p-sortIcon></th>
         <th pSortableColumn="fechaPago">Fecha <p-sortIcon field="fechaPago"></p-sortIcon></th>
         <th pSortableColumn="total">Total <p-sortIcon field="total"></p-sortIcon></th>
         <th pSortableColumn="metodoPago">Método <p-sortIcon field="metodoPago"></p-sortIcon></th>
@@ -83,7 +88,7 @@
         <td>
           <div class="lector-cell">
             <i class="pi pi-user lector-icon"></i>
-            {{ pago.lectorNombre }}
+            {{ pago.lectorNombre || ('ID: ' + pago.lectorPago) }}
           </div>
         </td>
         <td>{{ formatearFecha(pago.fechaPago) }}</td>

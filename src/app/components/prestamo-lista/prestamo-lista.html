@@ -288,16 +288,16 @@
     #dtPrestamos
     [value]="prestamos"
     [loading]="loading"
+    [lazy]="true"
+    [lazyLoadOnInit]="false"
     [paginator]="true"
-    [rows]="10"
+    [rows]="currentSize"
+    [first]="currentPage * currentSize"
+    [totalRecords]="totalRecords"
     [rowsPerPageOptions]="[10, 25, 50]"
-    [globalFilterFields]="[
-      'lector.nombre',
-      'lector.apPaterno',
-      'bibliotecario.nombre',
-      'estadoPrestamo.nombre',
-      'fechaPrestamo',
-    ]"
+    [sortField]="sortField"
+    [sortOrder]="sortOrder === 'asc' ? 1 : -1"
+    (onLazyLoad)="onPageChange($event)"
     styleClass="p-datatable-striped p-datatable-gridlines custom-table"
     currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} préstamos"
     [showCurrentPageReport]="true"

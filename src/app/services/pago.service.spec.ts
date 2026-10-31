@@ -40,8 +40,12 @@ describe('PagoService', () => {
   it('does not add the idempotency header to payment reads', () => {
     service.getPagos().subscribe();
 
-    const request = httpTesting.expectOne(`${environment.apiURL}/pagos`);
+    const request = httpTesting.expectOne(req => req.url === `${environment.apiURL}/pagos`);
+    expect(request.request.params.get('page')).toBe('0');
+    expect(request.request.params.get('size')).toBe('15');
+    expect(request.request.params.get('sortBy')).toBe('id');
+    expect(request.request.params.get('sortDirection')).toBe('desc');
     expect(request.request.headers.has('Idempotency-Key')).toBeFalse();
-    request.flush([]);
+    request.flush({ content: [], totalElements: 0, totalPages: 0, size: 15, number: 0, first: true, last: true });
   });
 });

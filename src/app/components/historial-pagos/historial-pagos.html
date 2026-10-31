@@ -16,10 +16,15 @@
       [value]="pagos"
       [loading]="loading"
       [paginator]="true"
-      [rows]="10"
+      [lazy]="true"
+      [lazyLoadOnInit]="false"
+      [first]="page * pageSize"
+      [totalRecords]="totalPagos"
+      [rows]="pageSize"
       [showCurrentPageReport]="true"
       currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pagos"
       [rowsPerPageOptions]="[10, 25, 50]"
+      (onLazyLoad)="onPageChange($event)"
       styleClass="p-datatable-sm p-datatable-striped"
       responsiveLayout="scroll">
 
