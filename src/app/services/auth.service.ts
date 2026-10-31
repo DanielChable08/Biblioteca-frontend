@@ -197,10 +197,10 @@ export class AuthService {
     return this.isAuthenticatedSubject.value;
   }
 
-  logout(): void {
+  logout(navigateToHome = true): void {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('userData');
     this.isAuthenticatedSubject.next(false);
-    this.router.navigate(['']);
+    if (navigateToHome) this.router.navigate(['']);
   }
 }

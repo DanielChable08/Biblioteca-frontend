@@ -10,7 +10,6 @@ import { AuthService } from '../../services/auth.service';
 import { MultaService } from '../../services/multa.service';
 import { PagoIntentoService } from '../../services/pago-intento.service';
 import { PagoService } from '../../services/pago.service';
-import { PrestamoService } from '../../services/prestamo.service';
 import { PrintTicketService } from '../../services/print-ticket.service';
 import { MultaPagoComponent } from './multa-pago';
 
@@ -52,16 +51,15 @@ describe('MultaPagoComponent', () => {
   beforeEach(async () => {
     sessionStorage.clear();
     multaService = jasmine.createSpyObj<MultaService>('MultaService', [
-      'getMultas', 'getEstadosMultas', 'getMotivosMultas'
+    'getMultas', 'getMultasByIds'
     ]);
-    multaService.getMultas.and.returnValue(of([multa] as any));
-    multaService.getEstadosMultas.and.returnValue(of([{ id: 1, nombre: 'Emitida' }] as any));
-    multaService.getMotivosMultas.and.returnValue(of([{ id: 2, nombre: 'Retraso' }] as any));
-
-    const prestamoService = jasmine.createSpyObj<PrestamoService>('PrestamoService', ['getPersonas']);
-    prestamoService.getPersonas.and.returnValue(of([{
-      id: 8, nombre: 'Lector', apPaterno: 'Prueba'
-    }] as any));
+    multaService.getMultas.and.returnValue(of({
+      content: [{ ...multa, lectorNombre: 'Lector Prueba', motivoMultaNombre: 'Retraso', estadoMultaNombre: 'Emitida' }],
+      totalElements: 1, totalPages: 1, size: 10, number: 0, first: true, last: true
+    } as any));
+    multaService.getMultasByIds.and.returnValue(of([
+      { ...multa, lectorNombre: 'Lector Prueba', motivoMultaNombre: 'Retraso', estadoMultaNombre: 'Emitida' }
+    ] as any));
 
     pagoService = jasmine.createSpyObj<PagoService>('PagoService', ['registrarPago']);
     pagoService.registrarPago.and.returnValue(new Subject<PagoMulta>() as Observable<PagoMulta>);
@@ -80,7 +78,6 @@ describe('MultaPagoComponent', () => {
         provideNoopAnimations(),
         { provide: MultaService, useValue: multaService },
         { provide: PagoService, useValue: pagoService },
-        { provide: PrestamoService, useValue: prestamoService },
         { provide: Router, useValue: router },
         { provide: PrintTicketService, useValue: printService },
         { provide: AuthService, useValue: authService }
@@ -116,6 +113,31 @@ describe('MultaPagoComponent', () => {
     expect(body).toEqual({ montoRecibido: 30, cajero: 4, lectorPago: 8, idsMultas: [7] });
     expect(key).toMatch(/^[0-9a-f-]{36}$/i);
     expect(component.procesando).toBeTrue();
+  });
+
+  it('preserves selected fines and totals while moving across server pages', () => {
+    createComponent();
+    const secondFine = { ...multa, id: 8, monto: 15, fechaEmision: '2026-10-02' };
+    multaService.getMultas.and.callFake((options: any) => of({
+      content: [options.page === 0 ? multa : secondFine],
+      totalElements: 2, totalPages: 2, size: 1, number: options.page,
+      first: options.page === 0, last: options.page === 1
+    } as any));
+    component.pageSize = 1;
+    component.loadMultasPendientes();
+
+    component.multas[0].seleccionada = true;
+    component.actualizarTotal();
+    component.onPageChange({ first: 1, rows: 1 });
+
+    expect(component.multas[0].id).toBe(8);
+    expect(component.multasSeleccionadas.map(item => item.id)).toEqual([7]);
+    expect(component.totalSeleccionado).toBe(25);
+
+    component.multas[0].seleccionada = true;
+    component.actualizarTotal();
+    expect(component.multasSeleccionadas.map(item => item.id)).toEqual([7, 8]);
+    expect(component.totalSeleccionado).toBe(40);
   });
 
   it('keeps the same key and body after a network error and retries only on user action', () => {

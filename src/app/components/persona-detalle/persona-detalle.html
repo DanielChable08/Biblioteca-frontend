@@ -26,15 +26,15 @@
     
     <div class="profile-stats">
       <div class="stat-item">
-        <span class="stat-value text-wine">{{ prestamos.length }}</span>
+        <span class="stat-value text-wine">{{ totalPrestamos }}</span>
         <span class="stat-label">Préstamos</span>
       </div>
       <div class="stat-item">
-        <span class="stat-value text-gray">{{ multas.length }}</span>
+        <span class="stat-value text-gray">{{ totalMultas }}</span>
         <span class="stat-label">Multas</span>
       </div>
       <div class="stat-item">
-        <span class="stat-value text-gold">{{ pagos.length }}</span>
+        <span class="stat-value text-gold">{{ totalPagos }}</span>
         <span class="stat-label">Pagos</span>
       </div>
     </div>
@@ -55,7 +55,7 @@
   <div class="tab-content-container">
 
     <div *ngIf="activeTab === 'prestamos'">
-      <p-table [value]="prestamos" styleClass="p-datatable-striped p-datatable-gridlines custom-table" [paginator]="true" [rows]="10" [loading]="loadingPrestamosYMultas" responsiveLayout="stack" breakpoint="960px">
+      <p-table [value]="prestamos" styleClass="p-datatable-striped p-datatable-gridlines custom-table" [lazy]="true" [lazyLoadOnInit]="false" [paginator]="true" [rows]="prestamosPageSize" [first]="prestamosPage * prestamosPageSize" [totalRecords]="totalPrestamos" [rowsPerPageOptions]="[10, 25, 50]" [loading]="loadingPrestamos" (onLazyLoad)="onPrestamosPageChange($event)" responsiveLayout="stack" breakpoint="960px">
         <ng-template pTemplate="header">
           <tr>
             <th>Responsable</th>
@@ -93,7 +93,7 @@
     </div>
 
     <div *ngIf="activeTab === 'multas'">
-      <p-table [value]="multas" styleClass="p-datatable-striped p-datatable-gridlines custom-table" [paginator]="true" [rows]="10" [loading]="loadingPrestamosYMultas" responsiveLayout="stack" breakpoint="960px">
+      <p-table [value]="multas" styleClass="p-datatable-striped p-datatable-gridlines custom-table" [lazy]="true" [lazyLoadOnInit]="false" [paginator]="true" [first]="multasPage * multasPageSize" [rows]="multasPageSize" [totalRecords]="totalMultas" [rowsPerPageOptions]="[10, 25, 50]" [loading]="loadingPrestamosYMultas" (onLazyLoad)="onMultasPageChange($event)" responsiveLayout="stack" breakpoint="960px">
         <ng-template pTemplate="header">
           <tr>
             <th>Motivo</th>
@@ -138,7 +138,7 @@
     </div>
 
     <div *ngIf="activeTab === 'pagos'">
-      <p-table [value]="pagos" styleClass="p-datatable-striped p-datatable-gridlines custom-table" [paginator]="true" [rows]="10" [loading]="loadingPagos" responsiveLayout="stack" breakpoint="960px">
+      <p-table [value]="pagos" styleClass="p-datatable-striped p-datatable-gridlines custom-table" [lazy]="true" [lazyLoadOnInit]="false" [paginator]="true" [first]="pagosPage * pagosPageSize" [rows]="pagosPageSize" [totalRecords]="totalPagos" [rowsPerPageOptions]="[10, 25, 50]" [loading]="loadingPagos" (onLazyLoad)="onPagosPageChange($event)" responsiveLayout="stack" breakpoint="960px">
         <ng-template pTemplate="header">
           <tr>
             <th>Fecha</th>

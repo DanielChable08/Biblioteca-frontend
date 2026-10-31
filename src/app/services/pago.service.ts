@@ -1,8 +1,9 @@
 import { PagoMulta, PagoMultaPayload, PagoMultaDetalle } from '../models/biblioteca';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Page } from '../models/page';
 
 @Injectable({
   providedIn: 'root'
@@ -24,8 +25,17 @@ export class PagoService {
     });
   }
 
-  getPagos(): Observable<PagoMulta[]> {
-    return this.http.get<PagoMulta[]>(`${this.apiUrl}/pagos`, { headers: this.getHeaders() });
+  getPagos(options: {
+    page?: number; size?: number; sortBy?: string; sortDirection?: string; search?: string; lectorId?: number;
+  } = {}): Observable<Page<PagoMulta>> {
+    let params = new HttpParams()
+      .set('page', options.page ?? 0)
+      .set('size', options.size ?? 15)
+      .set('sortBy', options.sortBy ?? 'id')
+      .set('sortDirection', options.sortDirection ?? 'desc');
+    if (options.search?.trim()) params = params.set('search', options.search.trim());
+    if (options.lectorId !== undefined) params = params.set('lectorId', options.lectorId);
+    return this.http.get<Page<PagoMulta>>(`${this.apiUrl}/pagos`, { headers: this.getHeaders(), params });
   }
 
   getPagoById(id: number): Observable<PagoMultaDetalle> {

@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/components/multa-lista/multa-lista.spec.ts",
+    "src/app/components/prestamo-lista/prestamo-lista.spec.ts",
+    "src/app/components/prestamo-detalle/prestamo-detalle.spec.ts",
+    "src/app/components/persona-detalle/persona-detalle.spec.ts"
+  ]
+}

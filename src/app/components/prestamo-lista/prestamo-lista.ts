@@ -1,11 +1,12 @@
 import { AuthService } from '../../services/auth.service';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, DatePipe } from '@angular/common';
 import { PrestamoDetalleComponent } from '../prestamo-detalle/prestamo-detalle';
 import { getEstadoPrestamoClass } from '../../utils/estado-prestamo';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { map, finalize } from 'rxjs/operators';
+import { Observable, Subject, Subscription, forkJoin, of, throwError } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, finalize, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 
 import { TableModule } from 'primeng/table';
@@ -24,7 +25,21 @@ import { PrestamoService } from '../../services/prestamo.service';
 import { CatalogService } from '../../services/catalog.service';
 
 import { PrintTicketService } from '../../services/print-ticket.service';
-import { Prestamo, DetallePrestamo } from '../../models/biblioteca';
+import { EstadoPrestamo, Persona, Prestamo, DetallePrestamo } from '../../models/biblioteca';
+
+interface PrestamoPageRequest {
+  page: number;
+  size: number;
+  sortField: string;
+  sortOrder: string;
+  search: string;
+  requestId: number;
+}
+
+interface PrestamoLookups {
+  personas: Persona[];
+  estados: EstadoPrestamo[];
+}
 
 @Component({
   selector: 'app-prestamo-lista',
@@ -51,6 +66,7 @@ import { Prestamo, DetallePrestamo } from '../../models/biblioteca';
 })
 export default class PrestamoListaComponent implements OnInit {
   authService = inject(AuthService);
+  private destroyRef = inject(DestroyRef);
   private prestamoService = inject(PrestamoService);
   private catalogService = inject(CatalogService);
 
@@ -67,6 +83,11 @@ export default class PrestamoListaComponent implements OnInit {
   mostrarDetalle = false;
   loading = false;
   globalFilter: string = '';
+  currentPage = 0;
+  currentSize = 10;
+  totalRecords = 0;
+  sortField = 'fechaPrestamo';
+  sortOrder = 'desc';
   loadingDetalles = false;
   diasfestivosSelect = 0;
   diasfestivos = 0;
@@ -78,46 +99,121 @@ export default class PrestamoListaComponent implements OnInit {
   loadingDevolucion = false;
   procesandoDevolucion = false;
 
+  private pageRequests$ = new Subject<PrestamoPageRequest>();
+  private searchTerms$ = new Subject<string>();
+  private lookups$?: Observable<PrestamoLookups>;
+  private detallePrestamoSubscription?: Subscription;
+  private devolucionDetallesSubscription?: Subscription;
+  private latestRequestId = 0;
+  private lastRequestSignature = '';
+
   ngOnInit(): void {
+    this.pageRequests$.pipe(
+      switchMap(request => {
+        this.loading = true;
+        return forkJoin({
+          page: this.prestamoService.getPrestamos(
+            request.page, request.size, request.sortField, request.sortOrder, request.search
+          ),
+          lookups: this.getLookups()
+        }).pipe(
+          map(({ page, lookups }) => ({ request, page, lookups })),
+          catchError(error => {
+            if (request.requestId === this.latestRequestId) {
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudieron cargar los préstamos.'
+              });
+              console.error('Error al cargar préstamos:', error);
+            }
+            return of(null);
+          }),
+          finalize(() => {
+            if (request.requestId === this.latestRequestId) this.loading = false;
+          })
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(result => {
+      if (!result || result.request.requestId !== this.latestRequestId) return;
+      const { page, lookups } = result;
+      this.personasMap.clear();
+      lookups.personas.forEach(persona => this.personasMap.set(
+        persona.id, `${persona.nombre} ${persona.apPaterno} ${persona.apMaterno || ''}`.trim()
+      ));
+      this.estadosMap.clear();
+      lookups.estados.forEach(estado => this.estadosMap.set(estado.id, estado.nombre));
+      this.prestamos = page.content.map(prestamo => ({
+        ...prestamo,
+        lector: lookups.personas.find(persona => persona.id === prestamo.idLector),
+        bibliotecario: lookups.personas.find(persona => persona.id === prestamo.idBibliotecario),
+        estadoPrestamo: lookups.estados.find(estado => estado.id === prestamo.idEstadoPrestamo)
+      }));
+      this.totalRecords = page.totalElements;
+    });
+
+    this.searchTerms$.pipe(
+      debounceTime(350),
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(search => {
+      this.globalFilter = search;
+      this.currentPage = 0;
+      this.requestPage();
+    });
+
     this.loadData();
   }
 
   loadData(): void {
-    this.loading = true;
-    forkJoin({
-      prestamos: this.prestamoService.getPrestamos(),
-      personas: this.prestamoService.getPersonas(),
-      estados: this.catalogService.getEstadosPrestamos()
-    }).pipe(
-      map(({ prestamos, personas, estados }) => {
-        personas.forEach(p => this.personasMap.set(p.id, `${p.nombre} ${p.apPaterno} ${p.apMaterno || ''}`.trim()));
-        estados.forEach(e => this.estadosMap.set(e.id, e.nombre));
+    this.requestPage(true);
+  }
 
-        return prestamos.map(p => ({
-          ...p,
-          lector: personas.find(lector => lector.id === p.idLector),
-          bibliotecario: personas.find(bib => bib.id === p.idBibliotecario),
-          estadoPrestamo: estados.find(e => e.id === p.idEstadoPrestamo)
-        }));
-      }),
-      finalize(() => this.loading = false)
-    ).subscribe({
-      next: (prestamosMapeados) => {
-        this.prestamos = prestamosMapeados.sort((a, b) => {
-          const dateA = new Date(a.fechaPrestamo).getTime();
-          const dateB = new Date(b.fechaPrestamo).getTime();
-          return dateB - dateA;
-        });
-      },
-      error: (err: any) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se pudieron cargar los préstamos.'
-        });
-        console.error('Error al cargar préstamos:', err);
-      }
-    });
+  onPageChange(event: any): void {
+    this.currentSize = event.rows > 0 ? event.rows : this.currentSize;
+    this.currentPage = this.currentSize > 0 ? Math.floor(event.first / this.currentSize) : 0;
+    this.sortField = event.sortField || this.sortField;
+    this.sortOrder = event.sortOrder === 1 ? 'asc' : event.sortOrder === -1 ? 'desc' : this.sortOrder;
+    this.requestPage();
+  }
+
+  private requestPage(force = false): void {
+    const request = {
+      page: this.currentPage,
+      size: this.currentSize,
+      sortField: this.sortField,
+      sortOrder: this.sortOrder,
+      search: this.globalFilter.trim()
+    };
+    const signature = JSON.stringify(request);
+    if (!force && signature === this.lastRequestSignature) return;
+    this.lastRequestSignature = signature;
+    this.latestRequestId++;
+    this.pageRequests$.next({ ...request, requestId: this.latestRequestId });
+  }
+
+  private getLookups(): Observable<PrestamoLookups> {
+    if (!this.lookups$) {
+      this.lookups$ = forkJoin({
+        personas: this.prestamoService.getPersonas(),
+        estados: this.catalogService.getEstadosPrestamos()
+      }).pipe(
+        catchError(error => {
+          this.lookups$ = undefined;
+          return throwError(() => error);
+        }),
+        tap(({ personas, estados }) => {
+          this.personasMap = new Map(personas.map(persona => [
+            persona.id, `${persona.nombre} ${persona.apPaterno} ${persona.apMaterno || ''}`.trim()
+          ]));
+          this.estadosMap = new Map(estados.map(estado => [estado.id, estado.nombre]));
+        }),
+        takeUntilDestroyed(this.destroyRef),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+    }
+    return this.lookups$;
   }
 
   verDetalles(prestamo: Prestamo): void {
@@ -128,13 +224,20 @@ export default class PrestamoListaComponent implements OnInit {
   }
 
   private cargarDetalles(prestamo: Prestamo): void {
+    this.detallePrestamoSubscription?.unsubscribe();
     this.loadingDetalles = true;
+    const prestamoUuid = prestamo.uuid!;
 
-    this.prestamoService.getDetallesPrestamo(prestamo.uuid!).pipe(
-      finalize(() => this.loadingDetalles = false)
+    this.detallePrestamoSubscription = this.prestamoService.getDetallesPrestamo(prestamoUuid).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        if (this.prestamoActual?.uuid === prestamoUuid) this.loadingDetalles = false;
+      })
     ).subscribe({
       next: (detallesMapeados) => {
-        this.detallesPrestamo = detallesMapeados;
+        if (this.mostrarDetalle && this.prestamoActual?.uuid === prestamoUuid) {
+          this.detallesPrestamo = detallesMapeados;
+        }
       },
       error: (err: any) => {
         console.error('Error al cargar detalles:', err);
@@ -144,17 +247,24 @@ export default class PrestamoListaComponent implements OnInit {
   }
 
   abrirModalDevolucion(prestamo: Prestamo): void {
+    this.devolucionDetallesSubscription?.unsubscribe();
     this.prestamoDevolucion = prestamo;
     this.detallesDevolucion = [];
     this.mostrarModalDevolucion = true;
     this.loadingDevolucion = true;
 
-    this.prestamoService.getDetallesPrestamo(prestamo.uuid!).pipe(
+    const prestamoUuid = prestamo.uuid!;
+    this.devolucionDetallesSubscription = this.prestamoService.getDetallesPrestamo(prestamoUuid).pipe(
+      takeUntilDestroyed(this.destroyRef),
       map(detalles => detalles.filter(d => !d.fechaDevolucion).map(d => ({ ...d, seleccionado: false }))),
-      finalize(() => this.loadingDevolucion = false)
+      finalize(() => {
+        if (this.prestamoDevolucion?.uuid === prestamoUuid) this.loadingDevolucion = false;
+      })
     ).subscribe({
       next: (detallesMapeados) => {
-        this.detallesDevolucion = detallesMapeados;
+        if (this.mostrarModalDevolucion && this.prestamoDevolucion?.uuid === prestamoUuid) {
+          this.detallesDevolucion = detallesMapeados;
+        }
       },
       error: (err: any) => {
         console.error('Error al cargar detalles:', err);
@@ -252,11 +362,15 @@ export default class PrestamoListaComponent implements OnInit {
   }
 
   cerrarModalDetalle(): void {
-    this.mostrarDetalle = false; this.prestamoActual = null; this.detallesPrestamo = [];
+    this.detallePrestamoSubscription?.unsubscribe();
+    this.detallePrestamoSubscription = undefined;
+    this.mostrarDetalle = false; this.prestamoActual = null; this.detallesPrestamo = []; this.loadingDetalles = false;
   }
 
   cerrarModalDevolucion(): void {
-    this.mostrarModalDevolucion = false; this.prestamoDevolucion = null; this.detallesDevolucion = []; this.diasfestivos = 0; this.diasfestivosSelect = 0;
+    this.devolucionDetallesSubscription?.unsubscribe();
+    this.devolucionDetallesSubscription = undefined;
+    this.mostrarModalDevolucion = false; this.prestamoDevolucion = null; this.detallesDevolucion = []; this.loadingDevolucion = false; this.diasfestivos = 0; this.diasfestivosSelect = 0;
   }
 
   regresar(): void {
@@ -287,7 +401,9 @@ export default class PrestamoListaComponent implements OnInit {
         this.prestamoService.deletePrestamo(p.uuid!).pipe(finalize(() => this.loading = false)).subscribe({
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Préstamo anulado.' });
-            this.prestamos = this.prestamos.filter(x => x.uuid !== p.uuid);
+            this.totalRecords = Math.max(0, this.totalRecords - 1);
+            if (this.prestamos.length === 1 && this.currentPage > 0) this.currentPage--;
+            this.loadData();
           },
           error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo anular.' })
         });
@@ -295,8 +411,19 @@ export default class PrestamoListaComponent implements OnInit {
     });
   }
 
-  applyFilterGlobal(table: any, event: Event): void { table.filterGlobal((event.target as HTMLInputElement).value, 'contains'); }
-  clearFilter(table: any): void { this.globalFilter = ''; table.clear(); }
+  applyFilterGlobal(table: any, event: Event): void {
+    this.globalFilter = (event.target as HTMLInputElement).value;
+    this.currentPage = 0;
+    if (table) table.first = 0;
+    this.searchTerms$.next(this.globalFilter.trim());
+  }
+
+  clearFilter(table: any): void {
+    this.globalFilter = '';
+    this.currentPage = 0;
+    if (table) table.first = 0;
+    this.searchTerms$.next('');
+  }
 
   getEstadoClass(estadoNombre: string = ''): string {
     return getEstadoPrestamoClass(estadoNombre);

@@ -56,9 +56,13 @@
     [value]="multas" 
     [loading]="loading" 
     [paginator]="true" 
-    [rows]="10" 
+    [lazy]="true"
+    [lazyLoadOnInit]="false"
+    [first]="page * pageSize"
+    [totalRecords]="totalRecords"
+    [rows]="pageSize" 
     [rowsPerPageOptions]="[10, 25, 50]"
-    [globalFilterFields]="['lectorNombre', 'motivoMulta.nombre', 'estadoMulta.nombre', 'monto', 'fechaEmision', 'diasRetraso']" 
+    (onLazyLoad)="onPageChange($event)"
     styleClass="p-datatable-striped p-datatable-gridlines custom-table"
     currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} multas" 
     [showCurrentPageReport]="true"
@@ -87,7 +91,7 @@
 
     <ng-template pTemplate="header">
       <tr>
-        <th pSortableColumn="lectorNombre">Lector <p-sortIcon field="lectorNombre"></p-sortIcon></th>
+        <th pSortableColumn="persona.nombre">Lector <p-sortIcon field="persona.nombre"></p-sortIcon></th>
         <th pSortableColumn="motivoMulta.nombre">Motivo <p-sortIcon field="motivoMulta.nombre"></p-sortIcon></th>
         <th pSortableColumn="diasRetraso">Días Atraso <p-sortIcon field="diasRetraso"></p-sortIcon></th>
         <th pSortableColumn="monto">Monto <p-sortIcon field="monto"></p-sortIcon></th>

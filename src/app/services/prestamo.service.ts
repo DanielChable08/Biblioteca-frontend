@@ -1,7 +1,8 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Page } from '../models/page';
 import { 
   Prestamo, 
   DetallePrestamo, 
@@ -31,8 +32,23 @@ export class PrestamoService {
     });
   }
 
-  getPrestamos(): Observable<Prestamo[]> {
-    return this.http.get<Prestamo[]>(`${this.apiUrl}/prestamos`);
+  getPrestamos(
+    page: number = 0,
+    size: number = 15,
+    sortField: string = 'fechaPrestamo',
+    sortOrder: string = 'desc',
+    search: string = '',
+    lectorId?: number
+  ): Observable<Page<Prestamo>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('size', size)
+      .set('sort', `${sortField},${sortOrder}`);
+
+    if (search.trim()) params = params.set('search', search.trim());
+    if (lectorId !== undefined && lectorId !== null) params = params.set('lectorId', lectorId);
+
+    return this.http.get<Page<Prestamo>>(`${this.apiUrl}/prestamos`, { params });
   }
 
   getPrestamoByUuid(uuid: string): Observable<Prestamo> {
