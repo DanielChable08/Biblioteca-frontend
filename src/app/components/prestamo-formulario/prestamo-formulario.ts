@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, HostListener }
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { finalize, forkJoin, map, switchMap, of, catchError } from 'rxjs';
+import { finalize, forkJoin, map, switchMap, of, catchError, Subscription } from 'rxjs';
 
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -17,6 +17,7 @@ import { MessageService } from 'primeng/api';
 import PersonaFormularioComponent from '../personas-formulario/personas-formulario';
 
 import { PrestamoService } from '../../services/prestamo.service';
+import { FechasNoHabilesResponse } from '../../models/calendario-institucional';
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
 import { UsuarioService } from '../../services/usuario.service';
@@ -100,11 +101,22 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   
   minFechaLimite: Date = new Date();
   minFechaPrestamo: Date = this.getTodayMidnight();
+  fechasNoHabiles: Date[] = [];
+  calendarioCargando = false;
+  calendarioError = false;
+  calendarioFueraCobertura = false;
+  calendarioMesSinDiasDisponibles = false;
 
   idPersonaBibliotecario!: number;
 
   private scanBuffer = '';
   private scanTimeout?: ReturnType<typeof setTimeout>;
+  private fechaPrestamoSubscription?: Subscription;
+  private fechaLimiteSubscription?: Subscription;
+  private calendarioSubscription?: Subscription;
+  private calendarioPorMes = new Map<string, FechasNoHabilesResponse>();
+  private calendarioMesActivo: string | null = null;
+  private mesesSinCoberturaAvisados = new Set<string>();
   catalogosListos = false;
 
   ngOnInit(): void {
@@ -149,6 +161,9 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.limpiarEscaneo();
+    this.fechaPrestamoSubscription?.unsubscribe();
+    this.fechaLimiteSubscription?.unsubscribe();
+    this.calendarioSubscription?.unsubscribe();
   }
 
   escanearDesdeCampo(event: KeyboardEvent, campo: HTMLInputElement): void {
@@ -259,7 +274,8 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   }
 
   setupFechaListeners(): void {
-    this.prestamoForm.get('fechaPrestamo')?.valueChanges.subscribe(fecha => {
+    this.fechaPrestamoSubscription?.unsubscribe();
+    this.fechaPrestamoSubscription = this.prestamoForm.get('fechaPrestamo')?.valueChanges.subscribe(fecha => {
       if (fecha) {
         const fechaObj = new Date(fecha);
         const minLimite = new Date(fechaObj);
@@ -272,6 +288,142 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
         }
       }
     });
+
+    this.fechaLimiteSubscription?.unsubscribe();
+    this.fechaLimiteSubscription = this.prestamoForm.get('fechaLimite')?.valueChanges.subscribe(() => {
+      const control = this.prestamoForm.get('fechaLimite');
+      if (!control?.hasError('fechaNoHabil')) return;
+      const remainingErrors = { ...(control.errors ?? {}) };
+      delete remainingErrors['fechaNoHabil'];
+      control.setErrors(Object.keys(remainingErrors).length ? remainingErrors : null);
+    });
+  }
+
+  onCalendarioMostrar(): void {
+    const selectedDate = this.prestamoForm.get('fechaLimite')?.value;
+    this.cargarFechasNoHabiles(selectedDate instanceof Date ? selectedDate : this.minFechaLimite);
+  }
+
+  onCalendarioMesCambiar(event: { month?: number; year?: number }): void {
+    if (!event.month || !event.year) return;
+    this.cargarFechasNoHabiles(this.fechaLocal(event.year, event.month - 1, 1));
+  }
+
+  cargarFechasNoHabiles(fechaVisible: Date): void {
+    const year = fechaVisible.getFullYear();
+    const month = fechaVisible.getMonth();
+    const monthKey = this.claveMes(year, month);
+    const cached = this.calendarioPorMes.get(monthKey);
+    if (cached) {
+      this.calendarioSubscription?.unsubscribe();
+      this.calendarioMesActivo = monthKey;
+      this.calendarioCargando = false;
+      this.aplicarFechasNoHabiles(monthKey, cached);
+      return;
+    }
+
+    if (this.calendarioMesActivo === monthKey && this.calendarioCargando) return;
+
+    this.calendarioSubscription?.unsubscribe();
+    this.calendarioMesActivo = monthKey;
+    this.calendarioCargando = true;
+    this.calendarioError = false;
+    this.calendarioFueraCobertura = false;
+    this.calendarioMesSinDiasDisponibles = false;
+    this.fechasNoHabiles = [];
+    const inicio = this.fechaLocal(year, month, 1);
+    const fin = this.fechaLocal(year, month + 1, 0);
+
+    this.calendarioSubscription = this.prestamoService
+      .getFechasNoHabiles(this.formatearFechaLocal(inicio), this.formatearFechaLocal(fin))
+      .subscribe({
+        next: response => {
+          if (this.calendarioMesActivo !== monthKey) return;
+          this.calendarioPorMes.set(monthKey, response);
+          this.calendarioCargando = false;
+          this.aplicarFechasNoHabiles(monthKey, response);
+        },
+        error: () => {
+          if (this.calendarioMesActivo !== monthKey) return;
+          this.calendarioCargando = false;
+          this.calendarioError = true;
+          this.calendarioMesSinDiasDisponibles = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Calendario no disponible',
+            detail: 'No se pudieron consultar las fechas institucionales. Intenta abrir nuevamente el calendario.'
+          });
+        }
+      });
+  }
+
+  private aplicarFechasNoHabiles(monthKey: string, response: FechasNoHabilesResponse): void {
+    this.fechasNoHabiles = response.fechasNoHabiles.map(fecha => this.parseFechaLocal(fecha));
+    this.calendarioError = false;
+    this.calendarioFueraCobertura = !response.coberturaCompleta;
+    this.calendarioMesSinDiasDisponibles = !this.hayDiaDisponible(monthKey, response);
+
+    if (this.calendarioFueraCobertura && !this.mesesSinCoberturaAvisados.has(monthKey)) {
+      this.mesesSinCoberturaAvisados.add(monthKey);
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Calendario institucional pendiente',
+        detail: 'Fuera de los periodos configurados solo se bloquean sábados y domingos; no se presuponen vacaciones ni suspensiones.'
+      });
+    }
+
+    const fechaSeleccionada = this.prestamoForm.get('fechaLimite')?.value;
+    if (fechaSeleccionada instanceof Date && this.claveMesDeFecha(fechaSeleccionada) === monthKey
+        && response.fechasNoHabiles.includes(this.formatearFechaLocal(fechaSeleccionada))) {
+      this.prestamoForm.get('fechaLimite')?.setValue(null);
+      this.prestamoForm.get('fechaLimite')?.markAsTouched();
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Fecha límite no disponible',
+        detail: 'La fecha seleccionada no está disponible por el calendario institucional. Elige otro día.'
+      });
+    }
+  }
+
+  private hayDiaDisponible(monthKey: string, response: FechasNoHabilesResponse): boolean {
+    const [year, zeroBasedMonth] = monthKey.split('-').map(Number);
+    const first = this.fechaLocal(year, zeroBasedMonth, 1);
+    const last = this.fechaLocal(year, zeroBasedMonth + 1, 0);
+    const min = this.minFechaLimite;
+    const minDate = this.fechaLocal(min.getFullYear(), min.getMonth(), min.getDate());
+    const start = first < minDate ? minDate : first;
+    if (start > last) return false;
+
+    const unavailable = new Set(response.fechasNoHabiles);
+    for (const date = start; date <= last; date.setDate(date.getDate() + 1)) {
+      if (!unavailable.has(this.formatearFechaLocal(date))) return true;
+    }
+    return false;
+  }
+
+  private fechaEsNoHabil(fecha: Date, response: FechasNoHabilesResponse): boolean {
+    return response.fechasNoHabiles.includes(this.formatearFechaLocal(fecha));
+  }
+
+  private claveMesDeFecha(fecha: Date): string {
+    return this.claveMes(fecha.getFullYear(), fecha.getMonth());
+  }
+
+  private claveMes(year: number, zeroBasedMonth: number): string {
+    return `${year}-${String(zeroBasedMonth + 1).padStart(2, '0')}`;
+  }
+
+  private fechaLocal(year: number, zeroBasedMonth: number, day: number): Date {
+    return new Date(year, zeroBasedMonth, day, 0, 0, 0, 0);
+  }
+
+  private parseFechaLocal(value: string): Date {
+    const [year, month, day] = value.split('-').map(Number);
+    return this.fechaLocal(year, month - 1, day);
+  }
+
+  private formatearFechaLocal(fecha: Date): string {
+    return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
   }
 
   loadCatalogos(): void {
@@ -499,6 +651,27 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
     
     if (fechaLimite <= fechaPrestamo) {
       this.messageService.add({ severity: 'warn', summary: 'Fecha inválida', detail: 'La fecha límite debe ser posterior al préstamo.' });
+      return;
+    }
+
+    const calendarioDelMes = this.calendarioPorMes.get(this.claveMesDeFecha(fechaLimite));
+    if (!calendarioDelMes) {
+      this.cargarFechasNoHabiles(fechaLimite);
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Consultando calendario',
+        detail: 'Espera a que se validen las fechas institucionales antes de registrar el préstamo.'
+      });
+      return;
+    }
+    if (this.fechaEsNoHabil(fechaLimite, calendarioDelMes)) {
+      this.prestamoForm.get('fechaLimite')?.setErrors({ ...(this.prestamoForm.get('fechaLimite')?.errors ?? {}), fechaNoHabil: true });
+      this.prestamoForm.get('fechaLimite')?.markAsTouched();
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Fecha inválida',
+        detail: 'La fecha de devolución seleccionada no está disponible por el calendario institucional.'
+      });
       return;
     }
 

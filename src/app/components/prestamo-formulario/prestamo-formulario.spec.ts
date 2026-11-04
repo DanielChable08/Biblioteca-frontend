@@ -3,13 +3,18 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MessageService } from 'primeng/api';
+import { of, Subject, throwError } from 'rxjs';
 import PrestamoFormulario from './prestamo-formulario';
 import { Ejemplar } from '../../models/biblioteca';
+import { PrestamoService } from '../../services/prestamo.service';
+import { FechasNoHabilesResponse } from '../../models/calendario-institucional';
 
-describe('PrestamoFormulario: escaneo', () => {
+describe('PrestamoFormulario', () => {
   let component: PrestamoFormulario;
   let fixture: ComponentFixture<PrestamoFormulario>;
   let messages: jasmine.Spy;
+  let calendarioRequest: jasmine.Spy;
+  let prestamoService: PrestamoService;
   const ejemplar = (id: number): Ejemplar => ({
     id, codigo: `EJ${id}`, uuid: `uuid-${id}`, ubicacion: null,
     idLibro: id, idCondicionFisicaEjemplar: 1, idEstadoEjemplar: 1,
@@ -29,7 +34,62 @@ describe('PrestamoFormulario: escaneo', () => {
     component.allEjemplares = Array.from({ length: 6 }, (_, i) => ejemplar(i + 1));
     component.ejemplaresDisponibles = component.allEjemplares.slice(0, 5);
     messages = spyOn(fixture.debugElement.injector.get(MessageService), 'add');
+    prestamoService = fixture.debugElement.injector.get(PrestamoService);
+    calendarioRequest = spyOn(prestamoService, 'getFechasNoHabiles').and.returnValue(of({
+      fechasNoHabiles: ['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-07', '2026-11-08'],
+      coberturaCompleta: true
+    }));
     fixture.detectChanges();
+  });
+
+  it('consulta el mes visible, bloquea las fechas institucionales y limpia una fecha que se vuelve inválida', () => {
+    component.prestamoForm.get('fechaLimite')?.setValue(new Date(2026, 10, 2, 12));
+    component.cargarFechasNoHabiles(new Date(2026, 10, 2));
+
+    expect(calendarioRequest).toHaveBeenCalledOnceWith('2026-11-01', '2026-11-30');
+    expect(component.fechasNoHabiles.map(date => date.getDate())).toContain(2);
+    expect(component.prestamoForm.get('fechaLimite')?.value).toBeNull();
+    expect(messages.calls.mostRecent().args[0].summary).toBe('Fecha límite no disponible');
+  });
+
+  it('conserva la fecha válida después de cargar el calendario y reutiliza meses consultados', () => {
+    component.prestamoForm.get('fechaLimite')?.setValue(new Date(2026, 10, 4, 12));
+    component.cargarFechasNoHabiles(new Date(2026, 10, 4));
+    component.cargarFechasNoHabiles(new Date(2026, 10, 15));
+
+    expect(component.prestamoForm.get('fechaLimite')?.value.getDate()).toBe(4);
+    expect(calendarioRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancela la consulta mensual anterior al cambiar de mes', () => {
+    const previous = new Subject<FechasNoHabilesResponse>();
+    const current = new Subject<FechasNoHabilesResponse>();
+    calendarioRequest.and.returnValues(previous.asObservable(), current.asObservable());
+
+    component.cargarFechasNoHabiles(new Date(2026, 10, 1));
+    component.cargarFechasNoHabiles(new Date(2026, 11, 1));
+
+    expect(previous.observed).toBeFalse();
+    expect(current.observed).toBeTrue();
+    current.next({ fechasNoHabiles: ['2026-12-25'], coberturaCompleta: true });
+    expect(component.fechasNoHabiles[0].getDate()).toBe(25);
+  });
+
+  it('muestra error de consulta y no envía el préstamo si no pudo validar el calendario', () => {
+    calendarioRequest.and.returnValue(throwError(() => new Error('Network error')));
+    const create = spyOn(prestamoService, 'createPrestamo');
+    component.prestamoForm.patchValue({
+      fechaPrestamo: new Date(2026, 10, 3, 9),
+      fechaLimite: new Date(2026, 10, 4, 12),
+      idLector: 1
+    });
+    component.ejemplaresSeleccionados = [ejemplar(1)];
+
+    component.onSubmit();
+
+    expect(component.calendarioError).toBeTrue();
+    expect(create).not.toHaveBeenCalled();
+    expect(messages.calls.mostRecent().args[0].summary).toBe('Consultando calendario');
   });
 
   it('agrega desde el campo enfocado, muestra el título y evita enviar el formulario', () => {
