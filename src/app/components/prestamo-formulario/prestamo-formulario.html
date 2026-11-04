@@ -72,6 +72,11 @@
             [showTime]="true"
             hourFormat="24"
             [minDate]="minFechaLimite"
+            [disabledDays]="[0, 6]"
+            [disabledDates]="fechasNoHabiles"
+            (onShow)="onCalendarioMostrar()"
+            (onMonthChange)="onCalendarioMesCambiar($event)"
+            (onYearChange)="onCalendarioMesCambiar($event)"
             styleClass="w-full"
           >
           </p-datePicker>
@@ -82,6 +87,21 @@
             "
           >
             La fecha límite es requerida
+          </small>
+          <small class="p-error" *ngIf="prestamoForm.get('fechaLimite')?.hasError('fechaNoHabil')">
+            La fecha seleccionada no está disponible por el calendario institucional
+          </small>
+          <small class="p-error" *ngIf="calendarioError">
+            No se pudieron consultar las fechas institucionales para este mes
+          </small>
+          <small *ngIf="calendarioCargando" class="text-color-secondary">
+            Consultando fechas institucionales…
+          </small>
+          <small *ngIf="calendarioFueraCobertura" class="text-color-secondary">
+            Fuera de los periodos configurados solo se bloquean sábados y domingos; no se presuponen vacaciones ni suspensiones.
+          </small>
+          <small *ngIf="calendarioMesSinDiasDisponibles" class="p-error">
+            No hay días hábiles disponibles en el mes visible a partir de la fecha del préstamo.
           </small>
         </div>
       </div>

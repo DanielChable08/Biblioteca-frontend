@@ -3,6 +3,7 @@ import { environment } from '../../environments/environment';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Page } from '../models/page';
+import { FechasNoHabilesResponse } from '../models/calendario-institucional';
 import { 
   Prestamo, 
   DetallePrestamo, 
@@ -53,6 +54,14 @@ export class PrestamoService {
 
   getPrestamoByUuid(uuid: string): Observable<Prestamo> {
     return this.http.get<Prestamo>(`${this.apiUrl}/prestamos/${uuid}`);
+  }
+
+  getFechasNoHabiles(inicio: string, fin: string): Observable<FechasNoHabilesResponse> {
+    const params = new HttpParams().set('inicio', inicio).set('fin', fin);
+    return this.http.get<FechasNoHabilesResponse>(
+      `${this.apiUrl}/calendario-institucional/fechas-no-habiles`,
+      { params }
+    );
   }
 
   getPersonas(): Observable<Persona[]> {
