@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MessageService } from 'primeng/api';
@@ -90,6 +90,105 @@ describe('PrestamoFormulario', () => {
     expect(component.calendarioError).toBeTrue();
     expect(create).not.toHaveBeenCalled();
     expect(messages.calls.mostRecent().args[0].summary).toBe('Consultando calendario');
+  });
+
+  it('envía el alta completa en una petición y bloquea los envíos mientras está pendiente', fakeAsync(() => {
+    const alta = new Subject<any>();
+    const crearCompleto = spyOn(prestamoService, 'createPrestamoCompleto').and.returnValue(alta.asObservable());
+    spyOn(component.authService, 'getCurrentUserScope').and.returnValue('user:4');
+    spyOn(component['router'], 'navigate');
+    const fechaPrestamo = new Date(2026, 10, 17, 9);
+    const fechaLimite = new Date(2026, 10, 24, 9);
+
+    component.idPersonaBibliotecario = 3;
+    component.prestamoForm.patchValue({ fechaPrestamo, fechaLimite, idLector: 1, idEstadoPrestamo: 1 });
+    component.ejemplaresSeleccionados = [ejemplar(1)];
+    component.cargarFechasNoHabiles(fechaLimite);
+
+    component.onSubmit();
+    fixture.detectChanges();
+    const intento = component.intentoPendiente!;
+
+    expect(crearCompleto).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({
+        prestamo: jasmine.objectContaining({ idLector: 1, idBibliotecario: 3 }),
+        idEjemplares: [1]
+      }),
+      intento.idempotencyKey
+    );
+    expect(component.isSubmitting).toBeTrue();
+
+    const submitButton: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
+    expect(submitButton.disabled).toBeTrue();
+    submitButton.click();
+    component.onSubmit();
+
+    expect(crearCompleto).toHaveBeenCalledTimes(1);
+
+    alta.next({ prestamo: { uuid: 'prestamo-1' }, detalles: [{ id: 1 }] });
+    alta.complete();
+    tick(1500);
+
+    expect(component.isSubmitting).toBeFalse();
+    expect(component.intentoPendiente).toBeNull();
+  }));
+
+  it('conserva la misma clave y el mismo payload al recuperar un resultado incierto', () => {
+    const primerEnvio = new Subject<any>();
+    const reintento = new Subject<any>();
+    const crearCompleto = spyOn(prestamoService, 'createPrestamoCompleto').and.returnValues(
+      primerEnvio.asObservable(),
+      reintento.asObservable()
+    );
+    spyOn(component.authService, 'getCurrentUserScope').and.returnValue('user:4');
+    const fechaPrestamo = new Date(2026, 10, 17, 9);
+    const fechaLimite = new Date(2026, 10, 24, 9);
+
+    component.idPersonaBibliotecario = 3;
+    component.prestamoForm.patchValue({ fechaPrestamo, fechaLimite, idLector: 1, idEstadoPrestamo: 1 });
+    component.ejemplaresSeleccionados = [ejemplar(1)];
+    component.cargarFechasNoHabiles(fechaLimite);
+    component.onSubmit();
+
+    const intento = component.intentoPendiente!;
+    primerEnvio.error(new HttpErrorResponse({ status: 0, statusText: 'Network error' }));
+
+    expect(component.isSubmitting).toBeFalse();
+    expect(component.intentoPendiente?.idempotencyKey).toBe(intento.idempotencyKey);
+    expect(component.prestamoForm.disabled).toBeTrue();
+
+    component.onSubmit();
+    expect(crearCompleto).toHaveBeenCalledTimes(2);
+    expect(crearCompleto.calls.argsFor(1)).toEqual(crearCompleto.calls.argsFor(0));
+    expect(component.isSubmitting).toBeTrue();
+
+    reintento.next({ prestamo: { uuid: 'prestamo-1' }, detalles: [{ id: 1 }] });
+    reintento.complete();
+    expect(component.intentoPendiente).toBeNull();
+  });
+
+  it('muestra un conflicto de disponibilidad y permite corregir el formulario sin navegar', () => {
+    const mensaje = 'El ejemplar 1 ya no está disponible para préstamo.';
+    const crearCompleto = spyOn(prestamoService, 'createPrestamoCompleto').and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 409, error: { message: mensaje } }))
+    );
+    spyOn(component.authService, 'getCurrentUserScope').and.returnValue('user:4');
+    const navegar = spyOn(component['router'], 'navigate');
+    const fechaPrestamo = new Date(2026, 10, 17, 9);
+    const fechaLimite = new Date(2026, 10, 24, 9);
+
+    component.idPersonaBibliotecario = 3;
+    component.prestamoForm.patchValue({ fechaPrestamo, fechaLimite, idLector: 1, idEstadoPrestamo: 1 });
+    component.ejemplaresSeleccionados = [ejemplar(1)];
+    component.cargarFechasNoHabiles(fechaLimite);
+    component.onSubmit();
+
+    expect(crearCompleto).toHaveBeenCalledTimes(1);
+    expect(component.isSubmitting).toBeFalse();
+    expect(component.intentoPendiente).toBeNull();
+    expect(component.prestamoForm.enabled).toBeTrue();
+    expect(messages.calls.mostRecent().args[0].detail).toContain(mensaje);
+    expect(navegar).not.toHaveBeenCalled();
   });
 
   it('agrega desde el campo enfocado, muestra el título y evita enviar el formulario', () => {
