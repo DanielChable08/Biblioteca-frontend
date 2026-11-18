@@ -4,6 +4,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Page } from '../models/page';
 import { FechasNoHabilesResponse } from '../models/calendario-institucional';
+import { AltaCompletaPrestamoPayload, AltaCompletaPrestamoResponse } from '../models/prestamo-intento';
 import { 
   Prestamo, 
   DetallePrestamo, 
@@ -70,6 +71,15 @@ export class PrestamoService {
 
   createPrestamo(prestamo: PrestamoPayload): Observable<Prestamo> {
     return this.http.post<Prestamo>(`${this.apiUrl}/prestamos`, prestamo);
+  }
+
+  createPrestamoCompleto(payload: AltaCompletaPrestamoPayload, idempotencyKey: string): Observable<AltaCompletaPrestamoResponse> {
+    const headers = new HttpHeaders({ 'Idempotency-Key': idempotencyKey });
+    return this.http.post<AltaCompletaPrestamoResponse>(
+      `${this.apiUrl}/prestamos/alta-completa`,
+      payload,
+      { headers }
+    );
   }
 
   updatePrestamo(uuid: string, prestamo: Partial<PrestamoPayload>): Observable<Prestamo> {

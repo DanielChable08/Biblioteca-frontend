@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { finalize, forkJoin, map, switchMap, of, catchError, Subscription } from 'rxjs';
@@ -17,6 +18,7 @@ import { MessageService } from 'primeng/api';
 import PersonaFormularioComponent from '../personas-formulario/personas-formulario';
 
 import { PrestamoService } from '../../services/prestamo.service';
+import { PrestamoIntentoService } from '../../services/prestamo-intento.service';
 import { FechasNoHabilesResponse } from '../../models/calendario-institucional';
 import { CatalogService } from '../../services/catalog.service';
 import { BookService } from '../../services/book.service';
@@ -24,6 +26,7 @@ import { UsuarioService } from '../../services/usuario.service';
 import { EjemplarService } from '../../services/ejemplar.service';
 import { AuthService } from '../../services/auth.service';
 import { SharedDataService } from '../../services/shared-data.service';
+import { AltaCompletaPrestamoPayload, PrestamoIntento } from '../../models/prestamo-intento';
 import {
   Prestamo,
   Persona,
@@ -58,6 +61,7 @@ import {
 export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private prestamoService = inject(PrestamoService);
+  private prestamoIntentoService = inject(PrestamoIntentoService);
   private catalogService = inject(CatalogService);
   private usuarioService = inject(UsuarioService);
   private bookService = inject(BookService);
@@ -74,6 +78,9 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
 
   isEditMode = false;
   isSubmitting = false;
+  intentoPendiente: PrestamoIntento | null = null;
+  errorConflictoClave = false;
+  private usuarioIntentoScope: string | null = null;
   catalogoSubmitting = false;
   prestamoUuid: string | null = null;
 
@@ -122,6 +129,7 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForms();
     this.setIdBibliotecario();
+    this.recuperarIntentoPendiente();
     this.loadCatalogos(); 
     this.setupFechaListeners();
   }
@@ -131,7 +139,7 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
     const target = event.target instanceof HTMLElement ? event.target : null;
     
     if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.isComposing ||
-        this.displayLectorModal || this.displayCatalogoModal || this.isSubmitting ||
+        this.displayLectorModal || this.displayCatalogoModal || this.isSubmitting || this.intentoPendiente ||
         target?.closest('input, textarea, select, [contenteditable="true"], [role="combobox"]')) {
         this.limpiarEscaneo();
         return;
@@ -167,6 +175,7 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   }
 
   escanearDesdeCampo(event: KeyboardEvent, campo: HTMLInputElement): void {
+    if (this.isSubmitting || this.intentoPendiente) return;
     if (event.key !== 'Enter' && event.key !== 'Tab') return;
     if (event.key === 'Tab' && !campo.value.trim()) return;
     event.preventDefault();
@@ -183,7 +192,7 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   agregarPorEscaneo(codigo: string): void {
     codigo = codigo.trim();
     if (!codigo) return;
-    if (this.isSubmitting) return;
+    if (this.isSubmitting || this.intentoPendiente) return;
     if (!this.catalogosListos) {
       this.messageService.add({ severity: 'warn', summary: 'Catálogos no disponibles', detail: 'Espera a que carguen los datos antes de escanear. Si la carga falló, recarga la página.' });
       return;
@@ -467,6 +476,7 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
         this.ejemplaresFiltrados = [...this.ejemplaresDisponibles];
         this.cargarAutoresParaEjemplares(this.ejemplaresDisponibles);
         this.checkEditMode();
+        this.restaurarIntentoEnPantalla();
         if (!this.isEditMode) this.catalogosListos = true;
       },
       error: (err) => {
@@ -557,6 +567,7 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   }
 
   abrirModalEjemplar(): void {
+    if (this.isSubmitting || this.intentoPendiente) return;
     this.modoReemplazo = false;
     this.indiceReemplazo = -1;
     this.ejemplarFilter = '';
@@ -565,6 +576,7 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   }
 
   iniciarReemplazo(index: number): void {
+    if (this.isSubmitting || this.intentoPendiente) return;
     this.modoReemplazo = true;
     this.indiceReemplazo = index;
     this.ejemplarFilter = '';
@@ -580,6 +592,7 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   }
 
   toggleEjemplar(ejemplar: Ejemplar): void {
+    if (this.isSubmitting || this.intentoPendiente) return;
     if (this.modoReemplazo) {
         if (this.ejemplaresSeleccionados[this.indiceReemplazo].id === ejemplar.id) {
             this.cerrarModalEjemplar();
@@ -635,11 +648,18 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   }
 
   removerEjemplar(index: number): void {
+    if (this.isSubmitting || this.intentoPendiente) return;
     this.ejemplaresSeleccionados.splice(index, 1);
     this.ejemplaresSeleccionados = [...this.ejemplaresSeleccionados]; 
   }
 
   onSubmit(): void {
+    if (this.isSubmitting) return;
+    if (this.intentoPendiente) {
+      this.enviarIntentoPrestamo(this.intentoPendiente);
+      return;
+    }
+
     if (this.prestamoForm.invalid) {
       this.prestamoForm.markAllAsTouched();
       this.messageService.add({ severity: 'warn', summary: 'Advertencia', detail: 'Completa los campos requeridos.' });
@@ -699,44 +719,180 @@ export default class PrestamoFormularioComponent implements OnInit, OnDestroy {
   }
 
 createPrestamo(payload: PrestamoPayload) {
-        this.prestamoService.createPrestamo(payload).pipe(finalize(() => this.isSubmitting = false))
-        .subscribe({
-          next: (p) => {
-            if (!p.uuid) return;
-            const detalles = this.ejemplaresSeleccionados.map(e => ({ idEjemplar: e.id, fechaDevolucion: null, idEstadoPrestamo: 1 }));
-            this.prestamoService.cargarDetallesEnMasiva(p.uuid, detalles).subscribe({
-              next: () => {
-                this.sharedDataService.notificarActualizacionEjemplares();
-                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Préstamo registrado correctamente.' });
-                this.cdr.detectChanges();
-                setTimeout(() => {
-                  this.router.navigate(['/admin/prestamos']);
-                }, 1500); 
-              },
-              error: (err) => {
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Se guardó el préstamo pero fallaron los detalles.' });
-                this.cdr.detectChanges();
-              }
-            });
-          },
-          error: (err) => {
-            let detalleError = 'No se pudo registrar el préstamo (El backend lo rechazó).';
-            
-            if (err?.error) {
-               if (typeof err.error === 'string') {
-                  detalleError = err.error; 
-               } else if (err.error.message) {
-                  detalleError = err.error.message; 
-               } else if (err.error.error) {
-                  detalleError = err.error.error; 
-               }
-            }
-
-            this.messageService.add({ severity: 'error', summary: 'Préstamo Rechazado', detail: detalleError });
-            this.cdr.detectChanges();
-          }
-        });
+    const scope = this.authService.getCurrentUserScope();
+    if (!scope) {
+      this.isSubmitting = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Sesión no identificada',
+        detail: 'Vuelve a iniciar sesión antes de registrar el préstamo.'
+      });
+      return;
     }
+
+    this.usuarioIntentoScope = scope;
+    let intento = this.intentoPendiente;
+    if (!intento) {
+      const payloadCompleto: AltaCompletaPrestamoPayload = {
+        prestamo: { ...payload },
+        idEjemplares: this.ejemplaresSeleccionados.map(ejemplar => ejemplar.id)
+      };
+      try {
+        intento = this.prestamoIntentoService.preparar(scope, payloadCompleto);
+      } catch (error) {
+        this.isSubmitting = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'No se pudo preparar el intento',
+          detail: error instanceof Error ? error.message : 'No se pudo guardar el intento de forma segura.'
+        });
+        return;
+      }
+      this.intentoPendiente = intento;
+      this.restaurarIntentoEnPantalla();
+    }
+
+    this.enviarIntentoPrestamo(intento);
+  }
+
+  private recuperarIntentoPendiente(): void {
+    this.usuarioIntentoScope = this.authService.getCurrentUserScope();
+    if (!this.usuarioIntentoScope || this.route.snapshot.paramMap.get('uuid')) return;
+
+    const recuperacion = this.prestamoIntentoService.recuperar(this.usuarioIntentoScope);
+    if (recuperacion.estado === 'invalid') {
+      this.prestamoIntentoService.limpiarInvalido(this.usuarioIntentoScope);
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Intento no recuperable',
+        detail: 'El intento guardado no es válido. Revisa el préstamo antes de iniciar uno nuevo.'
+      });
+      return;
+    }
+    if (recuperacion.estado === 'found') {
+      this.intentoPendiente = recuperacion.intento;
+      this.restaurarIntentoEnPantalla();
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Préstamo pendiente de confirmar',
+        detail: 'Reintenta el mismo envío para recuperar su resultado; se conservaron la clave y los datos originales.'
+      });
+    }
+  }
+
+  private restaurarIntentoEnPantalla(): void {
+    const intento = this.intentoPendiente;
+    if (!intento) return;
+
+    this.prestamoForm.patchValue({
+      fechaPrestamo: this.parseFecha(intento.payload.prestamo.fechaPrestamo),
+      fechaLimite: this.parseFecha(intento.payload.prestamo.fechaLimite),
+      idBibliotecario: intento.payload.prestamo.idBibliotecario,
+      idLector: intento.payload.prestamo.idLector,
+      idEstadoPrestamo: intento.payload.prestamo.idEstadoPrestamo
+    }, { emitEvent: false });
+
+    this.ejemplaresSeleccionados = intento.payload.idEjemplares
+      .map(id => this.allEjemplares.find(ejemplar => ejemplar.id === id))
+      .filter((ejemplar): ejemplar is Ejemplar => Boolean(ejemplar));
+    this.prestamoForm.disable({ emitEvent: false });
+  }
+
+  private enviarIntentoPrestamo(intento: PrestamoIntento): void {
+    const scope = this.authService.getCurrentUserScope();
+    if (!scope || scope !== intento.userScope) {
+      this.isSubmitting = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Usuario distinto',
+        detail: 'El intento pertenece a otra sesión. Inicia sesión con el mismo usuario para recuperarlo.'
+      });
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.usuarioIntentoScope = scope;
+    this.prestamoService.createPrestamoCompleto(intento.payload, intento.idempotencyKey)
+      .pipe(finalize(() => {
+        this.isSubmitting = false;
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: respuesta => {
+          this.prestamoIntentoService.limpiar(scope, intento);
+          this.intentoPendiente = null;
+          this.errorConflictoClave = false;
+          this.prestamoForm.enable({ emitEvent: false });
+          this.sharedDataService.notificarActualizacionEjemplares();
+          const identificador = respuesta.prestamo.uuid ?? respuesta.prestamo.id;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Préstamo registrado',
+            detail: `Préstamo ${identificador ?? ''} creado con ${respuesta.detalles.length} ejemplar(es).`
+          });
+          this.cdr.detectChanges();
+          setTimeout(() => this.router.navigate(['/admin/prestamos']), 1500);
+        },
+        error: (error: HttpErrorResponse) => this.manejarErrorAltaCompleta(error, scope, intento)
+      });
+  }
+
+  private manejarErrorAltaCompleta(error: HttpErrorResponse, scope: string, intento: PrestamoIntento): void {
+    const mensaje = this.obtenerMensajeError(error);
+    const mensajeNormalizado = mensaje.toLowerCase();
+    const esEnProceso = mensajeNormalizado.includes('está siendo procesada');
+    const claveConOtroPayload = mensajeNormalizado.includes('utilizada con datos distintos');
+    const resultadoIncierto = error.status === 0 || error.status >= 500 || error.status === 401 || error.status === 403;
+    const conservarIntento = esEnProceso || claveConOtroPayload || resultadoIncierto;
+    this.errorConflictoClave = claveConOtroPayload;
+
+    if (!conservarIntento) {
+      this.prestamoIntentoService.limpiar(scope, intento);
+      this.intentoPendiente = null;
+      this.errorConflictoClave = false;
+      this.prestamoForm.enable({ emitEvent: false });
+    }
+
+    const detalle = conservarIntento
+      ? `${mensaje} Conserva este intento y reinténtalo con los mismos datos para recuperar el resultado.`
+      : mensaje;
+    this.messageService.add({
+      severity: 'error',
+      summary: conservarIntento ? 'Resultado pendiente de confirmar' : 'Préstamo no registrado',
+      detail: detalle || 'No se pudo registrar el préstamo.'
+    });
+    this.cdr.detectChanges();
+  }
+
+  descartarIntentoConConflictoDeClave(): void {
+    const intento = this.intentoPendiente;
+    if (!intento || !this.errorConflictoClave) return;
+
+    const confirmado = window.confirm(
+      'El servidor indica que esta clave pertenece a otros datos. Antes de iniciar otro préstamo, confirma que el préstamo previo no se registró.'
+    );
+    if (!confirmado) return;
+
+    this.prestamoIntentoService.limpiar(intento.userScope, intento);
+    this.intentoPendiente = null;
+    this.errorConflictoClave = false;
+    this.prestamoForm.enable({ emitEvent: false });
+  }
+
+  private obtenerMensajeError(error: HttpErrorResponse): string {
+    if (typeof error.error === 'string') return error.error;
+    const mensaje = error.error?.message || error.error?.error;
+    if (typeof mensaje === 'string' && mensaje.trim()) return mensaje;
+
+    if (error.error && typeof error.error === 'object') {
+      const validaciones = Object.values(error.error)
+        .flatMap(valor => Array.isArray(valor) ? valor : [valor])
+        .filter((valor): valor is string => typeof valor === 'string' && Boolean(valor.trim()));
+      if (validaciones.length) return validaciones.join(' ');
+    }
+
+    return error.message || 'No se pudo registrar el préstamo.';
+  }
 
   updatePrestamo(payload: PrestamoPayload) {
         this.prestamoService.updatePrestamo(this.prestamoUuid!, payload).pipe(finalize(() => this.isSubmitting = false))

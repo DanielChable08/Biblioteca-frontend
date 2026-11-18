@@ -21,6 +21,24 @@
   </div>
 </div>
 
+<div class="form-page-container" *ngIf="intentoPendiente">
+  <div class="p-message p-message-warn" role="status">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>
+      Hay un intento de préstamo pendiente de confirmar. Los datos y ejemplares están bloqueados;
+      usa el botón de recuperación para reenviar exactamente la misma operación.
+    </span>
+    <button
+      *ngIf="errorConflictoClave"
+      type="button"
+      pButton
+      label="Descartar intento conflictivo"
+      class="p-button-text p-button-warning"
+      (click)="descartarIntentoConConflictoDeClave()"
+    ></button>
+  </div>
+</div>
+
 <div class="form-page-container">
   <form [formGroup]="prestamoForm" (ngSubmit)="onSubmit()" class="form-container">
     <div class="form-section">
@@ -37,6 +55,7 @@
           <p-datePicker
             id="fechaPrestamo"
             formControlName="fechaPrestamo"
+            [disabled]="isSubmitting || !!intentoPendiente"
             [showIcon]="true"
             dateFormat="yy-mm-dd"
             placeholder="Selecciona la fecha"
@@ -65,6 +84,7 @@
           <p-datePicker
             id="fechaLimite"
             formControlName="fechaLimite"
+            [disabled]="isSubmitting || !!intentoPendiente"
             [showIcon]="true"
             dateFormat="yy-mm-dd"
             placeholder="Selecciona la fecha límite"
@@ -116,6 +136,7 @@
               id="lector"
               [options]="lectores"
               formControlName="idLector"
+              [disabled]="isSubmitting || !!intentoPendiente"
               optionLabel="nombreCompleto"
               optionValue="id"
               placeholder="Selecciona un lector"
@@ -157,6 +178,7 @@
               id="estadoPrestamo"
               [options]="estadosPrestamo"
               formControlName="idEstadoPrestamo"
+              [disabled]="isSubmitting || !!intentoPendiente"
               optionLabel="nombre"
               optionValue="id"
               placeholder="Selecciona un estado"
@@ -181,6 +203,7 @@
           label="Buscar Manualmente"
           icon="pi pi-search"
           class="p-button-outlined btn-add-ejemplar"
+          [disabled]="isSubmitting || !!intentoPendiente"
           (click)="abrirModalEjemplar()"
         ></button>
       </div>
@@ -196,7 +219,7 @@
             class="my-1 w-300-px"
             autocomplete="off"
             placeholder="Escanea aquí y termina con Enter o Tab"
-            [disabled]="!catalogosListos || isSubmitting"
+            [disabled]="!catalogosListos || isSubmitting || !!intentoPendiente"
             (keydown)="escanearDesdeCampo($event, campoEscaneo)"
           />
           <br />
@@ -243,6 +266,7 @@
               pButton
               icon="pi pi-pencil"
               class="p-button-rounded p-button-text p-button-warning action-icon"
+              [disabled]="isSubmitting || !!intentoPendiente"
               pTooltip="Cambiar libro"
               tooltipPosition="left"
               (click)="iniciarReemplazo(i)"
@@ -253,6 +277,7 @@
               pButton
               icon="pi pi-times"
               class="p-button-rounded p-button-text p-button-danger action-icon"
+              [disabled]="isSubmitting || !!intentoPendiente"
               pTooltip="Eliminar"
               tooltipPosition="left"
               (click)="removerEjemplar(i)"
@@ -280,11 +305,11 @@
       <button
         type="submit"
         pButton
-        [label]="isEditMode ? 'Actualizar' : 'Guardar'"
+        [label]="isEditMode ? 'Actualizar' : (intentoPendiente ? 'Recuperar préstamo' : 'Guardar')"
         icon="pi pi-check"
         class="p-button-wine btn-primary"
         [loading]="isSubmitting"
-        [disabled]="prestamoForm.invalid || ejemplaresSeleccionados.length === 0"
+        [disabled]="isSubmitting || (!intentoPendiente && (prestamoForm.invalid || ejemplaresSeleccionados.length === 0))"
       ></button>
     </div>
   </form>
